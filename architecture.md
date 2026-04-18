@@ -15,7 +15,7 @@
 
 ## 🗺️ 目录树（当前真实状态）
 
-> 当前仓库处于"**Phase 0 完成**"——Next.js 15.5 骨架 + Tailwind 3.4 + shadcn/ui + Prisma 5.22 + 布局三件套 + Ark API 已冒烟验证（走 /chat/completions）。Phase 1 数据建模待开始。
+> 当前仓库处于"**Phase 1 完成**"——6 个数据 model + 10 家大厂种子 + zod schema 全套就绪。Phase 2 REST API 待开始。
 
 ```
 /Users/sibyl/Desktop/system/
@@ -26,22 +26,20 @@
 ├── progress.md                      ← 已有 · 进度真相（逐步勾选清单）
 ├── architecture.md                  ← 已有 · 文件地图（本文件）
 ├── CODEBUDDY.md                     ← 已有 · AI Agent 入口（首读）
-├── .env                             ← 已有 · Prisma CLI 专用（只有 DATABASE_URL）；不进 git
+├── .env                             ← 已有 · Prisma CLI 专用（只有 DATABASE_URL="file:./dev.db"）；不进 git
 ├── .env.local                       ← 已有 · Next.js runtime 环境变量（DATABASE_URL / DOUBAO_*）；不进 git
 ├── .gitignore                       ← 已有 · 保护 node_modules / .next / .env* / dev.db / uploads / .workbuddy 等
 ├── .workbuddy/                      ← 已有 · 工作记忆（不进 git）
 │
-│ ── Phase 0 Step 0.1 产生 ──
-├── package.json                     ← 已有 · Next 15.5 + React 18.3 + Tailwind 3.4 + TS 5.9 + Prisma 5.22 + shadcn 依赖
+│ ── Phase 0 产物 ──
+├── package.json                     ← 已有 · Next 15.5 + React 18.3 + Tailwind 3.4 + TS 5.9 + Prisma 5.22 + shadcn 依赖 + zod 4.3
 ├── pnpm-lock.yaml                   ← 已有 · 依赖锁定
 ├── pnpm-workspace.yaml              ← 已有 · onlyBuiltDependencies 白名单（@prisma/engines / prisma / tailwindcss-oxide）
 ├── tsconfig.json                    ← 已有 · TypeScript 配置，含 `@/*` path alias
 ├── next.config.ts                   ← 已有 · Next.js 配置（当前为空 defaults）
 ├── next-env.d.ts                    ← 已有 · Next.js 自动生成（gitignore 忽略；仓库初始 commit 保留了一份）
 ├── .eslintrc.json                   ← 已有 · ESLint 8 配置，extends next/core-web-vitals + next/typescript
-│
-│ ── Phase 0 Step 0.2 / 0.3 产生 ──
-├── tailwind.config.ts               ← 已有 · UI.md 4.1~4.6 全部色值 + 4.5 阴影 + 5.1 字体 + 5.2 字号 + 5.4 圆角 + tailwindcss-animate plugin
+├── tailwind.config.ts               ← 已有 · UI.md 4.1~4.6 全部色值 + 阴影 + 字体 + 字号 + 圆角 + tailwindcss-animate plugin
 ├── postcss.config.mjs               ← 已有 · PostCSS 走 tailwindcss + autoprefixer
 ├── components.json                  ← 已有 · shadcn/ui 配置（new-york / neutral / cssVars / @/* alias）
 │
@@ -55,28 +53,35 @@
 │   └── companies/page.tsx           ← 已有 · 占位页（Phase 3.5 实现）
 ├── public/                          ← 已有 · 静态资源（next.svg 等；Phase 7.2 清理）
 │
-│ ── Phase 0 Step 0.3 / 0.5 产生 ──
 ├── components/
 │   ├── ui/
 │   │   └── button.tsx               ← 已有 · shadcn Button，variant 映射 UI.md 4.2 粉色阶梯 + 4.6 状态色
 │   ├── layout/
-│   │   ├── Sidebar.tsx              ← 已有 · 左侧固定导航栏（UI.md 6.2 · 88px/圆角28px/半透明白+blur/胶囊）
-│   │   └── Header.tsx               ← 已有 · 顶部 Header（UI.md 6.3 · 薄轻通透，按路由切 UI.md 8.2/9/10 标题）
+│   │   ├── Sidebar.tsx              ← 已有 · 左侧固定导航栏（UI.md 6.2）
+│   │   └── Header.tsx               ← 已有 · 顶部 Header（UI.md 6.3，按路由切 UI.md 8.2/9/10 标题）
 │   └── CatIcon.tsx                  ← 已有 · 小猫占位（lucide Cat；Phase 7.2 换 UI.md 12.3 自定义 SVG）
 │
-│ ── Phase 0 Step 0.4 产生 ──
 ├── lib/
-│   └── utils.ts                     ← 已有 · shadcn 约定的 cn() 辅助（clsx + tailwind-merge）
-├── lib/
+│   ├── utils.ts                     ← 已有 · shadcn 约定的 cn() 辅助（clsx + tailwind-merge）
 │   └── db.ts                        ← 已有 · Prisma Client 单例（dev 模式挂 globalThis 防 HMR 泄漏）
-├── prisma/
-│   └── schema.prisma                ← 已有 · 最小版（sqlite datasource + prisma-client-js generator）；Step 1.1 扩展 6 个 model
 │
-│ ── Phase 0 Step 0.6 产生 ──
-└── scripts/
-    └── test-ark-api.ts              ← 已有 · 【临时，Phase 6.1 完成后删除】Ark API 冒烟脚本（5 用例实测，已决策走 /chat/completions + response_format）
+├── scripts/
+│   └── test-ark-api.ts              ← 已有 · 【临时，Phase 6.1 完成后删除】Ark API 冒烟脚本（已决策走 /chat/completions + response_format）
+│
+│ ── Phase 1 产物 ──
+├── prisma/
+│   ├── schema.prisma                ← 已有 · 6 个 model（Resume / Application（含 interviewQuestions）/ Stage / AIRun / IntelSummary / TomorrowTipCache）+ 中文枚举字符串 + Cascade/SetNull 关系
+│   ├── seed.ts                      ← 已有 · 幂等种子脚本，预置 10 家大厂占位 Application（阿里/腾讯/字节/美团/百度/京东/拼多多/小红书/快手/滴滴）
+│   ├── migrations/
+│   │   └── 20260418121855_init/     ← 已有 · 首次迁移（建 6 张表 + 索引）
+│   └── dev.db                       ← 已有 · SQLite 数据库（运行时产物，gitignore）
+├── lib/schemas/
+│   ├── enums.ts                     ← 已有 · PRD 所有中文枚举（RESUME_TAGS/STAGE_TYPES/APPLICATION_STATUSES/STAGE_STATUSES/AI_TASK_TYPES/AI_RUN_STATUSES）+ zod enum schema
+│   ├── entities.ts                  ← 已有 · 6 实体 zod schema（Xxx / XxxCreateInput / XxxUpdateInput 三套）+ `z.infer` 类型导出
+│   ├── ai-outputs.ts                ← 已有 · PRD 9.1~9.4 四个 AI JSON 输出 zod schema
+│   └── index.ts                     ← 已有 · barrel 导出
 
-（以下 Phase 1+ 陆续产生）
+（以下 Phase 2+ 陆续产生）
 ├── README.md                        ← 计划中 · 仓库门面，写"三条命令跑起来"（Phase 7.4 产生）
 │
 ├── app/api/                         ← 计划中 · Phase 2 起 REST API Route Handlers
@@ -118,13 +123,7 @@
 │   ├── llmClient.ts                 ← Ark API 唯一出口 callAI（/chat/completions + response_format）
 │   ├── prompts.ts                   ← PRD 9.1~9.5 的 5 个 system prompt 原文常量
 │   ├── fakeIntelSource.ts           ← 本地硬编码的大厂资讯样例（供 daily-intel 使用）
-│   ├── queries/                     ← 各 API 对应的前端 query 函数
-│   └── schemas/                     ← 6 实体 + 5 AI 输出的 zod schema
-│
-├── prisma/                          ← 计划中 · Phase 1 继续扩展
-│   ├── seed.ts                      ← 种子脚本（预置 10 家大厂占位 Application）
-│   ├── migrations/                  ← 迁移历史（进 git）
-│   └── dev.db                       ← SQLite 数据库文件（不进 git）
+│   └── queries/                     ← 各 API 对应的前端 query 函数
 │
 ├── uploads/                         ← 计划中 · PDF 简历本地存储目录（不进 git，运行时自动创建）
 │
@@ -212,6 +211,8 @@
 7. **AI 草稿态** → 任何 AI 路由**不写业务表**（只写 `AIRun` 日志），返回结果由前端收下→人工确认→再调 PATCH 入库
 8. **底座模型** → Endpoint `ep-20260418165808-rvgk2` 后端绑 **DeepSeek 3.2**；切模型由用户在火山方舟控制台操作，项目代码不动
 9. **前端技术栈版本锁定（2026-04-18 Step 0.1 决策）** → `create-next-app@latest` 默认拉 Next 16 + Tailwind 4 + React 19，与 `tech_stack.md` 规格不符、且会让后续 Tailwind 配置指令失效。本项目**强制降版到 Next 15 + Tailwind 3 + React 18 + ESLint 8**（通过手写 `package.json` 锁定，具体版本：next ^15.1 / tailwindcss ^3.4 / react ^18.3 / eslint ^8.57 / eslint-config-next ^15.1）。未来升级需同步重写 `tailwind.config.ts` 和 implementation_plan 相关步骤。
+10. **zod schema 统一落 `lib/schemas/`（2026-04-18 Step 1.4 决策）** → 不单独建 `types/`，zod schema 一份文件同时承担"运行时校验"和"`z.infer` 出 TS 类型源"两个角色。`lib/schemas/enums.ts`（6 组中文枚举）+ `lib/schemas/entities.ts`（6 实体 + Create/Update 派生）+ `lib/schemas/ai-outputs.ts`（PRD 9.1~9.4 的 AI JSON 输出）+ `lib/schemas/index.ts`（barrel）。新增依赖：zod 4.3.6。
+11. **JSON 字符串数组约定** → SQLite 不支持数组，`Application.jdKeywords` / `Application.expectedSkills` / `Application.interviewQuestions` / `AIRun.outputJson` 在 DB 里统一用 `String?` 存 JSON 字符串；应用层（API route）读写时 `JSON.parse` / `JSON.stringify` 转换；zod schema 在应用层用原生 `z.array(z.string())` / `z.record()` 类型。
 
 ---
 

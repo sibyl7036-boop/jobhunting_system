@@ -19,14 +19,14 @@
 | Phase | 内容 | 步数 | 完成 | 总进度 |
 |---|---|---|---|---|
 | 0 | 项目骨架 + git 基线 + API 连通性验证 | 7 | 7/7 | ✅✅✅✅✅✅✅ |
-| 1 | 数据层（6 个 model） | 4 | 0/4 | ⬜⬜⬜⬜ |
+| 1 | 数据层（6 个 model） | 4 | 4/4 | ✅✅✅✅ |
 | 2 | REST API（非 AI） | 6 | 0/6 | ⬜⬜⬜⬜⬜⬜ |
 | 3 | 三页骨架 | 5 | 0/5 | ⬜⬜⬜⬜⬜ |
 | 4 | Drawer + 手动 CRUD | 4 | 0/4 | ⬜⬜⬜⬜ |
 | 5 | Resume 上传预览关联 | 3 | 0/3 | ⬜⬜⬜ |
 | 6 | 豆包 AI 接入 | 6 | 0/6 | ⬜⬜⬜⬜⬜⬜ |
 | 7 | 打磨验收 | 4 | 0/4 | ⬜⬜⬜⬜ |
-| **合计** | | **39** | **7/39** | **18%** |
+| **合计** | | **39** | **11/39** | **28%** |
 
 ---
 
@@ -75,24 +75,26 @@
 
 ## Phase 1 · 数据层
 
-- [ ] **Step 1.1** — Prisma schema 建 6 个 model
-  - 完成日期：
+- [x] **Step 1.1** — Prisma schema 建 6 个 model
+  - 完成日期：2026-04-18
   - 关键产物：`prisma/schema.prisma`（Resume / Application（含 interviewQuestions）/ Stage / AIRun / IntelSummary / TomorrowTipCache）
-  - 验证备注：
-- [ ] **Step 1.2** — 执行首次迁移
-  - 完成日期：
-  - 关键产物：`prisma/migrations/*_init/` / `prisma/dev.db`
-  - 验证备注：
-- [ ] **Step 1.3** — 种子脚本 + 10 家大厂
-  - 完成日期：
-  - 关键产物：`prisma/seed.ts` / `package.json` 的 `prisma.seed` 字段
-  - 验证备注：
-- [ ] **Step 1.4** — 全局 zod schema
-  - 完成日期：
-  - 关键产物：`lib/schemas/*`（或 `types/*`）
-  - 验证备注：
+  - 验证备注：prisma validate ✓ / format ✓ / 中文枚举 10 个关键字面量全部保留（HR面/挂了/待参加/已通过/未通过/产品/运营/算法/通用/已投递）/ Stage.applicationId onDelete:Cascade / Application.linkedResumeId onDelete:SetNull（Resume 删除时自动置空引用） / IntelSummary.date 和 TomorrowTipCache.date 都有 @unique / jdKeywords/expectedSkills/interviewQuestions/outputJson 统一存 JSON 字符串（schema 注释写明）
+- [x] **Step 1.2** — 执行首次迁移
+  - 完成日期：2026-04-18
+  - 关键产物：`prisma/migrations/20260418121855_init/migration.sql`（6 张表 + 索引）/ `prisma/dev.db`（102KB，gitignore）
+  - 验证备注：第一次跑 migrate 时 db 落在 `prisma/prisma/dev.db`（.env 里 `file:./prisma/dev.db` 路径相对 schema.prisma 导致多一层），已修正为 `file:./dev.db`，清掉错位产物重跑。`prisma migrate status` 输出 "Database schema is up to date!"。pnpm build 通过（新 client 有 6 个 model 类型）
+- [x] **Step 1.3** — 种子脚本 + 10 家大厂
+  - 完成日期：2026-04-18
+  - 关键产物：`prisma/seed.ts`（占位 Application，companyName + departmentName="" + roleName="待填" + currentStatus="未投递"）/ `package.json` 的 `prisma.seed` 字段（`tsx prisma/seed.ts`）
+  - 验证备注：首次跑 create 10 条；二次跑 10 条全 skip（幂等性通过）；公司名与 PRD 5.3.3 完全一致（阿里/腾讯/字节/美团/百度/京东/拼多多/小红书/快手/滴滴）
+- [x] **Step 1.4** — 全局 zod schema
+  - 完成日期：2026-04-18
+  - 关键产物：`lib/schemas/enums.ts`（6 组常量 + zod enum：RESUME_TAGS / STAGE_TYPES / APPLICATION_STATUSES / STAGE_STATUSES / AI_TASK_TYPES / AI_RUN_STATUSES） / `lib/schemas/entities.ts`（6 实体：Resume / Application / Stage / AIRun / IntelSummary / TomorrowTipCache，每个派生 Xxx + XxxCreateInput + XxxUpdateInput 三套）/ `lib/schemas/ai-outputs.ts`（PRD 9.1~9.4 四个 AI JSON 输出 schema）/ `lib/schemas/index.ts`（barrel）
+  - 依赖：zod 4.3.6
+  - 决策：选择 `lib/schemas/` 目录（一份文件同时做校验 + `z.infer` 类型源，不再单建 `types/`）
+  - 验证备注：临时 scripts/test-schemas.ts 跑了 7 个冒烟用例：5 个合法（resumeSchema/resumeCreateInputSchema/applicationCreateInputSchema/stageCreateInputSchema HR面/aiParseJdOutputSchema）全过；2 个非法（resume tag='前端'、stage type='hr_interview'）正确失败 + 错误消息含 PRD 中文枚举。tsc 零错误。临时脚本已删除。
 
-**Phase 1 出口** ☐ 已追加 architecture.md 里程碑「数据层建模完成」
+**Phase 1 出口** ☑ 数据层建模完成：6 个 model 可用 + 10 家大厂已入库 + zod schema 覆盖 6 实体 + 4 AI 输出
 
 ---
 

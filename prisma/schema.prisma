@@ -1,6 +1,17 @@
-// Prisma schema · Step 0.4 最小可用版
-// Step 1.1 将在此扩展 6 个 model（Resume / Application / Stage / AIRun / IntelSummary / TomorrowTipCache）
-// 约束见 implementation_plan.md Step 1.1。
+// ──────────────────────────────────────────────────────────────
+// Prisma schema · 6 个数据模型
+//
+// 严格对齐 PRD 第 6.1 ~ 6.5 + Phase 1.1 决策的 2 处扩展：
+//   - Application.interviewQuestions（Step 6.3 AI 面试题共享题库，JSON 化 string[]）
+//   - TomorrowTipCache（Step 6.6 明日 AI 提醒的 eventsHash 被动失效缓存）
+//
+// 关键约束：
+//   1. 所有枚举值保留 PRD 规定的中文原值，SQLite 无原生枚举，用 String 字段 + zod 校验（Phase 1.4）
+//   2. jdKeywords / expectedSkills / interviewQuestions 是 string[]，SQLite 无数组，存 JSON 字符串，读写时 JSON.parse/stringify
+//   3. AIRun.outputJson 同理存 JSON 字符串
+//   4. 时间字段统一 DateTime
+//   5. Stage.applicationId onDelete Cascade（Application 删除时自动删 Stage）
+// ──────────────────────────────────────────────────────────────
 
 generator client {
   provider = "prisma-client-js"
@@ -9,4 +20,98 @@ generator client {
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
+}
+
+// ── 6.1 Resume（简历） ──
+model Resume {
+  id            String   @id @default(cuid())
+  name          String
+  tag           String // 枚举（PRD 中文原值）：产品 / 运营 / 算法 / 通用
+  fileName      String
+  fileUrl       String
+  extractedText String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // 反向关系：被哪些 Application 关联（Resume 被引用时不可直接删，由 API 层 409 拒绝，Phase 2.1）
+  applications Application[]
+}
+
+// ── 6.2 Application（岗位申请 · 主干） ──
+model Application {
+  id                 String   @id @default(cuid())
+  companyName        String
+  departmentName     String
+  roleName           String
+  jdText             String?
+  jdSummary          String?
+  jdKeywords         String? // 存 JSON 字符串化的 string[]；Phase 2.x 读写时 JSON.parse/stringify
+  expectedSkills     String? // 同上
+  interviewQuestions String? // 同上 · Step 6.3 AI 生成的岗位共享面试题库
+  linkedResumeId     String?
+  currentStatus      String   @default("未投递") // 枚举：已投递/笔试/测评/一面/二面/三面/HR面/Offer/挂了/未投递
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  linkedResume Resume? @relation(fields: [linkedResumeId], references: [id], onDelete: SetNull)
+  stages       Stage[]
+
+  @@index([companyName])
+  @@index([linkedResumeId])
+}
+
+// ── 6.3 Stage（流程节点） ──
+model Stage {
+  id                    String    @id @default(cuid())
+  applicationId         String
+  type                  String // 枚举：已投递/笔试/测评/一面/二面/三面/HR面/Offer/挂了
+  time                  DateTime?
+  meetingLink           String?
+  status                String    @default("待参加") // 枚举：待参加/已完成/已通过/未通过
+  reviewQuestionSummary String?
+  reviewAnswerSummary   String?
+  reviewSuggestion      String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@index([time])
+}
+
+// ── 6.4 AIRun（AI 调用日志） ──
+model AIRun {
+  id           String   @id @default(cuid())
+  taskType     String // 枚举：parse_email / parse_jd / generate_questions / review / daily_intel / tomorrow_tip
+  inputText    String
+  outputText   String
+  outputJson   String? // 存 JSON 字符串化的结果对象；解析失败时可为 null
+  status       String // success / failed
+  errorMessage String?
+  createdAt    DateTime @default(now())
+
+  @@index([taskType, createdAt])
+  @@index([status])
+}
+
+// ── 6.5 IntelSummary（今日大厂动向摘要缓存 · 按生成日本地时区天级缓存） ──
+model IntelSummary {
+  id          String   @id @default(cuid())
+  date        String   @unique // 本地时区 YYYY-MM-DD；跨 0 点自动失效（查不到就重算）
+  summaryText String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ── 扩展 · TomorrowTipCache（明日 AI 提醒缓存 · eventsHash 被动失效） ──
+// Step 6.6 用：每次访问首页时计算明天 Stage 列表的 SHA-256 哈希，
+// 与缓存里的 eventsHash 对比，不一致则重调 AI，一致则直接返回 tipText。
+model TomorrowTipCache {
+  id         String   @id @default(cuid())
+  date       String   @unique // 本地时区"明天"的 YYYY-MM-DD
+  tipText    String
+  eventsHash String // 明天事件集合（id+time+type+status 排序 stringify 后的 SHA-256）
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
