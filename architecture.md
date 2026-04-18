@@ -23,7 +23,7 @@
 ├── job_hunt_flow_board_prd.md       ← 已有 · 产品真相（PRD）
 ├── UI.md                            ← 已有 · 视觉真相（界面规范）
 ├── tech_stack.md                    ← 已有 · 落地真相（技术栈 + 目录 + 启动命令）
-├── implementation_plan.md           ← 已有 · 步骤真相（7 Phase / 38 Step 指令手册）
+├── implementation_plan.md           ← 已有 · 步骤真相（7 Phase / 39 Step 指令手册）
 ├── progress.md                      ← 已有 · 进度真相（逐步勾选清单）
 ├── architecture.md                  ← 已有 · 文件地图（本文件）
 ├── CODEBUDDY.md                     ← 已有 · AI Agent 入口（首读）
@@ -106,7 +106,7 @@
 │   └── schemas/                     ← 5 实体 + 5 AI 输出的 zod schema
 │
 ├── prisma/
-│   ├── schema.prisma                ← 数据模型（Resume / Application / Stage / AIRun / IntelSummary）
+│   ├── schema.prisma                ← 数据模型（Resume / Application / Stage / AIRun / IntelSummary / TomorrowTipCache）
 │   ├── seed.ts                      ← 种子脚本（预置 10 家大厂占位 Application）
 │   ├── migrations/                  ← 迁移历史（进 git）
 │   └── dev.db                       ← SQLite 数据库文件（不进 git）
@@ -131,7 +131,7 @@
 | `job_hunt_flow_board_prd.md` | **产品真相**。数据模型、API 契约、页面规格、AI 提示词原文、6 个验收闭环。 | 所有人 |
 | `UI.md` | **视觉真相**。浅色马卡龙色系、布局、组件、交互动效。 | 所有人 |
 | `tech_stack.md` | **落地真相**。Next.js + SQLite + Prisma + shadcn/ui + 豆包。含禁用方案清单。 | AI Agent |
-| `implementation_plan.md` | **步骤真相**。7 Phase / 38 Step 指令手册，每步含验证清单，严禁代码。 | AI Agent |
+| `implementation_plan.md` | **步骤真相**。7 Phase / 39 Step 指令手册，每步含验证清单，严禁代码。 | AI Agent |
 | `progress.md` | **进度真相**。逐步勾选清单，配合 implementation_plan 使用。 | AI Agent |
 | `architecture.md` | **文件地图**（本文件）。每个文件/文件夹的作用。 | AI Agent |
 | `CODEBUDDY.md` | **入口**。AI Agent 进入仓库第一读物，含强制阅读门禁。 | AI Agent |

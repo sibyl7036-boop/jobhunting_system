@@ -14,7 +14,7 @@
 | 2 | [`UI.md`](./UI.md) | **视觉真相**：浅色马卡龙色系、布局、组件、交互动效。偏离 UI.md 的配色/结构视为缺陷。 |
 | 3 | [`tech_stack.md`](./tech_stack.md) | **落地真相**：技术栈选型、目录结构、依赖清单、启动命令、6 天实现顺序、禁用方案清单。 |
 | 4 | [`architecture.md`](./architecture.md) | **文件地图**：仓库里每个文件/文件夹是干什么的。进来 30 秒定位代码。 |
-| 5 | [`implementation_plan.md`](./implementation_plan.md) | **步骤真相**：分 7 个 Phase / 38 步的执行手册。按顺序照做、每步都有验证清单、完成后必须更新 progress.md。 |
+| 5 | [`implementation_plan.md`](./implementation_plan.md) | **步骤真相**：分 7 个 Phase / 39 步的执行手册。按顺序照做、每步都有验证清单、完成后必须更新 progress.md。 |
 | 6 | [`progress.md`](./progress.md) | **进度真相**：逐步勾选清单。进来就能看到当前做到哪、下一步做什么。 |
 
 **冲突时的权威优先级：PRD > UI.md > tech_stack.md。** `architecture.md` 记录"**是什么**"、`progress.md` 记录"**做到哪**"、`implementation_plan.md` 记录"**怎么做**"，三者互不越位。
@@ -213,8 +213,8 @@ REST 风格，按实体分组：
 | 文件 | 记录什么 | 什么时候必须更新 |
 |---|---|---|
 | `architecture.md` | **是什么**：每个文件/文件夹的作用（文件地图） | 每当**新增 / 删除 / 重命名 / 移动**任何文件或目录时 |
-| `progress.md` | **做到哪**：逐步勾选清单（38 个 Step 的完成状态） | 每完成 `implementation_plan.md` 的一个 Step 的**全部验证清单** |
-| `implementation_plan.md` | **怎么做**：7 Phase / 38 Step 的指令手册 | 计划本身调整时（正常情况不动） |
+| `progress.md` | **做到哪**：逐步勾选清单（39 个 Step 的完成状态） | 每完成 `implementation_plan.md` 的一个 Step 的**全部验证清单** |
+| `implementation_plan.md` | **怎么做**：7 Phase / 39 Step 的指令手册 | 计划本身调整时（正常情况不动） |
 
 ### 行为准则
 - **开始工作前**：读 `progress.md` 看下一个该做的 Step → 翻 `implementation_plan.md` 读该 Step 完整指令 → 读 `architecture.md` 确认相关文件的定位

@@ -18,15 +18,15 @@
 
 | Phase | 内容 | 步数 | 完成 | 总进度 |
 |---|---|---|---|---|
-| 0 | 项目骨架 + API 连通性验证 | 6 | 0/6 | ⬜⬜⬜⬜⬜⬜ |
-| 1 | 数据层 | 4 | 0/4 | ⬜⬜⬜⬜ |
+| 0 | 项目骨架 + git 基线 + API 连通性验证 | 7 | 0/7 | ⬜⬜⬜⬜⬜⬜⬜ |
+| 1 | 数据层（6 个 model） | 4 | 0/4 | ⬜⬜⬜⬜ |
 | 2 | REST API（非 AI） | 6 | 0/6 | ⬜⬜⬜⬜⬜⬜ |
 | 3 | 三页骨架 | 5 | 0/5 | ⬜⬜⬜⬜⬜ |
 | 4 | Drawer + 手动 CRUD | 4 | 0/4 | ⬜⬜⬜⬜ |
 | 5 | Resume 上传预览关联 | 3 | 0/3 | ⬜⬜⬜ |
 | 6 | 豆包 AI 接入 | 6 | 0/6 | ⬜⬜⬜⬜⬜⬜ |
 | 7 | 打磨验收 | 4 | 0/4 | ⬜⬜⬜⬜ |
-| **合计** | | **38** | **0/38** | **0%** |
+| **合计** | | **39** | **0/39** | **0%** |
 
 ---
 
@@ -35,6 +35,10 @@
 - [ ] **Step 0.1** — Next.js 脚手架初始化
   - 完成日期：
   - 关键产物：`package.json` / `next.config.*` / `tailwind.config.*` / `app/`
+  - 验证备注：
+- [ ] **Step 0.1.5** — 验证 git 仓库状态并建立提交基线
+  - 完成日期：
+  - 关键产物：`.git` 初始化就绪 / 首次基线 commit / `phase0-step1-done` tag
   - 验证备注：
 - [ ] **Step 0.2** — 配置 Tailwind 马卡龙粉主题
   - 完成日期：
@@ -69,9 +73,9 @@
 
 ## Phase 1 · 数据层
 
-- [ ] **Step 1.1** — Prisma schema 建 5 个 model
+- [ ] **Step 1.1** — Prisma schema 建 6 个 model
   - 完成日期：
-  - 关键产物：`prisma/schema.prisma`（Resume / Application / Stage / AIRun / IntelSummary）
+  - 关键产物：`prisma/schema.prisma`（Resume / Application（含 interviewQuestions）/ Stage / AIRun / IntelSummary / TomorrowTipCache）
   - 验证备注：
 - [ ] **Step 1.2** — 执行首次迁移
   - 完成日期：

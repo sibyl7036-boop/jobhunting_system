@@ -47,7 +47,7 @@
 | 6 | 豆包 AI 接入 | 6 | 5 个 AI 能力全部可用，草稿态交互到位 |
 | 7 | 打磨与验收 | 4 | 所有 loading / 空态 / 错误提示、UI 精修、PRD 第 13 章 6 个闭环跑通 |
 
-总计 38 步（Phase 0 含 5 步骨架 + Step 0.6 Ark API 连通性测试）。每步粒度控制在"AI 一次可独立完成 + 可验证"，没有一步超过半天工作量。
+总计 39 步（Phase 0 含 5 步骨架 + Step 0.1.5 git 基线 + Step 0.6 Ark API 连通性测试，共 7 步）。每步粒度控制在"AI 一次可独立完成 + 可验证"，没有一步超过半天工作量。
 
 ---
 
@@ -70,6 +70,27 @@
 - [ ] `pnpm dev` 启动 3000 端口，浏览器能打开官方欢迎页
 - [ ] `pnpm build` 通过
 - [ ] `pnpm lint` 通过
+
+---
+
+### Step 0.1.5 — 验证 git 仓库状态并建立提交基线
+
+**背景**：仓库已在用户本地完成 `git init`（2026-04-18 确认），本步目的是**验证 git 能正常工作**并把"文档 + 脚手架"作为首次基线提交，保证 Step 0.2 起每个 Step 都能 commit 且能按步回退。
+
+**做什么**
+- 检查 `.git/` 目录存在：`ls -la .git` 确认
+- 检查 `.gitignore` 已存在（本仓库已在 2026-04-18 预置）且包含 `.env*` / `node_modules/` / `.next/` / `prisma/dev.db` / `uploads/` / `.workbuddy/`
+- `git status` 确认 `.env.local` 未被追踪（防止明文 API Key 进 git）
+- `git add .` + `git commit -m "chore: baseline · PRD/UI/tech_stack/plan 文档 + Next.js 脚手架"`
+- 查看 commit：`git log --oneline`，确认有且只有 1 个基线 commit（或之前还有"initial commit"也可以）
+- 建立 tag：`git tag phase0-step1-done`（后续每个 Step 完成后都 tag 一次，格式 `phaseX-stepY-done`，方便精确回退）
+
+**验证清单**
+- [ ] `git status` 显示 working tree clean
+- [ ] `git log --oneline` 至少有本次基线 commit
+- [ ] `.env.local` 不在追踪列表（`git ls-files | grep env.local` 为空）
+- [ ] `git tag -l` 显示 `phase0-step1-done`
+- [ ] 从此开始，每完成一个 Step 的验证清单后，都要 `git commit` + `git tag phaseX-stepY-done`
 
 ---
 
@@ -219,26 +240,30 @@
 
 ## Phase 1 · 数据层（Day 1 下午）
 
-> **阶段目标**：把 PRD 第 6 章的 5 个实体完整建模，数据库能跑起来，10 家大厂种子数据到位。
+> **阶段目标**：把 PRD 第 6 章的 5 个实体 + Phase 6 需要的 2 处扩展（Application.interviewQuestions 字段 + TomorrowTipCache 表）一次性建模，数据库能跑起来，10 家大厂种子数据到位。
 
 ---
 
-### Step 1.1 — 在 Prisma schema 中建 5 个 model
+### Step 1.1 — 在 Prisma schema 中建 6 个 model
 
 **做什么**
 - 严格按 **PRD 第 6.1 ~ 6.5** 的 TypeScript 类型，把 `Resume` / `Application` / `Stage` / `AIRun` / `IntelSummary` 翻译成 Prisma model。
+- 额外**在 Phase 1 就一起建**以下 PRD 之外的扩展（这些字段/表在 Phase 6 才会真正用，但现在一起建可以省掉 2 次 migration，更干净）：
+  - 在 `Application` model 里加 `interviewQuestions String?`（JSON 化的 `string[]`；Step 6.3 的 AI 面试题共享题库用）
+  - 新建 `TomorrowTipCache` model：`id(cuid)` + `date(String, @unique)` + `tipText(String)` + `eventsHash(String)` + `createdAt` + `updatedAt`（Step 6.6 的明日提醒缓存用）
 - 枚举值（StageType、StageStatus、ResumeTag、AIRun.taskType、AIRun.status、Application.currentStatus）**必须原样保留中文字符串**。SQLite 不支持原生枚举，用 `String` 字段 + zod 校验，不要擅自改成英文代号。
 - 关系：`Stage.applicationId` → `Application.id`（多对一，cascade delete）；`Application.linkedResumeId` → `Resume.id`（可选，单向）。
 - 时间字段统一用 `DateTime`，可空字段严格按 PRD 的 `| null` 标注对齐。
-- `jdKeywords` / `expectedSkills` 是字符串数组，SQLite 不支持数组，统一存成 JSON 字符串字段（字段名保持 `jdKeywords` / `expectedSkills`），读写时由应用层 `JSON.parse / JSON.stringify`。**在 schema 注释里写明这一点**。
+- `jdKeywords` / `expectedSkills` / `interviewQuestions` 是字符串数组，SQLite 不支持数组，统一存成 JSON 字符串字段，读写时由应用层 `JSON.parse / JSON.stringify`。**在 schema 注释里写明这一点**。
 - `AIRun.outputJson` 也用 JSON 字符串字段。
 
 **验证清单**
 - [ ] `pnpm dlx prisma format` 通过
 - [ ] `pnpm dlx prisma validate` 通过
-- [ ] 5 个 model 都有 `id`（cuid 或 uuid）、`createdAt`、`updatedAt`（PRD 没要求的模型除外）
+- [ ] 6 个 model 都有 `id`（cuid 或 uuid）、`createdAt`、`updatedAt`（TomorrowTipCache 也要有）
 - [ ] 枚举字段仍是中文字符串（grep 确认 `HR面`、`挂了`、`待参加` 等中文字面量存在）
 - [ ] `Stage` 的 `applicationId` 有 `onDelete: Cascade`
+- [ ] `Application` 有 `interviewQuestions String?` 字段；`TomorrowTipCache` 表已建且 `date` 字段是唯一索引
 
 ---
 
@@ -277,9 +302,9 @@
 
 **做什么**
 - 建立 `lib/schemas/` 目录（或 `types/` 目录，二选一，Agent 自行决定并**在 `architecture.md` 的目录树和关键契约点都同步记录**）。
-- 为 5 个实体各写一份 zod schema，字段与 Prisma model 对齐；导出 `z.infer` 得到的 TS 类型作为应用层使用的主类型。
+- 为 6 个实体各写一份 zod schema（5 个 PRD 实体 + `TomorrowTipCache`），字段与 Prisma model 对齐；导出 `z.infer` 得到的 TS 类型作为应用层使用的主类型。
 - 为 5 个 AI 输出结构（PRD 9.1 ~ 9.5）也写 zod schema，用于 Phase 6 解析 AI JSON。
-- 命名约定：`resumeSchema`、`applicationSchema`、`stageSchema`、`aiRunSchema`、`intelSummarySchema`、`aiParseEmailOutputSchema`、`aiParseJdOutputSchema`、`aiQuestionsOutputSchema`、`aiReviewOutputSchema`。
+- 命名约定：`resumeSchema`、`applicationSchema`（含 `interviewQuestions` 可空数组校验）、`stageSchema`、`aiRunSchema`、`intelSummarySchema`、`tomorrowTipCacheSchema`、`aiParseEmailOutputSchema`、`aiParseJdOutputSchema`、`aiQuestionsOutputSchema`、`aiReviewOutputSchema`。
 
 **验证清单**
 - [ ] `pnpm build` 通过（schema 无类型错误）
@@ -293,7 +318,7 @@
 - 所有 Step 1.1 ~ 1.4 已在 `progress.md` 勾选
 - 在 `progress.md` 的 "Phase 1 出口" 勾选已完成
 - 在 `architecture.md` 把 `prisma/schema.prisma`、`prisma/seed.ts`、`prisma/migrations/**`、`lib/schemas/**` 等新产生的文件从"计划中"移入已有区；在"关键契约点"补一项"**zod schema 目录位置**"（最终选的是 `lib/schemas/` 还是 `types/`）
-- 当前状态摘要：5 个 model 可用、10 家大厂已入库、zod schema 到位
+- 当前状态摘要：6 个 model 可用（含 interviewQuestions + TomorrowTipCache）、10 家大厂已入库、zod schema 到位
 
 ---
 
@@ -352,13 +377,20 @@
 **做什么**
 - 实现 `POST /api/stages`、`PATCH /api/stages/:id`、`DELETE /api/stages/:id`。
 - `POST` 必须带 `applicationId`，不存在则 404。
-- 实现 `GET /api/dashboard/events?range=7d`：返回今天起 `range` 天内（默认 7）所有 Stage，join 出公司 / 部门 / 岗位 / 关联简历名，按 time asc。**range 参数解析严格**：只接受 `Nd` 格式（例如 `7d`、`14d`），非法返 400。
+- 实现 `GET /api/dashboard/events?range=7d`：返回今天起 `range` 天内（默认 7）所有 Stage，join 出公司 / 部门 / 岗位 / 关联简历名，按 time asc。
+  - **range 参数解析严格**：只接受 `Nd` 格式（例如 `7d`、`14d`），非法返 400
+  - 时间窗口：**按本地时区（Asia/Shanghai）**把"今天 00:00:00.000"作为起始、"今天 + N 天 - 1 毫秒"作为结束（即 `今天 00:00:00 <= time < 今天+N 天 00:00:00`）
 - 实现 `GET /api/calendar/events?start=YYYY-MM-DD&end=YYYY-MM-DD`：闭区间，返回该区间内所有 Stage（同样 join）。
+  - 参数格式严格 `YYYY-MM-DD`，非法返 400
+  - **时间解释（按本地时区）**：`start` 当作"start 当天 00:00:00.000"、`end` 当作"end 当天 23:59:59.999"，即 `start 00:00:00 <= time <= end 23:59:59.999`
+  - 跨月边界例子：Stage.time = `2026-04-30 23:30:00`，查询 `start=2026-04-01&end=2026-04-30` 能命中；查询 `start=2026-05-01&end=2026-05-31` 不能命中
+  - `start > end` 返 400
 
 **验证清单**
-- [ ] 创建一条 Application + 3 条不同日期的 Stage（今天、明天、8 天后）
-- [ ] `GET /api/dashboard/events?range=7d` 只返回前两条
-- [ ] `GET /api/calendar/events?start=...&end=...` 覆盖 8 天后时能取到第 3 条
+- [ ] 创建一条 Application + 3 条不同日期的 Stage（今天、明天、8 天后，时间分别是 10:00 / 14:30 / 23:30）
+- [ ] `GET /api/dashboard/events?range=7d` 只返回前两条（今天和明天）
+- [ ] `GET /api/calendar/events?start=...&end=...` 覆盖 8 天后（含当天）时能取到第 3 条
+- [ ] 跨月边界测试：插入 `time=2026-04-30 23:30:00` 的 Stage，查询 `start=2026-04-01&end=2026-04-30` 命中；查询 `start=2026-05-01&end=...` 不命中
 - [ ] 非法 range 值（如 `abc`、`7`）返 400
 - [ ] 非法日期（`start > end`、格式错误）返 400
 - [ ] Stage 的 applicationId 不存在时 POST 返 404
@@ -503,7 +535,8 @@
   - 标题 `我的简历` + 副标题 `放 2~3 份常用版本就够了`
   - 列表项设计按 UI.md 8.6（左文件图标 + 中间名称/标签/时间 + 右预览/删除）
   - 有 Resume 数据（Step 2.1 验证前准备手动插的那条）时渲染列表行；无数据显示空态 `先放一份简历进来吧`
-  - 上传按钮先只是 UI，点击不响应；Phase 5.2 接
+  - **上传、预览、删除按钮本阶段全部 `disabled`**（shadcn Button 的 disabled 属性），鼠标悬停显示 tooltip `即将开放`；Phase 5.2 再启用
+  - Phase 5.2 接
 - **AI Copilot 卡片**（UI.md 8.7，占位）：
   - 大卡片，背景非常淡的粉紫渐变
   - 左上标题 `AI Copilot` + 小猫 icon（同上，Phase 7.2 换）
@@ -858,9 +891,9 @@
 - 首页 AI Copilot 卡片的 4 个快捷按钮接线：
   - **解析面试邮件**：点击 → 调 6.2 → 返回的草稿打开一个专用的"新建 Stage Drawer"并预填字段（companyName / departmentName / roleName / stageType / time / meetingLink / jdText）→ 用户可编辑 → 保存时走 Phase 4.4 的"新建"路径，同时创建 Application（如果不存在同 company+department+role）+ Stage。
   - **解析 JD**：要求用户选择一个已有的 Application（shadcn `combobox`），粘贴 JD 文本 → 调 `POST /api/ai/parse-jd`（Step 6.4 要实现）→ 返回 `jdSummary / jdKeywords / expectedSkills` → 进入 Drawer 的 JD 区 → 用户编辑 → 保存走 `PATCH /api/applications/:id`。
-  - **生成面试题**：要求用户选一个 Application（**不是 Stage**，因为面试题属于"岗位题库"，一个 Application 共享一套题库；不同 Stage 的面试共用）→ 调 `POST /api/ai/generate-questions`（入参 `applicationId`，后端从中取出 `jdText` + `linkedResume.extractedText`）→ 返回题目列表 → 展示为可编辑的 shadcn `textarea` 列表（每题一行，UI.md 11.2 E：带小编号圆点或数字标签的简洁卡片）→ 保存到 **Application 表的新字段 `interviewQuestions`**（类型 `String?`，存 JSON 字符串化的 `string[]`；读写时由应用层 `JSON.parse/JSON.stringify`，与 `jdKeywords`、`expectedSkills` 一致）
-    - 需要：**追加 Prisma migration**（`add-interview-questions-to-application`）、更新 `lib/schemas/applicationSchema`、同步更新 `architecture.md` 的目录树与"关键契约点 · 数据模型扩展"、在 `progress.md` Step 6.3 关键产物里追记
+  - **生成面试题**：要求用户选一个 Application（**不是 Stage**，因为面试题属于"岗位题库"，一个 Application 共享一套题库；不同 Stage 的面试共用）→ 调 `POST /api/ai/generate-questions`（入参 `applicationId`，后端从中取出 `jdText` + `linkedResume.extractedText`）→ 返回题目列表 → 展示为可编辑的 shadcn `textarea` 列表（每题一行，UI.md 11.2 E：带小编号圆点或数字标签的简洁卡片）→ 保存到 **Application.`interviewQuestions`**（Phase 1.1 已预建；`String?` 字段存 JSON 字符串化的 `string[]`）
     - Drawer 展示位置：在 `StageDrawerContent` 的 "E. AI 面试辅助区"（UI.md 11.2 E）展示——**所有属于同一 Application 的 Stage 都能看到这份共享题库**
+    - 不需要新建 migration（Phase 1.1 已建好）
   - **生成复盘**：要求用户选一个 Stage（复盘是某一场面试专有）并粘贴转录文本 → 调 `POST /api/ai/review` → 返回 `questionSummary / answerSummary / suggestion` → 进入 Drawer 的 "F. AI 面试复盘区"（UI.md 11.2 F：3 个小卡片）→ 编辑保存到 Stage 的三个复盘字段。
 
 **验证清单**
@@ -890,8 +923,12 @@
 ### Step 6.5 — `GET /api/ai/daily-intel` + 首页"今日大厂动向"
 
 **做什么**
-- Route 内部先读 `IntelSummary` 表，若今天已有记录直接返回（避免反复烧 token）。
-- 若没有，读取一个"原始资讯列表"——本项目没有真实爬虫，**在 `lib/fakeIntelSource.ts` 里放一个硬编码的示例资讯数组**（Agent 自行写 5~8 条，看起来像"今日腾讯开放产品方向暑期实习"这类）；后续如需接真源可替换。调 `callDoubao`（9.5 的 prompt，**注意这个不是 JSON 输出，是纯文本 50~90 字摘要**），把结果写入 `IntelSummary` 并返回。
+- Route 内部按以下缓存策略：
+  - `IntelSummary.date` 字段存 "**生成日（本地时区 YYYY-MM-DD 字符串）**"——跨 0 点自动失效
+  - 查询流程：用 `format(new Date(), 'yyyy-MM-dd')`（本地时区）计算今天的 date 字符串 → 查 `IntelSummary.date = 今天` 的记录 → 命中则直接返回 `summaryText`（不调 AI）；未命中则调 AI 后 upsert
+  - 跨 0 点后再访问：新 date 查不到 → 自动重新调 AI 生成
+- 若命中缓存但用户希望强制重算：**不在本阶段提供**（PRD 没要求；要避免过度设计）
+- 若未命中，读取一个"原始资讯列表"——本项目没有真实爬虫，**在 `lib/fakeIntelSource.ts` 里放一个硬编码的示例资讯数组**（Agent 自行写 5~8 条，看起来像"今日腾讯开放产品方向暑期实习"这类）；后续如需接真源可替换。调 `callAI`（PRD 9.5 的 prompt，**注意这个不是 JSON 输出，是纯文本 50~90 字摘要**），把结果写入 `IntelSummary` 并返回。
 - 前端首页"今日大厂动向"卡片从该 API 取数据展示。
 
 **验证清单**
@@ -908,12 +945,13 @@
   - 如果为空 → 显示"明天暂无流程安排，可以安心休息一下。"（UI.md 8.4 空态文案原文）（不调 AI）
   - 如果非空 → 把事件列表拼成一段 userPrompt，走 `callAI`（**用一个新 prompt**，Agent 参考 PRD 5.1.2 的示例自行写系统提示词，产出 50~80 字自然语言提醒）→ 卡片展示
 - **缓存策略（按用户反馈：事件一变自动失效重算）**：
-  - 新增一张 Prisma model `TomorrowTipCache`：字段 `id / date(String, 唯一) / tipText(String) / eventsHash(String) / createdAt / updatedAt`
+  - 使用 Phase 1.1 已建的 `TomorrowTipCache` 表（`date String @unique` + `tipText` + `eventsHash` + `createdAt` + `updatedAt`）
   - `eventsHash` 是"明天的 Stage 列表（按 id + time + type + status 排序后 stringify 再 SHA-256）"的哈希，用来判断事件集合是否变化
-  - 查询流程：计算当前明天的 `eventsHash` → 查表中 date=明天 的记录 → 若存在且 `eventsHash` 匹配则直接返回 `tipText`（不调 AI）；否则调 AI 并 upsert 更新 tipText + eventsHash
+  - 查询流程：**按本地时区**计算"明天的日期字符串"（`YYYY-MM-DD`）→ 计算当前明天的 `eventsHash` → 查表 `date=明天字符串` 的记录 → 若存在且 `eventsHash` 匹配则直接返回 `tipText`（不调 AI）；否则调 AI 并 upsert 更新 tipText + eventsHash
   - **事件变更触发失效（被动失效）**：不需要额外代码——只要明天的 Stage 有任何 CRUD（Phase 4.4 的手动接口 + Phase 6.3 的 AI 解析入库），下次访问首页时 `eventsHash` 自动不匹配、自动重算。**无需主动清缓存**
   - 用户在卡片右上角点一个 `RefreshCw` 图标可强制重算（删除当日缓存后重拉）
-  - 需要：追加 Prisma migration、`lib/schemas/tomorrowTipCacheSchema.ts`、在 `architecture.md` 关键契约点新增一条 "**明日提醒缓存方案：TomorrowTipCache + eventsHash 被动失效**"
+  - 不需要新建 migration（Phase 1.1 已建好）；需要建的是 `lib/queries/getTomorrowTip.ts` 或 `app/api/ai/tomorrow-tip/route.ts`（Agent 自选）
+  - 在 `architecture.md` 关键契约点新增一条 "**明日提醒缓存方案：TomorrowTipCache + eventsHash 被动失效**"
 
 **验证清单**
 - [ ] 明天无事件时显示 `明天暂无流程安排，可以安心休息一下。`，AIRun 表无新增
