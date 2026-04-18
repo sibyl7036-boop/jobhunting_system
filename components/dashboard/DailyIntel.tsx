@@ -1,29 +1,27 @@
-"use client";
-
 /**
  * components/dashboard/DailyIntel.tsx
  *
- * 今日大厂动向卡片（UI.md 8.5）
+ * 今日大厂动向卡片（UI.md 8.5 + PRD 5.1.3）
  *
- * Step 3.3 占位：
- *   - 浅粉紫→浅黄的非常淡渐变背景
- *   - 标题：今日动向
- *   - 右上角 Sparkles icon
- *   - 内容占位：暂无动向
- *   - 底部小标签：AI 摘要
- *   - Phase 6.5 接 GET /api/ai/daily-intel
+ * Step 6.5 实装：接入 /api/ai/daily-intel 的返回
+ *   - 首屏由 Server Component 拉数据，Date 容器传 `summary` prop
+ *   - AI 失败时显示友好兜底文案，卡片仍渲染
  */
 
 import { Sparkles } from "lucide-react";
 
-export function DailyIntel() {
+interface DailyIntelProps {
+  summary: string | null;
+  /** 首屏是否来自缓存（调试用，不在 UI 展示） */
+  fromCache?: boolean;
+}
+
+export function DailyIntel({ summary }: DailyIntelProps) {
   return (
     <section
       className="relative overflow-hidden rounded-card-md p-5 shadow-soft transition-all duration-200 hover:-translate-y-0.5 hover:shadow-hover"
       style={{
-        // UI.md 8.5 粉紫 → 浅黄 非常淡
-        background:
-          "linear-gradient(135deg, #F8F5FF 0%, #FFF8E8 100%)",
+        background: "linear-gradient(135deg, #F8F5FF 0%, #FFF8E8 100%)",
       }}
     >
       <header className="flex items-start justify-between">
@@ -36,7 +34,7 @@ export function DailyIntel() {
       </header>
 
       <p className="mt-4 text-body leading-relaxed text-text-secondary">
-        暂无动向
+        {summary || "暂无动向"}
       </p>
 
       <footer className="mt-4">

@@ -17,3 +17,5 @@ export {
   type CompanyStage,
 } from "./companies";
 export { getResumes, type ResumeRow } from "./resumes";
+export { getDailyIntelSummary } from "./intel";
+export { getTomorrowTip, clearTomorrowTipCache } from "./tomorrowTip";

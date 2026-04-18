@@ -90,6 +90,53 @@ export function NewApplicationDrawerContent({ onClose }: Props) {
     },
   });
 
+  // Step 6.3 · 读 sessionStorage 里的邮件解析草稿并预填
+  React.useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("jhb:emailDraft");
+      if (!raw) return;
+      const d = JSON.parse(raw) as {
+        companyName: string | null;
+        departmentName: string | null;
+        roleName: string | null;
+        stageType: string | null;
+        time: string | null;
+        meetingLink: string | null;
+      };
+      // 转 time 到 datetime-local（best-effort：能解析就用，不能就留空）
+      let stageTime = "";
+      if (d.time) {
+        const parsed = new Date(d.time);
+        if (!Number.isNaN(parsed.getTime())) {
+          const pad = (n: number) => String(n).padStart(2, "0");
+          stageTime = `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(parsed.getDate())}T${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`;
+        }
+      }
+      // stageType 校验：必须落在枚举内
+      const validStageType = (STAGE_TYPES as readonly string[]).includes(
+        d.stageType ?? ""
+      )
+        ? (d.stageType as (typeof STAGE_TYPES)[number])
+        : "一面";
+
+      form.reset({
+        companyName: d.companyName ?? "",
+        departmentName: d.departmentName ?? "",
+        roleName: d.roleName ?? "",
+        addFirstStage: !!(d.stageType || d.time || d.meetingLink),
+        stageType: validStageType,
+        stageStatus: "待参加",
+        stageTime,
+        stageMeetingLink: d.meetingLink ?? "",
+      });
+      // 用完即清，避免下次误带
+      sessionStorage.removeItem("jhb:emailDraft");
+    } catch {
+      /* ignore */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const addFirstStage = form.watch("addFirstStage");
 
   const onSubmit = async (values: FormValues) => {

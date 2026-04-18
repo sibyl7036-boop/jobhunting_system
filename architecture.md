@@ -15,7 +15,7 @@
 
 ## 🗺️ 目录树（当前真实状态）
 
-> 当前仓库处于"**Phase 4 完成 ✅**"——三页骨架 + 全局 Drawer（URL 参数驱动）+ 手动 CRUD 闭环（查看/编辑/新增/删除 + 二次确认 + toast）。下一步 Phase 5 Resume 上传预览关联。Phase 2 已交付 8 个非 AI REST API + 烟测 14/14；Phase 3 Phase 4 共新增 3 个 client 路由 + 1 个新端点 `/api/stages/[id]/detail`。
+> 当前仓库处于"**Phase 6 完成 ✅**"——AI 5 大能力（解析邮件/JD/面试题/复盘/今日动向）+ 明日提醒全部接入，草稿态闭环、双缓存（IntelSummary by date + TomorrowTipCache by eventsHash）到位。共 18 个 API 路由。下一步 Phase 7 打磨验收。
 
 ```
 /Users/sibyl/Desktop/system/
@@ -142,6 +142,28 @@
 ├── uploads/                         ← 已有 · Step 5.1 · 用户上传 PDF 存储目录（gitignore，DELETE Resume 时同步清）
 ├── next.config.ts                   ← 升级 · Step 5.1 · serverExternalPackages 标 pdf-parse / pdfjs-dist 为外部包
 
+│ ── Phase 6 产物（豆包 AI 接入 + 5 能力 + 双缓存） ──
+├── lib/
+│   ├── llmClient.ts                 ← 已有 · Step 6.1 · callAI 唯一出口（/chat/completions + response_format + 30s 超时 + 4 种错误分类 + AIRun 日志 + 脱敏）
+│   ├── prompts.ts                   ← 已有 · Step 6.1 · PRD 9.1~9.5 system prompt 原文 + 6 个 userPrompt 模板函数（含 SYS_TOMORROW_TIP）
+│   ├── fakeIntelSource.ts           ← 已有 · Step 6.5 · 7 条硬编码大厂资讯（腾讯 IEG / 字节电商 / 美团到店 等）
+│   └── queries/
+│       ├── intel.ts                 ← 已有 · Step 6.5 · getDailyIntelSummary（Server Component 首屏用；等价于 /api/ai/daily-intel）
+│       └── tomorrowTip.ts           ← 已有 · Step 6.6 · getTomorrowTip + clearTomorrowTipCache（SHA-256 eventsHash 被动失效）
+├── app/api/ai/
+│   ├── parse-email/route.ts         ← 已有 · Step 6.2 · POST 入参 inputText（5~20000）
+│   ├── parse-jd/route.ts            ← 已有 · Step 6.4 · POST 入参 jdText（20~30000）
+│   ├── generate-questions/route.ts  ← 已有 · Step 6.4 · POST 入参 applicationId（后端拉 jdText + resume.extractedText）
+│   ├── review/route.ts              ← 已有 · Step 6.4 · POST 入参 stageId + transcriptText（30~40000）
+│   ├── daily-intel/route.ts         ← 已有 · Step 6.5 · GET 本地时区 date 缓存
+│   └── tomorrow-tip/refresh/route.ts ← 已有 · Step 6.6 · POST 清缓存 + 强制重算
+├── components/dashboard/
+│   ├── AICopilot.tsx                ← 升级 · Step 6.3 · 4 个 AI 按钮全接线 + 草稿预览卡 + 采纳保存
+│   ├── DailyIntel.tsx               ← 升级 · Step 6.5 · 接 summary prop（SSR 注入）
+│   └── TomorrowReminder.tsx         ← 升级 · Step 6.6 · 接 tipText + eventCount prop + 右上 RefreshCw 强制重算按钮
+├── components/drawer/NewApplicationDrawerContent.tsx  ← 升级 · Step 6.3 · useEffect 读 sessionStorage 里的 emailDraft 自动预填字段
+├── app/dashboard/page.tsx           ← 升级 · Step 6.5/6.6 · Promise.all 并发拉 events + resumes + intel + tip 四份数据
+
 （以下 Phase 3+ 陆续产生）
 ├── README.md                        ← 计划中 · 仓库门面（Phase 7.4）
 │
@@ -257,6 +279,9 @@
 17. **客户端三方库依赖栈（2026-04-18 Phase 4 锁定）** → Form：`react-hook-form 7.72` + `@hookform/resolvers 5.2`（zod integration）；Data fetching（Client）：`swr 2.4`（Drawer 详情拉取 + Phase 6 AI 轮询复用）；Toast：`sonner 2.0`（全局 Toaster 挂 layout）；Dialog 基础组件：`@radix-ui/react-dialog 1.1`（Sheet/Dialog 共享底座）。没装 @radix-ui/react-select（native select 够用），没装 Zustand / Jotai（URL 参数够用），没装 react-query（SWR 更轻）。
 18. **PDF 处理栈（2026-04-18 Phase 5 锁定）** → 解析用 `pdf-parse 2.4`（v2 API：`new PDFParse({ data }).getText()`，和 v1 的 `pdf(buffer)` 不兼容）；**预览用浏览器原生 iframe**（tech_stack 禁用清单里的 react-pdf），70vw×85vh 的 Dialog 承载，内置 PDF 工具栏支持缩放/下载。`next.config.ts` 必须把 `pdf-parse` + `pdfjs-dist` 加进 `serverExternalPackages`，否则 Next 15 server bundler 会报 "Object.defineProperty called on non-object"。上传 route 必须 `export const runtime = "nodejs"`（默认 edge-light 跑不起来）。上传存盘路径统一 `uploads/<resumeId>.pdf`（文件名 = DB id），DELETE Resume 时同步清理物理文件。
 19. **PDF 文本清洗规则（2026-04-18 Step 5.1 决策）** → pdf-parse 输出的原文可能含裸控制字符（U+0000~001F），直接 `NextResponse.json()` 产出的响应会让严格 JSON 解析器（jq / python json / node JSON.parse）炸掉（浏览器 fetch.json 能容忍）。服务端在落库前做清洗：`\r\n`→`\n`、删除除 `\t\n` 外的 C0/DEL 控制字符（换成空格）、连续空白压缩。清洗后的 `extractedText` 是"可直接拼进 prompt、可直接 JSON 序列化"的纯文本。
+20. **明日提醒缓存方案（2026-04-19 Step 6.6 决策）** → 复用 Phase 1.1 已建的 `TomorrowTipCache` 表（`date @unique` + `tipText` + `eventsHash` + ...），**按"事件集合 SHA-256"被动失效**，而非主动清理。`eventsHash = sha256(JSON.stringify(明天 Stage[].map({id,time,type,status}).sortById))`；查 TomorrowTipCache(date=明天) + hash 一致 → 直接返；hash 不一致 / 未命中 → 调 AI + upsert；明天事件为空 → 返 UI.md 空态原文 "明天暂无流程安排，可以安心休息一下。"（不调 AI）。好处：任何手动/AI CRUD 改明天 Stage 都自动让 hash 不匹配，无需手动清缓存。前端 RefreshCw 按钮走 `POST /api/ai/tomorrow-tip/refresh`（先 delete 缓存，再调 `getTomorrowTip({force:true})`）。
+21. **AI 调用 4 种错误分类（2026-04-19 Step 6.1 决策）** → `lib/llmClient.ts` 的 `AIError.code` 枚举：`AI_CONFIG_MISSING`（env 三件套缺）/ `AI_CALL_TIMEOUT`（30s）/ `AI_CALL_FAILED`（网络/HTTP 4xx-5xx/响应体异常）/ `AI_PARSE_FAILED`（expectJson=true 时 JSON.parse 失败）。所有 AI route 的 handler 在 catch 时把 `AIError` 包成 502 `INTERNAL_ERROR` 返前端，并在 `details.code` 里带上细分 code；`AIRun.errorMessage` 也用 `"<code>: <msg>"` 前缀，便于 Prisma Studio 里肉眼分类。日志脱敏：catch 时 `console.error` 只打 taskType + code，禁止打 Authorization / key / 完整 url。
+22. **AI 草稿态前端流程（2026-04-19 Step 6.3 决策）** → PRD 3.2 硬性规则：AI 解析结果 **不写业务表**（只写 AIRun 日志），由前端收下作为 "草稿" 再由用户确认后走 PATCH/POST 入库。具体 4 条：(a) 解析邮件 → sessionStorage 暂存 → 打开 `application-new` Drawer 自动预填所有字段 → 保存时一次性建 Application + 首个 Stage；(b) 解析 JD → 选 Application → 内联展示 → 点"采纳保存" PATCH /api/applications/:id 写 jdText/jdSummary/jdKeywords/expectedSkills；(c) 生成面试题 → 选 Application → 点采纳 PATCH 写 `Application.interviewQuestions`（共享题库，同 Application 所有 Stage 共用）；(d) 生成复盘 → 选 Stage → 点采纳 PATCH 写 Stage 的 review 三字段。
 
 ---
 

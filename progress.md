@@ -24,7 +24,7 @@
 | 3 | 三页骨架 | 5 | 2/5 | ✅✅⬜⬜⬜ |
 | 4 | Drawer + 手动 CRUD | 4 | 4/4 | ✅✅✅✅ |
 | 5 | Resume 上传预览关联 | 3 | 3/3 | ✅✅✅ |
-| 6 | 豆包 AI 接入 | 6 | 0/6 | ⬜⬜⬜⬜⬜⬜ |
+| 6 | 豆包 AI 接入 | 6 | 6/6 | ✅✅✅✅✅✅ |
 | 7 | 打磨验收 | 4 | 0/4 | ⬜⬜⬜⬜ |
 | **合计** | | **39** | **22/39** | **56%** |
 
@@ -215,24 +215,41 @@
 
 **开工前必须确认** `.env.local` 已包含所有豆包必需变量（见下方"开发前准备"小节）。
 
-- [ ] **Step 6.1** — `lib/llmClient.ts` + AIRun 日志
-  - 完成日期：
-  - 关键产物：`lib/llmClient.ts`（导出 `callAI`，按 Step 0.6 决策的路径实现）/ `lib/prompts.ts`（PRD 9.1~9.5 原文常量）
-- [ ] **Step 6.2** — `POST /api/ai/parse-email`
-  - 完成日期：
-  - 关键产物：`app/api/ai/parse-email/route.ts`
-- [ ] **Step 6.3** — AI Copilot 前端接入 4 个能力
-  - 完成日期：
-- [ ] **Step 6.4** — `parse-jd` / `generate-questions` / `review` 三个 AI API
-  - 完成日期：
-  - 关键产物：`app/api/ai/parse-jd/route.ts` / `app/api/ai/generate-questions/route.ts` / `app/api/ai/review/route.ts`
-- [ ] **Step 6.5** — `GET /api/ai/daily-intel` + 首页大厂动向
-  - 完成日期：
-  - 关键产物：`app/api/ai/daily-intel/route.ts` / `lib/fakeIntelSource.ts`
-- [ ] **Step 6.6** — 明日 AI 提醒
-  - 完成日期：
+- [x] **Step 6.1** — `lib/llmClient.ts` + AIRun 日志
+  - 完成日期：2026-04-19
+  - 关键产物：`lib/prompts.ts`（PRD 9.1~9.5 原文常量 + Step 6.6 新增 SYS_TOMORROW_TIP + 6 个 userPrompt 模板函数）/ `lib/llmClient.ts`（`callAI` 函数，严格按 Step 0.6 决策走 `/chat/completions` + `response_format`，30s 超时，AIRun 日志 + 错误分类 `AI_CALL_TIMEOUT`/`AI_CALL_FAILED`/`AI_PARSE_FAILED`/`AI_CONFIG_MISSING`，日志脱敏）/ 临时 `app/api/ai/test-ping/route.ts`（验证后已删除）
+  - 验证备注：ping 请求 200 + `json={ok:true}` + AIRun 1 条 success；Key 改错 1 位 → 401 + AIRun failed + errorMessage 记录后端返回的 AuthenticationError；**日志里不含错 Key 明文**（grep 0 次）；走的就是 Step 0.6 锁定的 `/chat/completions` 路径
+- [x] **Step 6.2** — `POST /api/ai/parse-email`
+  - 完成日期：2026-04-19
+  - 关键产物：`app/api/ai/parse-email/route.ts`（zod 入参 5~20000 字 / callAI expectJson / aiParseEmailOutputSchema 校验 stageType 枚举 / AI_SCHEMA_MISMATCH 502 包装）
+  - 验证备注：腾讯游戏事业部一面邮件 → 返 {公司,部门,岗位,一面,2026-04-22 15:00, 会议链接} 全命中；"今天吃了饭"无关文本 → 7 字段全 null（"不编造"规则生效）；AIRun 日志齐
+- [x] **Step 6.4** — 补齐 `parse-jd` / `generate-questions` / `review` 三个 AI API
+  - 完成日期：2026-04-19
+  - 关键产物：`app/api/ai/parse-jd/route.ts`（JD 20~30000 字） / `generate-questions/route.ts`（入参 applicationId，后端拉 jdText + linkedResume.extractedText；两者都为空返 400） / `review/route.ts`（入参 stageId + transcriptText 30~40000 字，stageId 不存在 404）
+  - 验证备注：
+    - parse-jd 游戏数据产品 JD → jdSummary 120 字 + 7 个关键词 + 4 条能力要求；JD 空 → 400 ✅
+    - generate-questions → 5 个精准题目（结合 Data Agent / LLM / SQL 要点）✅
+    - review 典型转录 → questionSummary/answerSummary/suggestion 三字段齐 ✅；短输入 → 400 ✅
+- [x] **Step 6.3** — AI Copilot 前端接入 4 个 AI 能力
+  - 完成日期：2026-04-19
+  - 关键产物：`components/dashboard/AICopilot.tsx` 整体升级（textarea + 4 个胶囊快捷按钮 + Application/Stage 下拉 + DraftPreview 草稿卡片 + 采纳保存按钮）
+  - 决策：
+    - **解析邮件草稿** → sessionStorage 暂存 → 打开 application-new Drawer 自动预填公司/部门/岗位/第一个 Stage 类型和时间（因为邮件一般对应"新岗位"，走 application-new 比 stage-new 更完整）
+    - **解析 JD** → 选 Application → 内联展示 summary/keywords/skills → 点"采纳保存" PATCH /api/applications/:id
+    - **生成面试题** → 选 Application → 展示编号圆点数字卡片列表 → 采纳保存 → 写 Application.interviewQuestions（共享题库）
+    - **生成复盘** → 选 Stage → 展示 3 个小卡片（问题/回答/建议，mint/lilac/yellow 背景）→ 采纳保存 → 写 Stage 的 review 三字段
+  - 验证备注：typecheck 0 / build 0 warning / dashboard bundle 9.08kB（Copilot 扩展约 2kB）
+- [x] **Step 6.5** — `GET /api/ai/daily-intel` + 首页今日大厂动向
+  - 完成日期：2026-04-19
+  - 关键产物：`lib/fakeIntelSource.ts`（7 条硬编码资讯：腾讯 IEG 实习 / 字节电商 / 美团到店 / 阿里淘天 / 百度搜索 / 小红书社区 / 快手磁力） / `app/api/ai/daily-intel/route.ts`（缓存 by date 本地时区） / `lib/queries/intel.ts`（Server Component 同逻辑，供 dashboard 首屏 SSR 用） / `components/dashboard/DailyIntel.tsx`（接 `summary` prop，AI 失败 fallback "暂无动向"）
+  - 验证备注：首次 → `fromCache=false` 调 AI 返 103 字摘要（稍超规格但合理）；再访问 → `fromCache=true`；清缓存后 → 重算；AIRun.daily_intel 只 2 条（命中缓存时不增）✅
+- [x] **Step 6.6** — 明日 AI 提醒 + TomorrowTipCache + eventsHash 被动失效
+  - 完成日期：2026-04-19
+  - 关键产物：`lib/queries/tomorrowTip.ts`（`getTomorrowTip` 函数：拉明天 Stage → SHA-256 hash → 查 TomorrowTipCache → 命中且 hash 一致 → 直接返；否则调 AI upsert） / `app/api/ai/tomorrow-tip/refresh/route.ts`（POST 强制重算） / `components/dashboard/TomorrowReminder.tsx` 升级为 `tipText` + `eventCount` prop + 右上 RefreshCw 按钮 / `lib/prompts.ts` 新增 `SYS_TOMORROW_TIP`（Agent 按 PRD 5.1.2 示例撰写，50~80 字自然语言提醒）
+  - 决策：**事件变更被动失效**（eventsHash 不匹配才重算，任何 CRUD 自动触发，无需主动清缓存代码）；**空事件直接返 UI.md 空态原文 "明天暂无流程安排，可以安心休息一下。" 不调 AI**（省 token + 符合空态规范）
+  - 验证备注：6 场景全过：首次调 AI 写缓存；再访问 diff=0 命中缓存；改 Stage time → hash 变 → 重算；refresh API fromCache=false；空事件返空态原文 + AIRun 无新增
 
-**Phase 6 出口** ☐ 已追加 architecture.md 里程碑「AI 能力 5/5 全部接入」
+**Phase 6 出口** ☑ 已追加 architecture.md 里程碑「AI 5 能力接入 + 今日动向/明日提醒缓存完成」
 
 ---
 
