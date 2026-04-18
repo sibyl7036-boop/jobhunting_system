@@ -33,14 +33,26 @@ export async function fetchJson<T>(
   input: string,
   init?: RequestInit
 ): Promise<T> {
-  const res = await fetch(input, {
-    // 默认带 Content-Type：POST / PATCH 请求体是 JSON
-    headers: {
-      ...(init?.body ? { "Content-Type": "application/json" } : {}),
-      ...(init?.headers || {}),
-    },
-    ...init,
-  });
+  let res: Response;
+  try {
+    res = await fetch(input, {
+      // 默认带 Content-Type：POST / PATCH 请求体是 JSON
+      headers: {
+        ...(init?.body ? { "Content-Type": "application/json" } : {}),
+        ...(init?.headers || {}),
+      },
+      ...init,
+    });
+  } catch (e) {
+    // 网络层直接失败（dev server 挂了 / offline / CORS 拒绝）
+    // Step 7.1：统一抛 NETWORK_ERROR，前端 catch 后走"网络异常，请稍后重试" toast
+    throw new FetchError(
+      0,
+      "NETWORK_ERROR",
+      "网络异常，请稍后重试",
+      e instanceof Error ? e.message : String(e)
+    );
+  }
 
   // 204 之类无 body 的响应
   const text = await res.text();
@@ -58,4 +70,12 @@ export async function fetchJson<T>(
   }
 
   return body as T;
+}
+
+/**
+ * 判断一个 error 是否是网络层错误（FetchError 且 code=NETWORK_ERROR）
+ * 供 Client Component 在 catch 里统一 toast 网络异常用
+ */
+export function isNetworkError(e: unknown): e is FetchError {
+  return e instanceof FetchError && e.code === "NETWORK_ERROR";
 }

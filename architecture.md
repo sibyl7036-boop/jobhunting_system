@@ -164,7 +164,21 @@
 ├── components/drawer/NewApplicationDrawerContent.tsx  ← 升级 · Step 6.3 · useEffect 读 sessionStorage 里的 emailDraft 自动预填字段
 ├── app/dashboard/page.tsx           ← 升级 · Step 6.5/6.6 · Promise.all 并发拉 events + resumes + intel + tip 四份数据
 
-（以下 Phase 3+ 陆续产生）
+│ ── Phase 7 产物（打磨与验收） ──
+├── components/ui/
+│   └── skeleton.tsx                 ← 已有 · Step 7.1 · shadcn 骨架块（soft-panel pulse）
+├── components/common/
+│   ├── EmptyState.tsx               ← 已有 · Step 7.1 · 通用空态（icon + title + description + action，支持 compact）
+│   └── ErrorState.tsx               ← 已有 · Step 7.1 · 通用错误态（可选 onRetry）
+├── app/
+│   ├── loading.tsx                  ← 已有 · Step 7.1 · 全局 fallback（UI.md 13.1 3 粉点 bounce）
+│   ├── error.tsx                    ← 已有 · Step 7.1 · Next 15 全局错误边界，ErrorState + reset
+│   ├── dashboard/loading.tsx        ← 已有 · Step 7.1 · 首页 12 栏布局骨架
+│   ├── calendar/loading.tsx         ← 已有 · Step 7.1 · 月视图 7×5 格 + 当日列表骨架
+│   └── companies/loading.tsx        ← 已有 · Step 7.1 · 10 行 × 9 节点胶囊骨架
+├── lib/fetcher.ts                   ← 升级 · Step 7.1 · fetch 外层 try/catch 抛 NETWORK_ERROR + 导出 isNetworkError()
+
+（以下 Phase 7.2+ 陆续产生）
 ├── README.md                        ← 计划中 · 仓库门面（Phase 7.4）
 │
 ├── app/api/ai/                      ← 计划中 · Phase 6 AI Route Handlers

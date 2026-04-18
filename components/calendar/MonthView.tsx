@@ -34,6 +34,7 @@ import {
   addMonths,
   subMonths,
 } from "date-fns";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { fetchJson } from "@/lib/fetcher";
 import { useOpenDrawer } from "@/lib/drawerUrl";
@@ -163,8 +164,8 @@ export function MonthView({
         currentRange.current = { start, end };
       })
       .catch((err) => {
-        // eslint-disable-next-line no-console
-        console.error("[calendar] 加载事件失败：", err);
+        const msg = err instanceof Error ? err.message : "加载事件失败";
+        toast.error(msg);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

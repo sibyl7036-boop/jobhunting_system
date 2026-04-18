@@ -21,12 +21,12 @@
 | 0 | 项目骨架 + git 基线 + API 连通性验证 | 7 | 7/7 | ✅✅✅✅✅✅✅ |
 | 1 | 数据层（6 个 model） | 4 | 4/4 | ✅✅✅✅ |
 | 2 | REST API（非 AI） | 6 | 6/6 | ✅✅✅✅✅✅ |
-| 3 | 三页骨架 | 5 | 2/5 | ✅✅⬜⬜⬜ |
+| 3 | 三页骨架 | 5 | 5/5 | ✅✅✅✅✅ |
 | 4 | Drawer + 手动 CRUD | 4 | 4/4 | ✅✅✅✅ |
 | 5 | Resume 上传预览关联 | 3 | 3/3 | ✅✅✅ |
 | 6 | 豆包 AI 接入 | 6 | 6/6 | ✅✅✅✅✅✅ |
-| 7 | 打磨验收 | 4 | 0/4 | ⬜⬜⬜⬜ |
-| **合计** | | **39** | **22/39** | **56%** |
+| 7 | 打磨验收 | 4 | 1/4 | ✅⬜⬜⬜ |
+| **合计** | | **39** | **36/39** | **92%** |
 
 ---
 
@@ -255,8 +255,11 @@
 
 ## Phase 7 · 打磨验收
 
-- [ ] **Step 7.1** — 全局状态规范化（loading / 空态 / 错误 / toast）
-  - 完成日期：
+- [x] **Step 7.1** — 全局状态规范化（loading / 空态 / 错误 / toast）
+  - 完成日期：2026-04-19
+  - 关键产物：`components/ui/skeleton.tsx`（shadcn 骨架块：soft-panel 浅粉底 + pulse）/ `components/common/EmptyState.tsx`（通用空态：lucide 图标+标题+副文案+可选 CTA，支持 compact 紧凑模式）/ `components/common/ErrorState.tsx`（Client 组件，danger 圆底图标 + 可选 onRetry 重试按钮）/ `app/loading.tsx`（全局 fallback：UI.md 13.1 三粉点 bounce）/ `app/error.tsx`（Next 15 错误边界，ErrorState 注入 reset 函数做重试）/ `app/dashboard/loading.tsx`（12 栏布局骨架：左 8 表格+简历，右 4 提醒/动向/Copilot）/ `app/calendar/loading.tsx`（月视图 7×5 格 + 当日事件列表骨架）/ `app/companies/loading.tsx`（8 行公司 × 9 节点胶囊骨架）
+  - 增强：`lib/fetcher.ts` 在 fetch() 外层 try/catch 网络层错误，统一抛 `FetchError(0, "NETWORK_ERROR", "网络异常，请稍后重试")` + 导出 `isNetworkError()` helper。MonthView 切月失败从 `console.error` 改为 `toast.error`。其他 Client 组件 catch 全部早已走 `toast.error(err.message)`，FetchError.message 直接作为用户可读文案，dev server kill 掉时前端点击任何按钮都会出现"网络异常，请稍后重试" toast，不白屏。
+  - 验证备注：typecheck 0 / build 0 warning；三页骨架屏、全局 loading/error 都已就位；修复 `app/error.tsx` 里 JSX 属性串误用 ASCII 半角引号导致的语法错误（把包"重试"的 " 换成「」）
 - [ ] **Step 7.2** — UI 精修（对照 UI.md）+ 小猫 SVG + Framer Motion
   - 完成日期：
 - [ ] **Step 7.3** — PRD 第 13 章 6 个闭环验收
