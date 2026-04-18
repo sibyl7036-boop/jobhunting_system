@@ -26,7 +26,7 @@
 | 5 | Resume 上传预览关联 | 3 | 0/3 | ⬜⬜⬜ |
 | 6 | 豆包 AI 接入 | 6 | 0/6 | ⬜⬜⬜⬜⬜⬜ |
 | 7 | 打磨验收 | 4 | 0/4 | ⬜⬜⬜⬜ |
-| **合计** | | **39** | **19/39** | **49%** |
+| **合计** | | **39** | **20/39** | **51%** |
 
 ---
 
@@ -143,9 +143,10 @@
   - 状态颜色映射：待参加 → `neutral/50` / 已完成 → `#EEEAF0` / 已通过 → `secondary-mint` + `#4A9970` / 未通过 → `danger/25` + `primary-strong`
   - 行交互：点击整行 `console.log('row click', stageId)`（Phase 4.3 接 Drawer），操作列表头只渲染 "操作" 文字和 "—" 占位（无任何按钮，防与 Phase 4.4 冲突）
   - 验证备注：typecheck 0 错误 / build 通过（/dashboard 2.01kB 含 Client bundle）/ 有数据：dev server HTTP 200 + grep HTML 命中`未来 7 天流程安排`/`linear-gradient`/`bg-secondary-lilac`/`bg-secondary-yellow`/`bg-secondary-mint`/`bg-neutral`/`bg-soft-panel`/`一面`×3/`笔试`×3/`待参加`/`已通过`/`阿里`×6/`未关联`×2 / 空态：清空 Stage 后 HTML 命中"未来 7 天暂无流程安排"+"可以先把简历准备好"+"有新流程时" / hover class `hover:bg-soft-panel hover:-translate-y-px` 已出现在 DOM。当前 DB 里保留 2 条 demo Stage 方便本地预览（可随时清空）
-- [ ] **Step 3.3** — `/dashboard` 其余 4 个模块占位
-  - 完成日期：
-  - 关键产物：`components/dashboard/TomorrowReminder.tsx` / `DailyIntel.tsx` / `ResumeCard.tsx` / `AICopilot.tsx`
+- [x] **Step 3.3** — `/dashboard` 其余 4 个模块占位
+  - 完成日期：2026-04-18
+  - 关键产物：`components/dashboard/TomorrowReminder.tsx`（粉黄渐变 `#FFF7D8→#FFF3FA` + CatIcon + Bell + 硬编码"明天暂无流程安排..."）/ `DailyIntel.tsx`（粉紫→浅黄 `#F8F5FF→#FFF8E8` + Sparkles + "暂无动向" + "AI 摘要"标签）/ `ResumeCard.tsx`（列表态：FileText 图标 + 标签胶囊 4 色映射（产品=lilac/运营=peach/算法=mint/通用=neutral）+ Eye/Trash2/Upload 按钮全 `disabled` + title="即将开放"；空态：FolderClosed + "先放一份简历进来吧"）/ `AICopilot.tsx`（粉紫渐变大卡 + CatIcon + textarea radius=18px placeholder 与 UI.md 8.7 原文 100% 一致 + 4 个胶囊快捷按钮 console.log）/ `app/dashboard/page.tsx` 升级为 12 栏布局（lg:col-span-8 左 + lg:col-span-4 右；并发拉 events + resumes）
+  - 验证备注：typecheck 0 / build 通过 /dashboard 5.7kB（4 个 Client 组件）/ dev HTTP 200 · HTML 36KB / grep 22 个关键字全部命中（含 `lg:col-span-8` `lg:col-span-4` `FFF7D8` `FFF8E8` `FFF1F7` `border-radius:18px` `disabled=""` `粘贴面试邮件` `解析面试邮件` `放 2~3 份常用版本就够了` 等） / 所有卡片走 `rounded-card-md/lg` + `shadow-soft` + `hover:-translate-y-0.5 hover:shadow-hover` 统一视觉规则 / 简历卡 disabled 按钮 tooltip 用原生 `title` 属性（不引入新依赖）
 - [ ] **Step 3.4** — `/calendar` 月视图
   - 完成日期：
   - 关键产物：`app/calendar/page.tsx` / `components/calendar/MonthView.tsx`

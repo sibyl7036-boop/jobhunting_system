@@ -94,8 +94,12 @@
 │       ├── companies.ts             ← 已有 · getCompaniesProgress() + COMPANY_ORDER 常量
 │       └── resumes.ts               ← 已有 · getResumes()
 ├── components/dashboard/
-│   └── EventTable.tsx               ← 已有 · Step 3.2 · 首页时间维度流程表格（Client Component，胶囊颜色映射 + hover 浮起 + 空态，点击行 console.log）
-├── app/dashboard/page.tsx           ← Step 3.2 · Server Component 拉 getDashboardEvents(7) 并序列化 Date→ISO 传给 EventTable
+│   ├── EventTable.tsx               ← 已有 · Step 3.2 · 首页时间维度流程表格（Client Component，胶囊颜色映射 + hover 浮起 + 空态，点击行 console.log）
+│   ├── TomorrowReminder.tsx         ← 已有 · Step 3.3 · 明日提醒占位卡（粉黄渐变 + CatIcon + Bell）；Phase 6.6 接
+│   ├── DailyIntel.tsx               ← 已有 · Step 3.3 · 今日动向占位卡（粉紫→浅黄 + Sparkles + "AI 摘要"标签）；Phase 6.5 接
+│   ├── ResumeCard.tsx               ← 已有 · Step 3.3 · 我的简历卡（列表 / 空态；按钮全 disabled + title tooltip）；Phase 5.2 启用
+│   └── AICopilot.tsx                ← 已有 · Step 3.3 · AI Copilot 占位大卡（粉紫渐变 + CatIcon + textarea + 4 胶囊按钮）；Phase 6.3 接
+├── app/dashboard/page.tsx           ← Step 3.3 · Server Component 12 栏布局（lg:col-span-8 左 + lg:col-span-4 右），并发拉 events + resumes
 
 （以下 Phase 3+ 陆续产生）
 ├── README.md                        ← 计划中 · 仓库门面（Phase 7.4）
