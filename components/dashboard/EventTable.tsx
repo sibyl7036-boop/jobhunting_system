@@ -19,7 +19,6 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import type { DashboardEvent } from "@/lib/queries";
 
 // ──────────────────────────────────────────────────────────────────────
 // 单元格视觉映射（严格按 UI.md 8.3 + Step 3.2 指令）

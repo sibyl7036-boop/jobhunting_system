@@ -100,6 +100,9 @@
 │   ├── ResumeCard.tsx               ← 已有 · Step 3.3 · 我的简历卡（列表 / 空态；按钮全 disabled + title tooltip）；Phase 5.2 启用
 │   └── AICopilot.tsx                ← 已有 · Step 3.3 · AI Copilot 占位大卡（粉紫渐变 + CatIcon + textarea + 4 胶囊按钮）；Phase 6.3 接
 ├── app/dashboard/page.tsx           ← Step 3.3 · Server Component 12 栏布局（lg:col-span-8 左 + lg:col-span-4 右），并发拉 events + resumes
+├── components/calendar/
+│   └── MonthView.tsx                ← 已有 · Step 3.4 · 月视图（7 列 grid + 当日事件列表 + 月份切换，Client Component 拉 /api/calendar/events）
+├── app/calendar/page.tsx            ← Step 3.4 · Server Component SSR 注入首屏月网格事件，后续切月由 Client 端 fetch
 
 （以下 Phase 3+ 陆续产生）
 ├── README.md                        ← 计划中 · 仓库门面（Phase 7.4）
