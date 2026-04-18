@@ -21,12 +21,12 @@
 | 0 | 项目骨架 + git 基线 + API 连通性验证 | 7 | 7/7 | ✅✅✅✅✅✅✅ |
 | 1 | 数据层（6 个 model） | 4 | 4/4 | ✅✅✅✅ |
 | 2 | REST API（非 AI） | 6 | 6/6 | ✅✅✅✅✅✅ |
-| 3 | 三页骨架 | 5 | 0/5 | ⬜⬜⬜⬜⬜ |
+| 3 | 三页骨架 | 5 | 1/5 | ✅⬜⬜⬜⬜ |
 | 4 | Drawer + 手动 CRUD | 4 | 0/4 | ⬜⬜⬜⬜ |
 | 5 | Resume 上传预览关联 | 3 | 0/3 | ⬜⬜⬜ |
 | 6 | 豆包 AI 接入 | 6 | 0/6 | ⬜⬜⬜⬜⬜⬜ |
 | 7 | 打磨验收 | 4 | 0/4 | ⬜⬜⬜⬜ |
-| **合计** | | **39** | **17/39** | **44%** |
+| **合计** | | **39** | **18/39** | **46%** |
 
 ---
 
@@ -131,9 +131,11 @@
 
 ## Phase 3 · 三页骨架（只读）
 
-- [ ] **Step 3.1** — 数据请求层封装
-  - 完成日期：
-  - 关键产物：`lib/fetcher.ts` / `lib/queries/*`
+- [x] **Step 3.1** — 数据请求层封装
+  - 完成日期：2026-04-18
+  - 关键产物：`lib/fetcher.ts`（客户端 fetch 封装 + FetchError）/ `lib/queries/{dashboard,calendar,companies,resumes,index}.ts`（Server Component 直调 Prisma 的 5 个 query 函数 + 类型导出）/ 新增依赖：server-only 0.0.1
+  - 决策：**Server Component 直调 Prisma**，不走 HTTP fetch API route（理由已写入 architecture.md 关键契约点 14）。API route 保留供 Phase 4+ 客户端交互（CRUD）使用。
+  - 验证备注：`pnpm typecheck` 0 错误 / `pnpm build` 通过，/dashboard 正确识别为 ƒ Dynamic server-rendered / `pnpm dev` 访问 /dashboard 返 200，server log 打印 `[dashboard] getDashboardEvents(7) → 0 条 Stage；首条预览： （空）`（Phase 2 烟测后 Stage 表已清空，符合预期）。dashboard/page.tsx 保留临时 console.log，Phase 3.2 实现真实表格时会一并清理。
 - [ ] **Step 3.2** — `/dashboard` 时间维度流程表格
   - 完成日期：
   - 关键产物：`app/dashboard/page.tsx` / `components/dashboard/EventTable.tsx`

@@ -15,7 +15,7 @@
 
 ## 🗺️ 目录树（当前真实状态）
 
-> 当前仓库处于"**Phase 2 完成**"——8 个非 AI REST API 全部就绪 + 烟测脚本 14/14 通过 + 统一错误处理。Phase 3 三页骨架待开始。
+> 当前仓库处于"**Phase 3 进行中 · Step 3.1 完成**"——数据请求层已就绪（Server Component 直调 Prisma + 客户端 fetcher 封装）。Phase 2 已交付 8 个非 AI REST API + 烟测 14/14。
 
 ```
 /Users/sibyl/Desktop/system/
@@ -37,7 +37,8 @@
 ├── tailwind.config.ts / postcss.config.mjs / components.json
 ├── app/
 │   ├── layout.tsx / page.tsx / globals.css / favicon.ico
-│   ├── dashboard/page.tsx / calendar/page.tsx / companies/page.tsx   ← 占位，Phase 3 实现
+│   ├── dashboard/page.tsx           ← Step 3.1 临时改造：Server Component 直调 getDashboardEvents 并 console.log（Step 3.2 会替换为真实表格）
+│   ├── calendar/page.tsx / companies/page.tsx   ← 占位，Step 3.4 / 3.5 实现
 ├── public/                          ← 静态资源
 ├── components/
 │   ├── ui/button.tsx                ← shadcn Button（粉色 variant）
@@ -82,6 +83,16 @@
 │   └── companies/progress/route.ts  ← 已有 · GET 10 家公司按 PRD 顺序 × Application × Stage + isEmpty 标记
 ├── scripts/
 │   └── smoke-api.ts                 ← 已有 · Phase 2 烟测脚本（14 断言，一条命令跑完 CRUD）
+│
+│ ── Phase 3 产物（数据请求层） ──
+├── lib/
+│   ├── fetcher.ts                   ← 已有 · 客户端 fetchJson 封装 + FetchError（供 Phase 4+ Client Component 做 CRUD 用）
+│   └── queries/
+│       ├── index.ts                 ← 已有 · barrel
+│       ├── dashboard.ts             ← 已有 · getDashboardEvents(days) 服务端直调 Prisma（半开区间）
+│       ├── calendar.ts              ← 已有 · getCalendarEvents(start, end) 服务端直调 Prisma（闭区间）
+│       ├── companies.ts             ← 已有 · getCompaniesProgress() + COMPANY_ORDER 常量
+│       └── resumes.ts               ← 已有 · getResumes()
 
 （以下 Phase 3+ 陆续产生）
 ├── README.md                        ← 计划中 · 仓库门面（Phase 7.4）
@@ -93,19 +104,17 @@
 │   ├── review/route.ts
 │   └── daily-intel/route.ts
 │
-├── components/                      ← 计划中 · Phase 3+ 业务组件
+├── components/                      ← 计划中 · Phase 3.2+ 业务组件
 │   ├── ui/                          ← shadcn/ui 按需添加（card / dialog / sheet / table / badge 等）
-│   ├── dashboard/                   ← 首页 5 模块
-│   ├── calendar/                    ← 日历月视图
-│   ├── companies/                   ← 公司流程行
-│   └── drawer/                      ← 全局 Drawer 容器
+│   ├── dashboard/                   ← 首页 5 模块（Phase 3.2 / 3.3）
+│   ├── calendar/                    ← 日历月视图（Phase 3.4）
+│   ├── companies/                   ← 公司流程行（Phase 3.5）
+│   └── drawer/                      ← 全局 Drawer 容器（Phase 4）
 │
-├── lib/                             ← 计划中 · Phase 3+ 继续扩展
-│   ├── fetcher.ts                   ← Phase 3.1 最小化 fetch 封装
+├── lib/                             ← 计划中 · Phase 6+ 继续扩展
 │   ├── llmClient.ts                 ← Phase 6.1 Ark API 唯一出口 callAI
 │   ├── prompts.ts                   ← Phase 6.1 PRD 9.1~9.5 原文常量
-│   ├── fakeIntelSource.ts           ← Phase 6.5 本地硬编码资讯
-│   └── queries/                     ← Phase 3.1 前端 query 函数
+│   └── fakeIntelSource.ts           ← Phase 6.5 本地硬编码资讯
 │
 ├── uploads/                         ← 计划中 · Phase 5.1 PDF 简历目录（gitignore）
 
