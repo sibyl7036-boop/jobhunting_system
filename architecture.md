@@ -84,7 +84,7 @@
 ├── scripts/
 │   └── smoke-api.ts                 ← 已有 · Phase 2 烟测脚本（14 断言，一条命令跑完 CRUD）
 │
-│ ── Phase 3 产物（数据请求层） ──
+│ ── Phase 3 产物（数据请求层 + dashboard 主模块） ──
 ├── lib/
 │   ├── fetcher.ts                   ← 已有 · 客户端 fetchJson 封装 + FetchError（供 Phase 4+ Client Component 做 CRUD 用）
 │   └── queries/
@@ -93,6 +93,9 @@
 │       ├── calendar.ts              ← 已有 · getCalendarEvents(start, end) 服务端直调 Prisma（闭区间）
 │       ├── companies.ts             ← 已有 · getCompaniesProgress() + COMPANY_ORDER 常量
 │       └── resumes.ts               ← 已有 · getResumes()
+├── components/dashboard/
+│   └── EventTable.tsx               ← 已有 · Step 3.2 · 首页时间维度流程表格（Client Component，胶囊颜色映射 + hover 浮起 + 空态，点击行 console.log）
+├── app/dashboard/page.tsx           ← Step 3.2 · Server Component 拉 getDashboardEvents(7) 并序列化 Date→ISO 传给 EventTable
 
 （以下 Phase 3+ 陆续产生）
 ├── README.md                        ← 计划中 · 仓库门面（Phase 7.4）

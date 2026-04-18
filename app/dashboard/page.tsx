@@ -1,42 +1,48 @@
 /**
  * /dashboard 首页
  *
- * Step 3.1 阶段：临时把 getDashboardEvents('7d') 的返回打印到 server log，
- * 用于验证 Server Component 直调 Prisma 的数据请求路径。
- * Phase 3.2 会替换为真实的"时间维度流程表格"。
+ * Phase 3 阶段：只读展示。Step 3.2 实现时间维度流程表格（左侧主模块）。
+ * Step 3.3 再补右侧 4 个卡片（明日提醒 / 今日动向 / 简历 / AI Copilot）。
+ *
+ * 数据路径：Server Component 直调 lib/queries/ → getDashboardEvents(7)
+ *            → 序列化 Date 为 ISO 字符串后传给 Client Component EventTable
  */
 
 import { getDashboardEvents } from "@/lib/queries";
+import {
+  EventTable,
+  type SerializedEvent,
+} from "@/components/dashboard/EventTable";
 
-export const dynamic = "force-dynamic"; // 避免 SSR 缓存干扰调试
+// 数据依赖 DB，禁用静态缓存，每次请求重新拉
+export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const events = await getDashboardEvents(7);
 
-  // Step 3.1 验证用：让 server log 看到数据形状
-  console.log(
-    "[dashboard] getDashboardEvents(7) →",
-    events.length,
-    "条 Stage；首条预览：",
-    events[0]
-      ? {
-          id: events[0].id,
-          type: events[0].type,
-          status: events[0].status,
-          time: events[0].time?.toISOString() ?? null,
-          company: events[0].application.companyName,
-        }
-      : "（空）"
-  );
+  // Server → Client 边界：Date 转 ISO 字符串（RSC 序列化 Date 容易踩坑）
+  const serialized: SerializedEvent[] = events.map((e) => ({
+    id: e.id,
+    type: e.type,
+    status: e.status,
+    timeIso: e.time ? e.time.toISOString() : null,
+    application: {
+      id: e.application.id,
+      companyName: e.application.companyName,
+      departmentName: e.application.departmentName,
+      roleName: e.application.roleName,
+      linkedResume: e.application.linkedResume
+        ? {
+            id: e.application.linkedResume.id,
+            name: e.application.linkedResume.name,
+          }
+        : null,
+    },
+  }));
 
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
-      <p className="text-section-title text-text-secondary">
-        首页占位（Phase 3.2 即将实现真实表格）
-      </p>
-      <p className="text-caption text-text-tertiary">
-        当前 dashboard 事件数：<b>{events.length}</b>
-      </p>
+    <div className="space-y-6 py-6">
+      <EventTable events={serialized} />
     </div>
   );
 }

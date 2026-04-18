@@ -21,12 +21,12 @@
 | 0 | 项目骨架 + git 基线 + API 连通性验证 | 7 | 7/7 | ✅✅✅✅✅✅✅ |
 | 1 | 数据层（6 个 model） | 4 | 4/4 | ✅✅✅✅ |
 | 2 | REST API（非 AI） | 6 | 6/6 | ✅✅✅✅✅✅ |
-| 3 | 三页骨架 | 5 | 1/5 | ✅⬜⬜⬜⬜ |
+| 3 | 三页骨架 | 5 | 2/5 | ✅✅⬜⬜⬜ |
 | 4 | Drawer + 手动 CRUD | 4 | 0/4 | ⬜⬜⬜⬜ |
 | 5 | Resume 上传预览关联 | 3 | 0/3 | ⬜⬜⬜ |
 | 6 | 豆包 AI 接入 | 6 | 0/6 | ⬜⬜⬜⬜⬜⬜ |
 | 7 | 打磨验收 | 4 | 0/4 | ⬜⬜⬜⬜ |
-| **合计** | | **39** | **18/39** | **46%** |
+| **合计** | | **39** | **19/39** | **49%** |
 
 ---
 
@@ -136,9 +136,13 @@
   - 关键产物：`lib/fetcher.ts`（客户端 fetch 封装 + FetchError）/ `lib/queries/{dashboard,calendar,companies,resumes,index}.ts`（Server Component 直调 Prisma 的 5 个 query 函数 + 类型导出）/ 新增依赖：server-only 0.0.1
   - 决策：**Server Component 直调 Prisma**，不走 HTTP fetch API route（理由已写入 architecture.md 关键契约点 14）。API route 保留供 Phase 4+ 客户端交互（CRUD）使用。
   - 验证备注：`pnpm typecheck` 0 错误 / `pnpm build` 通过，/dashboard 正确识别为 ƒ Dynamic server-rendered / `pnpm dev` 访问 /dashboard 返 200，server log 打印 `[dashboard] getDashboardEvents(7) → 0 条 Stage；首条预览： （空）`（Phase 2 烟测后 Stage 表已清空，符合预期）。dashboard/page.tsx 保留临时 console.log，Phase 3.2 实现真实表格时会一并清理。
-- [ ] **Step 3.2** — `/dashboard` 时间维度流程表格
-  - 完成日期：
-  - 关键产物：`app/dashboard/page.tsx` / `components/dashboard/EventTable.tsx`
+- [x] **Step 3.2** — `/dashboard` 时间维度流程表格
+  - 完成日期：2026-04-18
+  - 关键产物：`components/dashboard/EventTable.tsx`（Client Component，`"use client"`，大白卡 24px 圆角 + 顶部粉-黄渐变装饰线 + 标题 + 今日/明日/本周 tabs 仅 UI + 9 列表格 + hover 浮起 + 事件类型/状态胶囊颜色映射 + 空态文案）/ `app/dashboard/page.tsx`（Server Component 拉 `getDashboardEvents(7)` + 序列化 Date→ISO 传 Client）
+  - 胶囊颜色映射（PRD + UI.md 8.3 + Step 3.2 指令）：一面/二面/三面/HR面 → `secondary-lilac` / 笔试/测评 → `secondary-yellow` / Offer → `secondary-mint` + `#4A9970` / 其他（已投递/挂了）→ `neutral`
+  - 状态颜色映射：待参加 → `neutral/50` / 已完成 → `#EEEAF0` / 已通过 → `secondary-mint` + `#4A9970` / 未通过 → `danger/25` + `primary-strong`
+  - 行交互：点击整行 `console.log('row click', stageId)`（Phase 4.3 接 Drawer），操作列表头只渲染 "操作" 文字和 "—" 占位（无任何按钮，防与 Phase 4.4 冲突）
+  - 验证备注：typecheck 0 错误 / build 通过（/dashboard 2.01kB 含 Client bundle）/ 有数据：dev server HTTP 200 + grep HTML 命中`未来 7 天流程安排`/`linear-gradient`/`bg-secondary-lilac`/`bg-secondary-yellow`/`bg-secondary-mint`/`bg-neutral`/`bg-soft-panel`/`一面`×3/`笔试`×3/`待参加`/`已通过`/`阿里`×6/`未关联`×2 / 空态：清空 Stage 后 HTML 命中"未来 7 天暂无流程安排"+"可以先把简历准备好"+"有新流程时" / hover class `hover:bg-soft-panel hover:-translate-y-px` 已出现在 DOM。当前 DB 里保留 2 条 demo Stage 方便本地预览（可随时清空）
 - [ ] **Step 3.3** — `/dashboard` 其余 4 个模块占位
   - 完成日期：
   - 关键产物：`components/dashboard/TomorrowReminder.tsx` / `DailyIntel.tsx` / `ResumeCard.tsx` / `AICopilot.tsx`
