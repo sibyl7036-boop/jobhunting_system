@@ -20,13 +20,13 @@
 |---|---|---|---|---|
 | 0 | 项目骨架 + git 基线 + API 连通性验证 | 7 | 7/7 | ✅✅✅✅✅✅✅ |
 | 1 | 数据层（6 个 model） | 4 | 4/4 | ✅✅✅✅ |
-| 2 | REST API（非 AI） | 6 | 0/6 | ⬜⬜⬜⬜⬜⬜ |
+| 2 | REST API（非 AI） | 6 | 6/6 | ✅✅✅✅✅✅ |
 | 3 | 三页骨架 | 5 | 0/5 | ⬜⬜⬜⬜⬜ |
 | 4 | Drawer + 手动 CRUD | 4 | 0/4 | ⬜⬜⬜⬜ |
 | 5 | Resume 上传预览关联 | 3 | 0/3 | ⬜⬜⬜ |
 | 6 | 豆包 AI 接入 | 6 | 0/6 | ⬜⬜⬜⬜⬜⬜ |
 | 7 | 打磨验收 | 4 | 0/4 | ⬜⬜⬜⬜ |
-| **合计** | | **39** | **11/39** | **28%** |
+| **合计** | | **39** | **17/39** | **44%** |
 
 ---
 
@@ -100,26 +100,32 @@
 
 ## Phase 2 · REST API（非 AI）
 
-- [ ] **Step 2.1** — Resume API（不含上传）
-  - 完成日期：
-  - 关键产物：`app/api/resumes/route.ts` / `app/api/resumes/[id]/route.ts`
-- [ ] **Step 2.2** — Application API
-  - 完成日期：
-  - 关键产物：`app/api/applications/[id]/route.ts` / `app/api/applications/route.ts`（POST）
-- [ ] **Step 2.3** — Stage API + Dashboard / Calendar 事件查询
-  - 完成日期：
-  - 关键产物：`app/api/stages/**` / `app/api/dashboard/events/route.ts` / `app/api/calendar/events/route.ts`
-- [ ] **Step 2.4** — Companies Progress API
-  - 完成日期：
-  - 关键产物：`app/api/companies/progress/route.ts`
-- [ ] **Step 2.5** — 统一错误处理 + 日志
-  - 完成日期：
-  - 关键产物：`lib/api.ts` / 所有 route 重构
-- [ ] **Step 2.6** — 烟测脚本
-  - 完成日期：
-  - 关键产物：`scripts/smoke-api.ts`
+- [x] **Step 2.1** — Resume API（不含上传）
+  - 完成日期：2026-04-18
+  - 关键产物：`lib/api.ts`（ApiError / jsonOk / jsonError / withApiHandler / parseJsonBody）/ `lib/serialize.ts`（JSON 数组字段序列化工具）/ `app/api/resumes/route.ts`（GET 列表 desc / POST 暂不开放）/ `app/api/resumes/[id]/route.ts`（PATCH / DELETE 含引用校验 409）
+  - 验证备注：修复了 `.env.local` 的 DATABASE_URL（从 `file:./prisma/dev.db` 改成 `file:./dev.db`，Prisma Client 运行时相对 schema.prisma 解析）。curl 全通：GET /api/resumes 200 含手动插的测试 Resume / PATCH does-not-exist 返 404 / PATCH 合法改名 200 / PATCH 非法 tag 返 400 + 错误消息含 PRD 4 个枚举 / DELETE 被 Application.linkedResumeId 引用返 409 + 提示"腾讯-待填"岗位名
+- [x] **Step 2.2** — Application API
+  - 完成日期：2026-04-18
+  - 关键产物：`app/api/applications/route.ts`（POST）/ `app/api/applications/[id]/route.ts`（GET 含 stages + linkedResume / PATCH / DELETE）
+  - 验证备注：POST 返 201 + currentStatus 默认"未投递" / GET 返回 stages:[]（新 Application 无 Stage）+ linkedResume:null / PATCH 合法改 currentStatus+jdKeywords 成功（数组正确存 JSON 字符串+返时反序列化） / PATCH 非法 currentStatus 返 400 + 错误消息含 10 个枚举（已投递/笔试/.../Offer/挂了/未投递） / DELETE 200 + 后续 GET 返 404
+- [x] **Step 2.3** — Stage API + Dashboard / Calendar 事件查询
+  - 完成日期：2026-04-18
+  - 关键产物：`lib/dates.ts`（本地时区日期工具：startOfToday/startOfDayOffset/parseDateStartLocal/parseDateEndLocal/formatLocalDate/parseRangeDays）/ `app/api/stages/route.ts`（POST + applicationId 外键校验）/ `app/api/stages/[id]/route.ts`（PATCH / DELETE）/ `app/api/dashboard/events/route.ts`（半开区间 [今天, 今天+N天)） / `app/api/calendar/events/route.ts`（闭区间 [start 00:00, end 23:59:59.999]）
+  - 验证备注：dashboard range=7d 返回 2 条（今天+明天，不含 8 天后）/ range=10d 返 3 条 / range=abc / range=7 都返 400 含具体原因 / calendar 2026-04-01~04-30 命中 4-30 23:30 的 Stage（跨月边界正确）/ 5-01~5-31 不命中 / start>end 400 / 格式错误 400 / POST Stage 外键不存在 404
+- [x] **Step 2.4** — Companies Progress API
+  - 完成日期：2026-04-18
+  - 关键产物：`app/api/companies/progress/route.ts`（按 PRD 5.3.3 硬编码 10 家公司顺序，一次性 findMany 后按 companyName 聚合）
+  - 验证备注：只跑种子不加任何 Application 时 10 家全 isEmpty:true / 给腾讯加"游戏产品" + 2 Stage 后腾讯 apps=2（占位"待填"isEmpty:true + "游戏产品"isEmpty:false stages=2 按 time asc）/ 响应 11ms 远低于 100ms 要求
+- [x] **Step 2.5** — 统一错误处理 + 日志
+  - 完成日期：2026-04-18
+  - 关键产物：`lib/api.ts`（实际在 Step 2.1 开头就建了：ApiError 类 / jsonOk / jsonError / withApiHandler 高阶 / parseJsonBody / notFound / conflict / validationError 工厂；错误 code 枚举 VALIDATION_ERROR/NOT_FOUND/CONFLICT/INTERNAL_ERROR）
+  - 验证备注：2.1~2.4 所有 route 从一开始就用 withApiHandler（无需重构）；临时建 app/api/test-throw/route.ts 故意抛异常 → 返 500 INTERNAL_ERROR + dev log 有 [api] uncaught 前缀（dev 模式 details 含原始消息，生产模式隐藏）；非法 JSON body 返 400 "请求体必须是合法 JSON"；zod 校验失败自动 400 含 path 和 message；回归 2.1~2.4 代表用例全过。临时 test-throw route 已删除。
+- [x] **Step 2.6** — 烟测脚本
+  - 完成日期：2026-04-18
+  - 关键产物：`scripts/smoke-api.ts`（14 个断言覆盖 Resume GET / Application CRUD / Stage POST+PATCH+DELETE / Dashboard events 合法+非法 / Calendar events 合法+非法 / Companies progress 含数量=10 校验）
+  - 验证备注：`pnpm tsx scripts/smoke-api.ts` 一条命令跑完，通过 14 失败 0；build 时捕到一个 Prisma 类型问题（`Application.linkedResumeId` 在 update 时必须用 `linkedResume.connect/disconnect` nested write，不能直接赋字段），已修复并回归通过
 
-**Phase 2 出口** ☐ 已追加 architecture.md 里程碑「非 AI REST API 全部就绪」
+**Phase 2 出口** ☑ 非 AI REST API 全部就绪：8 个 endpoint（Resume×2 / Application×2 / Stage×2 / Dashboard events / Calendar events / Companies progress）+ 统一错误处理 + 烟测脚本
 
 ---
 

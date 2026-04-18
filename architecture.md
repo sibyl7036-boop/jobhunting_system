@@ -15,7 +15,7 @@
 
 ## 🗺️ 目录树（当前真实状态）
 
-> 当前仓库处于"**Phase 1 完成**"——6 个数据 model + 10 家大厂种子 + zod schema 全套就绪。Phase 2 REST API 待开始。
+> 当前仓库处于"**Phase 2 完成**"——8 个非 AI REST API 全部就绪 + 烟测脚本 14/14 通过 + 统一错误处理。Phase 3 三页骨架待开始。
 
 ```
 /Users/sibyl/Desktop/system/
@@ -26,109 +26,88 @@
 ├── progress.md                      ← 已有 · 进度真相（逐步勾选清单）
 ├── architecture.md                  ← 已有 · 文件地图（本文件）
 ├── CODEBUDDY.md                     ← 已有 · AI Agent 入口（首读）
-├── .env                             ← 已有 · Prisma CLI 专用（只有 DATABASE_URL="file:./dev.db"）；不进 git
-├── .env.local                       ← 已有 · Next.js runtime 环境变量（DATABASE_URL / DOUBAO_*）；不进 git
+├── .env                             ← 已有 · Prisma CLI 专用（DATABASE_URL="file:./dev.db"）；不进 git
+├── .env.local                       ← 已有 · Next.js runtime（DATABASE_URL="file:./dev.db" + DOUBAO_*）；不进 git
 ├── .gitignore                       ← 已有 · 保护 node_modules / .next / .env* / dev.db / uploads / .workbuddy 等
 ├── .workbuddy/                      ← 已有 · 工作记忆（不进 git）
 │
-│ ── Phase 0 产物 ──
-├── package.json                     ← 已有 · Next 15.5 + React 18.3 + Tailwind 3.4 + TS 5.9 + Prisma 5.22 + shadcn 依赖 + zod 4.3
-├── pnpm-lock.yaml                   ← 已有 · 依赖锁定
-├── pnpm-workspace.yaml              ← 已有 · onlyBuiltDependencies 白名单（@prisma/engines / prisma / tailwindcss-oxide）
-├── tsconfig.json                    ← 已有 · TypeScript 配置，含 `@/*` path alias
-├── next.config.ts                   ← 已有 · Next.js 配置（当前为空 defaults）
-├── next-env.d.ts                    ← 已有 · Next.js 自动生成（gitignore 忽略；仓库初始 commit 保留了一份）
-├── .eslintrc.json                   ← 已有 · ESLint 8 配置，extends next/core-web-vitals + next/typescript
-├── tailwind.config.ts               ← 已有 · UI.md 4.1~4.6 全部色值 + 阴影 + 字体 + 字号 + 圆角 + tailwindcss-animate plugin
-├── postcss.config.mjs               ← 已有 · PostCSS 走 tailwindcss + autoprefixer
-├── components.json                  ← 已有 · shadcn/ui 配置（new-york / neutral / cssVars / @/* alias）
-│
+│ ── Phase 0 产物（脚手架 + Tailwind + shadcn + Prisma 连通 + 布局 + Ark 冒烟） ──
+├── package.json / pnpm-lock.yaml / pnpm-workspace.yaml / tsconfig.json
+├── next.config.ts / next-env.d.ts / .eslintrc.json
+├── tailwind.config.ts / postcss.config.mjs / components.json
 ├── app/
-│   ├── layout.tsx                   ← 已有 · 三区布局（Sidebar + Header + main），zh-CN + UI.md 语义令牌
-│   ├── page.tsx                     ← 已有 · 重定向到 /dashboard
-│   ├── globals.css                  ← 已有 · Tailwind 3 三件套 + body 基线（app-bg + text-primary + PingFang + 行高 1.5）
-│   ├── favicon.ico                  ← 已有 · 默认图标
-│   ├── dashboard/page.tsx           ← 已有 · 占位页（Phase 3.2+3.3 实现真实模块）
-│   ├── calendar/page.tsx            ← 已有 · 占位页（Phase 3.4 实现月视图）
-│   └── companies/page.tsx           ← 已有 · 占位页（Phase 3.5 实现）
-├── public/                          ← 已有 · 静态资源（next.svg 等；Phase 7.2 清理）
-│
+│   ├── layout.tsx / page.tsx / globals.css / favicon.ico
+│   ├── dashboard/page.tsx / calendar/page.tsx / companies/page.tsx   ← 占位，Phase 3 实现
+├── public/                          ← 静态资源
 ├── components/
-│   ├── ui/
-│   │   └── button.tsx               ← 已有 · shadcn Button，variant 映射 UI.md 4.2 粉色阶梯 + 4.6 状态色
-│   ├── layout/
-│   │   ├── Sidebar.tsx              ← 已有 · 左侧固定导航栏（UI.md 6.2）
-│   │   └── Header.tsx               ← 已有 · 顶部 Header（UI.md 6.3，按路由切 UI.md 8.2/9/10 标题）
-│   └── CatIcon.tsx                  ← 已有 · 小猫占位（lucide Cat；Phase 7.2 换 UI.md 12.3 自定义 SVG）
-│
+│   ├── ui/button.tsx                ← shadcn Button（粉色 variant）
+│   ├── layout/Sidebar.tsx           ← UI.md 6.2
+│   ├── layout/Header.tsx            ← UI.md 6.3
+│   └── CatIcon.tsx                  ← lucide Cat 占位（Phase 7.2 换 SVG）
 ├── lib/
-│   ├── utils.ts                     ← 已有 · shadcn 约定的 cn() 辅助（clsx + tailwind-merge）
-│   └── db.ts                        ← 已有 · Prisma Client 单例（dev 模式挂 globalThis 防 HMR 泄漏）
-│
+│   ├── utils.ts                     ← cn()
+│   └── db.ts                        ← Prisma Client 单例
 ├── scripts/
-│   └── test-ark-api.ts              ← 已有 · 【临时，Phase 6.1 完成后删除】Ark API 冒烟脚本（已决策走 /chat/completions + response_format）
+│   └── test-ark-api.ts              ← 【临时，Phase 6.1 完成后删除】Ark 冒烟
 │
-│ ── Phase 1 产物 ──
+│ ── Phase 1 产物（6 个 model + 种子 + zod） ──
 ├── prisma/
-│   ├── schema.prisma                ← 已有 · 6 个 model（Resume / Application（含 interviewQuestions）/ Stage / AIRun / IntelSummary / TomorrowTipCache）+ 中文枚举字符串 + Cascade/SetNull 关系
-│   ├── seed.ts                      ← 已有 · 幂等种子脚本，预置 10 家大厂占位 Application（阿里/腾讯/字节/美团/百度/京东/拼多多/小红书/快手/滴滴）
-│   ├── migrations/
-│   │   └── 20260418121855_init/     ← 已有 · 首次迁移（建 6 张表 + 索引）
-│   └── dev.db                       ← 已有 · SQLite 数据库（运行时产物，gitignore）
+│   ├── schema.prisma                ← 6 个 model（Resume / Application（含 interviewQuestions）/ Stage / AIRun / IntelSummary / TomorrowTipCache）
+│   ├── seed.ts                      ← 幂等种子：10 家大厂占位
+│   ├── migrations/20260418121855_init/  ← 首次迁移（6 表 + 索引）
+│   └── dev.db                       ← SQLite 文件（gitignore）
 ├── lib/schemas/
-│   ├── enums.ts                     ← 已有 · PRD 所有中文枚举（RESUME_TAGS/STAGE_TYPES/APPLICATION_STATUSES/STAGE_STATUSES/AI_TASK_TYPES/AI_RUN_STATUSES）+ zod enum schema
-│   ├── entities.ts                  ← 已有 · 6 实体 zod schema（Xxx / XxxCreateInput / XxxUpdateInput 三套）+ `z.infer` 类型导出
-│   ├── ai-outputs.ts                ← 已有 · PRD 9.1~9.4 四个 AI JSON 输出 zod schema
-│   └── index.ts                     ← 已有 · barrel 导出
-
-（以下 Phase 2+ 陆续产生）
-├── README.md                        ← 计划中 · 仓库门面，写"三条命令跑起来"（Phase 7.4 产生）
+│   ├── enums.ts                     ← 6 组中文枚举 + zod enum
+│   ├── entities.ts                  ← 6 实体 schema + Create/Update 派生 + z.infer 类型
+│   ├── ai-outputs.ts                ← PRD 9.1~9.4 四个 AI JSON 输出 schema
+│   └── index.ts                     ← barrel
 │
-├── app/api/                         ← 计划中 · Phase 2 起 REST API Route Handlers
+│ ── Phase 2 产物（REST API 非 AI + 统一错误处理 + 烟测） ──
+├── lib/
+│   ├── api.ts                       ← 已有 · ApiError / jsonOk / jsonError / withApiHandler / parseJsonBody / notFound / conflict / validationError 工厂
+│   ├── serialize.ts                 ← 已有 · JSON 字符串数组字段 ↔ 应用层数组（serializeApplication + parseStringArray + stringifyStringArray）
+│   └── dates.ts                     ← 已有 · 本地时区日期工具（startOfToday / parseDateStartLocal / parseDateEndLocal / formatLocalDate / parseRangeDays）
+├── app/api/
 │   ├── resumes/
-│   │   ├── route.ts                 ← GET 列表
-│   │   ├── upload/route.ts          ← POST 上传（multipart PDF）
-│   │   └── [id]/
-│   │       ├── route.ts             ← PATCH 改名 / DELETE
-│   │       └── file/route.ts        ← GET 流式返回 PDF 文件
+│   │   ├── route.ts                 ← 已有 · GET 列表（createdAt desc）
+│   │   └── [id]/route.ts            ← 已有 · PATCH / DELETE（被 Application 引用返 409 + 提示岗位名）
 │   ├── applications/
-│   │   ├── route.ts                 ← POST 创建
-│   │   └── [id]/route.ts            ← GET（含 stages）/ PATCH / DELETE
+│   │   ├── route.ts                 ← 已有 · POST（currentStatus 默认 "未投递"）
+│   │   └── [id]/route.ts            ← 已有 · GET（含 stages asc + linkedResume）/ PATCH（linkedResumeId 用 nested connect/disconnect）/ DELETE（级联删 Stage）
 │   ├── stages/
-│   │   ├── route.ts                 ← POST 创建
-│   │   └── [id]/route.ts            ← PATCH / DELETE
-│   ├── dashboard/
-│   │   └── events/route.ts          ← GET ?range=Nd 的流程事件
-│   ├── calendar/
-│   │   └── events/route.ts          ← GET ?start=&end= 的流程事件
-│   ├── companies/
-│   │   └── progress/route.ts        ← GET 10 家公司 × Application × Stage 全量
-│   └── ai/
-│       ├── parse-email/route.ts     ← POST 解析面试邮件（走 /chat/completions · 输出 JSON · 草稿态）
-│       ├── parse-jd/route.ts        ← POST 解析 JD
-│       ├── generate-questions/route.ts ← POST 生成面试题
-│       ├── review/route.ts          ← POST 面试复盘
-│       └── daily-intel/route.ts     ← GET 今日大厂动向摘要（按生成日本地时区缓存）
+│   │   ├── route.ts                 ← 已有 · POST（applicationId 外键校验 → 404）
+│   │   └── [id]/route.ts            ← 已有 · PATCH / DELETE
+│   ├── dashboard/events/route.ts    ← 已有 · GET ?range=Nd（半开区间 [今天 00:00, 今天+N 天 00:00)）
+│   ├── calendar/events/route.ts     ← 已有 · GET ?start&end（闭区间 [start 00:00:00, end 23:59:59.999]）
+│   └── companies/progress/route.ts  ← 已有 · GET 10 家公司按 PRD 顺序 × Application × Stage + isEmpty 标记
+├── scripts/
+│   └── smoke-api.ts                 ← 已有 · Phase 2 烟测脚本（14 断言，一条命令跑完 CRUD）
+
+（以下 Phase 3+ 陆续产生）
+├── README.md                        ← 计划中 · 仓库门面（Phase 7.4）
 │
-├── components/                      ← 计划中 · Phase 3+ 产生业务组件
-│   ├── ui/                          ← shadcn/ui 后续按需添加（card / dialog / sheet / table / badge 等）
+├── app/api/ai/                      ← 计划中 · Phase 6 AI Route Handlers
+│   ├── parse-email/route.ts
+│   ├── parse-jd/route.ts
+│   ├── generate-questions/route.ts
+│   ├── review/route.ts
+│   └── daily-intel/route.ts
+│
+├── components/                      ← 计划中 · Phase 3+ 业务组件
+│   ├── ui/                          ← shadcn/ui 按需添加（card / dialog / sheet / table / badge 等）
 │   ├── dashboard/                   ← 首页 5 模块
-│   ├── calendar/                    ← 日历组件
+│   ├── calendar/                    ← 日历月视图
 │   ├── companies/                   ← 公司流程行
-│   └── drawer/                      ← 全局右侧 Drawer 容器及内容组件
+│   └── drawer/                      ← 全局 Drawer 容器
 │
-├── lib/                             ← 计划中 · Phase 2+ 起产生
-│   ├── fetcher.ts                   ← 最小化 fetch 封装（自动抛错）
-│   ├── api.ts                       ← API route 通用：jsonOk / jsonError / withApiHandler
-│   ├── llmClient.ts                 ← Ark API 唯一出口 callAI（/chat/completions + response_format）
-│   ├── prompts.ts                   ← PRD 9.1~9.5 的 5 个 system prompt 原文常量
-│   ├── fakeIntelSource.ts           ← 本地硬编码的大厂资讯样例（供 daily-intel 使用）
-│   └── queries/                     ← 各 API 对应的前端 query 函数
+├── lib/                             ← 计划中 · Phase 3+ 继续扩展
+│   ├── fetcher.ts                   ← Phase 3.1 最小化 fetch 封装
+│   ├── llmClient.ts                 ← Phase 6.1 Ark API 唯一出口 callAI
+│   ├── prompts.ts                   ← Phase 6.1 PRD 9.1~9.5 原文常量
+│   ├── fakeIntelSource.ts           ← Phase 6.5 本地硬编码资讯
+│   └── queries/                     ← Phase 3.1 前端 query 函数
 │
-├── uploads/                         ← 计划中 · PDF 简历本地存储目录（不进 git，运行时自动创建）
-│
-└── scripts/
-    └── smoke-api.ts                 ← 计划中 · Phase 2.6 非 AI REST API 烟测脚本
+├── uploads/                         ← 计划中 · Phase 5.1 PDF 简历目录（gitignore）
 
 └── node_modules/                    ← 已有 · pnpm 安装产物（不进 git）
 ```
@@ -213,6 +192,8 @@
 9. **前端技术栈版本锁定（2026-04-18 Step 0.1 决策）** → `create-next-app@latest` 默认拉 Next 16 + Tailwind 4 + React 19，与 `tech_stack.md` 规格不符、且会让后续 Tailwind 配置指令失效。本项目**强制降版到 Next 15 + Tailwind 3 + React 18 + ESLint 8**（通过手写 `package.json` 锁定，具体版本：next ^15.1 / tailwindcss ^3.4 / react ^18.3 / eslint ^8.57 / eslint-config-next ^15.1）。未来升级需同步重写 `tailwind.config.ts` 和 implementation_plan 相关步骤。
 10. **zod schema 统一落 `lib/schemas/`（2026-04-18 Step 1.4 决策）** → 不单独建 `types/`，zod schema 一份文件同时承担"运行时校验"和"`z.infer` 出 TS 类型源"两个角色。`lib/schemas/enums.ts`（6 组中文枚举）+ `lib/schemas/entities.ts`（6 实体 + Create/Update 派生）+ `lib/schemas/ai-outputs.ts`（PRD 9.1~9.4 的 AI JSON 输出）+ `lib/schemas/index.ts`（barrel）。新增依赖：zod 4.3.6。
 11. **JSON 字符串数组约定** → SQLite 不支持数组，`Application.jdKeywords` / `Application.expectedSkills` / `Application.interviewQuestions` / `AIRun.outputJson` 在 DB 里统一用 `String?` 存 JSON 字符串；应用层（API route）读写时 `JSON.parse` / `JSON.stringify` 转换；zod schema 在应用层用原生 `z.array(z.string())` / `z.record()` 类型。
+12. **API 错误结构规约（2026-04-18 Step 2.1/2.5 决策）** → 所有 API route 必经 `withApiHandler` 包装。成功返数据；失败返 `{ error: { code, message, details? } }` + HTTP 4xx/5xx。`code` 枚举：`VALIDATION_ERROR`（400）/ `NOT_FOUND`（404）/ `CONFLICT`（409）/ `INTERNAL_ERROR`（500）。zod 校验失败会被 `withApiHandler` 自动转为 400。Prisma 外键 update 必须用 nested `connect/disconnect`（不能直接赋 `linkedResumeId`）。
+13. **API 时间语义（2026-04-18 Step 2.3 决策）** → 全部本地时区。`/api/dashboard/events?range=Nd` 返回 `[今天 00:00:00.000, 今天+N 天 00:00:00.000)` 半开区间内的 Stage；`/api/calendar/events?start&end` 返回 `[start 00:00:00.000, end 23:59:59.999]` 闭区间内的 Stage。日期字符串只接受 `YYYY-MM-DD`，range 只接受 `Nd`（N ∈ [1, 365]）。
 
 ---
 
