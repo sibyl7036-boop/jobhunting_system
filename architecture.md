@@ -15,7 +15,7 @@
 
 ## 🗺️ 目录树（当前真实状态）
 
-> 当前仓库处于"**Phase 3 进行中 · Step 3.1 完成**"——数据请求层已就绪（Server Component 直调 Prisma + 客户端 fetcher 封装）。Phase 2 已交付 8 个非 AI REST API + 烟测 14/14。
+> 当前仓库处于"**Phase 4 完成 ✅**"——三页骨架 + 全局 Drawer（URL 参数驱动）+ 手动 CRUD 闭环（查看/编辑/新增/删除 + 二次确认 + toast）。下一步 Phase 5 Resume 上传预览关联。Phase 2 已交付 8 个非 AI REST API + 烟测 14/14；Phase 3 Phase 4 共新增 3 个 client 路由 + 1 个新端点 `/api/stages/[id]/detail`。
 
 ```
 /Users/sibyl/Desktop/system/
@@ -104,8 +104,30 @@
 │   └── MonthView.tsx                ← 已有 · Step 3.4 · 月视图（7 列 grid + 当日事件列表 + 月份切换，Client Component 拉 /api/calendar/events）
 ├── app/calendar/page.tsx            ← Step 3.4 · Server Component SSR 注入首屏月网格事件，后续切月由 Client 端 fetch
 ├── components/companies/
-│   └── CompanyRow.tsx               ← 已有 · Step 3.5 · 大厂单行（9 节点胶囊 + 颜色 4 态 + hover 浮起 + 细线连接 + MoreHorizontal 占位）
+│   ├── CompanyRow.tsx               ← 已有 · Step 3.5 + 4.3 + 4.4 · 9 节点胶囊 + 节点点击开 Drawer + MoreHorizontal 菜单（新增节点 / 删除岗位，带二次确认）
+│   └── NewApplicationButton.tsx     ← 已有 · Step 4.4 · /companies 右上 "新增申请" Client 按钮（开 application-new Drawer）
 ├── app/companies/page.tsx           ← Step 3.5 · Server Component 拉 getCompaniesProgress，10 家按 PRD 顺序 divide-y 分隔
+
+│ ── Phase 4 产物（全局 Drawer + 手动 CRUD + 二次确认 + toast） ──
+├── components/ui/
+│   ├── sheet.tsx                    ← 已有 · Step 4.1 · shadcn Sheet new-york（440px + 左侧大圆角 + 240ms + 圆形 X 关闭）
+│   ├── dialog.tsx                   ← 已有 · Step 4.1 · shadcn Dialog 精简版（二次确认用）
+│   ├── input.tsx                    ← 已有 · Step 4.1 · shadcn Input
+│   ├── select.tsx                   ← 已有 · Step 4.1 · 原生 select 包 Tailwind（不引入 @radix-ui/react-select）
+│   └── label.tsx                    ← 已有 · Step 4.1 · 简版 Label
+├── components/drawer/
+│   ├── DetailDrawer.tsx             ← 已有 · Step 4.1 · URL search params 驱动的 Drawer 容器（挂在 layout）
+│   ├── StageDrawerContent.tsx       ← 已有 · Step 4.2 · Stage 详情 + 编辑（react-hook-form + zod + SWR + dirty 态 + 保存并发 PATCH）
+│   ├── NewStageDrawerContent.tsx    ← 已有 · Step 4.4 · 新建 Stage（可预填 applicationId / date，下拉选已有 Application）
+│   └── NewApplicationDrawerContent.tsx ← 已有 · Step 4.4 · 新建 Application + 可选第一个 Stage（原子化：先 POST app 后 POST stage，失败保留表单）
+├── components/common/
+│   └── ConfirmDeleteDialog.tsx      ← 已有 · Step 4.4 · 通用删除二次确认（title/description/loading/toast）
+├── lib/
+│   ├── drawerUrl.ts                 ← 已有 · Step 4.3 · useOpenDrawer / useCloseDrawer（URL 参数工具）
+├── app/api/
+│   ├── applications/route.ts        ← 升级 · Step 4.4 · GET 列表（支持 includeEmpty=true 查询参数）+ POST（已有）
+│   └── stages/[id]/detail/route.ts  ← 已有 · Step 4.1 · Drawer 专用 GET，一次性返 stage+application+linkedResume（含 JSON 数组反序列化）
+├── app/layout.tsx                   ← 升级 · Step 4.1 · 挂 Suspense+DetailDrawer + Toaster(sonner) + 粉色风格 toast 样式
 
 （以下 Phase 3+ 陆续产生）
 ├── README.md                        ← 计划中 · 仓库门面（Phase 7.4）

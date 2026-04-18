@@ -5,44 +5,37 @@
  *
  * 首页主模块 · 时间维度流程表格（PRD 5.1.1 + UI.md 8.3）
  *
- * 外观要点：
- *   - 大白卡（radius 24px）+ shadow-soft + 顶部粉-黄渐变装饰线
- *   - 标题「未来 7 天流程安排」+ 右侧 tabs（今日 / 明日 / 本周，仅 UI，Phase 7 再接交互）
- *   - 浅分隔、无重线框；行高 64px；hover 背景 soft-panel + translateY(-1px)
- *   - 9 列：日期 / 时间 / 事件类型 / 公司 / 部门 / 岗位 / 当前状态 / 关联简历 / 操作
- *   - 操作列 Phase 3 只渲染占位表头，不放任何图标按钮（避免与 Phase 4.4 冲突）
- *   - 空态文案：未来 7 天暂无流程安排，可以先把简历准备好 🌸
- *
- * 交互约定：
- *   - 整行点击：console.log('row click', stageId)（Phase 4.3 再接 Drawer）
+ * Step 3.2 外观 + Step 4.3 行点击打开 Drawer + Step 4.4 操作列（Eye/Check/Pencil/Trash2）+ 新增事件按钮
  */
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Eye, Check, Pencil, Trash2, Plus } from "lucide-react";
+
 import { cn } from "@/lib/utils";
+import { useOpenDrawer } from "@/lib/drawerUrl";
+import { fetchJson } from "@/lib/fetcher";
+import { Button } from "@/components/ui/button";
+import { ConfirmDeleteDialog } from "@/components/common/ConfirmDeleteDialog";
 
 // ──────────────────────────────────────────────────────────────────────
-// 单元格视觉映射（严格按 UI.md 8.3 + Step 3.2 指令）
+// 视觉映射
 // ──────────────────────────────────────────────────────────────────────
 
-/** 事件类型 → 胶囊底色/字色 */
 function typeChipClass(type: string): string {
-  // 面试类：一面/二面/三面/HR面 → 浅粉紫 + text-primary
   if (["一面", "二面", "三面", "HR面"].includes(type)) {
     return "bg-secondary-lilac text-text-primary";
   }
-  // 笔试/测评 → 浅黄 + text-primary
   if (["笔试", "测评"].includes(type)) {
     return "bg-secondary-yellow text-text-primary";
   }
-  // Offer（Stage.type 里是「Offer」；PRD 界面展示同义「Offer 沟通」）→ 浅绿 + success 深字
   if (type === "Offer") {
     return "bg-secondary-mint text-[#4A9970]";
   }
-  // 其他（已投递 / 挂了）→ neutral 底 + text-secondary
   return "bg-neutral/60 text-text-secondary";
 }
 
-/** 当前状态 → 柔和小标签底色/字色（UI.md 4.7 状态使用规则 + Step 3.2 指令） */
 function statusChipClass(status: string): string {
   switch (status) {
     case "待参加":
@@ -57,10 +50,6 @@ function statusChipClass(status: string): string {
       return "bg-neutral/40 text-text-secondary";
   }
 }
-
-// ──────────────────────────────────────────────────────────────────────
-// 日期/时间格式化（本地时区；time 为 null 时容错）
-// ──────────────────────────────────────────────────────────────────────
 
 function formatDate(d: Date | null): string {
   if (!d) return "—";
@@ -77,23 +66,13 @@ function formatTime(d: Date | null): string {
 }
 
 // ──────────────────────────────────────────────────────────────────────
-// Props
+// 类型
 // ──────────────────────────────────────────────────────────────────────
 
-interface EventTableProps {
-  events: SerializedEvent[];
-}
-
-/**
- * Server → Client 边界上的序列化类型。
- * 父 Server Component 负责把 Date 转 string 传进来（避免 RSC 序列化 Date 时的歧义），
- * 列表项的 time 在 DB 里本就可空。
- */
 export interface SerializedEvent {
   id: string;
   type: string;
   status: string;
-  /** ISO 字符串，或 null */
   timeIso: string | null;
   application: {
     id: string;
@@ -104,23 +83,25 @@ export interface SerializedEvent {
   };
 }
 
-// ──────────────────────────────────────────────────────────────────────
-// 组件
-// ──────────────────────────────────────────────────────────────────────
+interface EventTableProps {
+  events: SerializedEvent[];
+}
 
 const TABS = ["今日", "明日", "本周"] as const;
 
+// ──────────────────────────────────────────────────────────────────────
+// 主组件
+// ──────────────────────────────────────────────────────────────────────
+
 export function EventTable({ events }: EventTableProps) {
-  // tabs 仅渲染 UI，不切换数据（Phase 7 再接）
   const [activeTab, setActiveTab] = React.useState<(typeof TABS)[number]>(
     "本周"
   );
-
+  const openDrawer = useOpenDrawer();
   const isEmpty = events.length === 0;
 
   return (
     <section className="relative overflow-hidden rounded-card-lg bg-surface-bg shadow-soft">
-      {/* 顶部极淡的粉→黄渐变装饰线（UI.md 8.3） */}
       <div
         aria-hidden
         className="absolute inset-x-0 top-0 h-[3px]"
@@ -131,31 +112,40 @@ export function EventTable({ events }: EventTableProps) {
         }}
       />
 
-      {/* 卡片内容 */}
       <div className="px-6 py-6">
-        {/* 卡片标题 + tabs */}
         <header className="mb-5 flex items-center justify-between gap-4">
           <h2 className="text-section-title text-text-primary">
             未来 7 天流程安排
           </h2>
 
-          {/* tabs：仅 UI，点击暂不切换数据 */}
-          <div className="flex items-center gap-1 rounded-pill bg-soft-panel p-1">
-            {TABS.map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setActiveTab(t)}
-                className={cn(
-                  "rounded-pill px-4 py-1.5 text-caption transition-colors",
-                  activeTab === t
-                    ? "bg-surface-bg text-text-primary shadow-soft"
-                    : "text-text-secondary hover:text-text-primary"
-                )}
-              >
-                {t}
-              </button>
-            ))}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 rounded-pill bg-soft-panel p-1">
+              {TABS.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setActiveTab(t)}
+                  className={cn(
+                    "rounded-pill px-4 py-1.5 text-caption transition-colors",
+                    activeTab === t
+                      ? "bg-surface-bg text-text-primary shadow-soft"
+                      : "text-text-secondary hover:text-text-primary"
+                  )}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+
+            {/* Step 4.4 · 新增事件按钮 */}
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => openDrawer({ type: "stage-new" })}
+            >
+              <Plus />
+              新增事件
+            </Button>
           </div>
         </header>
 
@@ -174,7 +164,6 @@ export function EventTable({ events }: EventTableProps) {
                   <Th>岗位</Th>
                   <Th>当前状态</Th>
                   <Th>关联简历</Th>
-                  {/* 操作列：Phase 3 仅渲染表头占位，Phase 4.4 接入图标按钮 */}
                   <Th className="text-right">操作</Th>
                 </tr>
               </thead>
@@ -216,80 +205,172 @@ function Th({
 }
 
 function EventRow({ e }: { e: SerializedEvent }) {
+  const router = useRouter();
   const time = e.timeIso ? new Date(e.timeIso) : null;
   const resume = e.application.linkedResume;
+  const openDrawer = useOpenDrawer();
+  const [confirmOpen, setConfirmOpen] = React.useState(false);
+  const [marking, setMarking] = React.useState(false);
 
-  const handleClick = () => {
-    // Phase 4.3 改为打开 Drawer
-    // eslint-disable-next-line no-console
-    console.log("row click", e.id);
+  const handleRowClick = () => {
+    openDrawer({ type: "stage", id: e.id });
+  };
+
+  const handleMarkDone = async () => {
+    setMarking(true);
+    try {
+      await fetchJson(`/api/stages/${e.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: "已完成" }),
+      });
+      toast.success("已标记完成");
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "标记失败");
+    } finally {
+      setMarking(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    await fetchJson(`/api/stages/${e.id}`, { method: "DELETE" });
+    router.refresh();
   };
 
   return (
-    <tr
-      onClick={handleClick}
+    <>
+      <tr
+        onClick={handleRowClick}
+        className={cn(
+          "h-16 cursor-pointer align-middle transition-all duration-150",
+          "hover:bg-soft-panel hover:-translate-y-px hover:shadow-soft",
+          "[&>td]:border-b [&>td]:border-border-light"
+        )}
+      >
+        <Td className="whitespace-nowrap text-text-secondary">
+          {formatDate(time)}
+        </Td>
+        <Td className="whitespace-nowrap font-medium text-text-primary">
+          {formatTime(time)}
+        </Td>
+
+        <Td>
+          <span
+            className={cn(
+              "inline-flex items-center rounded-pill px-3 py-1 text-caption font-medium",
+              typeChipClass(e.type)
+            )}
+          >
+            {e.type}
+          </span>
+        </Td>
+
+        <Td className="font-medium text-text-primary">
+          {e.application.companyName}
+        </Td>
+        <Td className="text-text-secondary">
+          {e.application.departmentName || "—"}
+        </Td>
+        <Td className="text-text-secondary">{e.application.roleName}</Td>
+
+        <Td>
+          <span
+            className={cn(
+              "inline-flex items-center rounded-pill px-2.5 py-0.5 text-caption",
+              statusChipClass(e.status)
+            )}
+          >
+            {e.status}
+          </span>
+        </Td>
+
+        <Td>
+          {resume ? (
+            <span className="inline-flex items-center rounded-pill bg-cool-panel px-3 py-1 text-caption text-text-primary">
+              {resume.name}
+            </span>
+          ) : (
+            <span className="text-caption text-text-tertiary">未关联</span>
+          )}
+        </Td>
+
+        {/* Step 4.4 操作列：4 个 icon 按钮（阻止冒泡） */}
+        <Td className="text-right">
+          <div
+            className="flex items-center justify-end gap-1"
+            onClick={(ev) => ev.stopPropagation()}
+          >
+            <IconBtn
+              label="查看详情"
+              onClick={() => openDrawer({ type: "stage", id: e.id })}
+            >
+              <Eye size={16} />
+            </IconBtn>
+            <IconBtn
+              label="标记完成"
+              disabled={marking || e.status === "已完成"}
+              onClick={handleMarkDone}
+            >
+              <Check size={16} />
+            </IconBtn>
+            <IconBtn
+              label="编辑"
+              onClick={() => openDrawer({ type: "stage", id: e.id })}
+            >
+              <Pencil size={16} />
+            </IconBtn>
+            <IconBtn
+              label="删除"
+              variant="danger"
+              onClick={() => setConfirmOpen(true)}
+            >
+              <Trash2 size={16} />
+            </IconBtn>
+          </div>
+        </Td>
+      </tr>
+
+      <ConfirmDeleteDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="确认删除该流程节点？"
+        description={`将删除「${e.application.companyName} · ${e.application.roleName} · ${e.type}」，此操作不可撤销。`}
+        onConfirm={handleDelete}
+      />
+    </>
+  );
+}
+
+function IconBtn({
+  children,
+  label,
+  onClick,
+  disabled,
+  variant,
+}: {
+  children: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  variant?: "default" | "danger";
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={label}
+      title={label}
       className={cn(
-        // 行高 64px（UI.md 8.3 指定 60~68px 区间）
-        "h-16 cursor-pointer align-middle transition-all duration-150",
-        // hover 背景 + 轻微上浮
-        "hover:bg-soft-panel hover:-translate-y-px hover:shadow-soft",
-        // 浅分隔，不是重线框：底部 1px border-light
-        "[&>td]:border-b [&>td]:border-border-light"
+        "flex h-8 w-8 items-center justify-center rounded-btn-sm transition-colors",
+        variant === "danger"
+          ? "text-text-tertiary hover:bg-danger/15 hover:text-danger"
+          : "text-text-tertiary hover:bg-soft-panel hover:text-primary-strong",
+        "disabled:pointer-events-none disabled:opacity-40"
       )}
     >
-      <Td className="whitespace-nowrap text-text-secondary">
-        {formatDate(time)}
-      </Td>
-      <Td className="whitespace-nowrap font-medium text-text-primary">
-        {formatTime(time)}
-      </Td>
-
-      {/* 事件类型胶囊 */}
-      <Td>
-        <span
-          className={cn(
-            "inline-flex items-center rounded-pill px-3 py-1 text-caption font-medium",
-            typeChipClass(e.type)
-          )}
-        >
-          {e.type}
-        </span>
-      </Td>
-
-      <Td className="font-medium text-text-primary">
-        {e.application.companyName}
-      </Td>
-      <Td className="text-text-secondary">
-        {e.application.departmentName || "—"}
-      </Td>
-      <Td className="text-text-secondary">{e.application.roleName}</Td>
-
-      {/* 当前状态柔和标签 */}
-      <Td>
-        <span
-          className={cn(
-            "inline-flex items-center rounded-pill px-2.5 py-0.5 text-caption",
-            statusChipClass(e.status)
-          )}
-        >
-          {e.status}
-        </span>
-      </Td>
-
-      {/* 关联简历 */}
-      <Td>
-        {resume ? (
-          <span className="inline-flex items-center rounded-pill bg-cool-panel px-3 py-1 text-caption text-text-primary">
-            {resume.name}
-          </span>
-        ) : (
-          <span className="text-caption text-text-tertiary">未关联</span>
-        )}
-      </Td>
-
-      {/* 操作列：Phase 3 仅占位，Phase 4.4 接入 */}
-      <Td className="text-right text-text-tertiary">—</Td>
-    </tr>
+      {children}
+    </button>
   );
 }
 
@@ -304,7 +385,6 @@ function Td({
 }
 
 function EmptyState() {
-  // UI.md 13.5 空态文案风格
   return (
     <div className="flex min-h-[220px] flex-col items-center justify-center gap-2 rounded-card-md bg-app-bg-secondary py-10 text-center">
       <p className="text-body text-text-secondary">

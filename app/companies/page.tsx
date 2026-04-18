@@ -5,13 +5,12 @@
  * 10 家公司按 PRD 5.3.3 固定顺序；每家 0~N 个 Application，每个 Application 横向展示 9 个节点。
  */
 
-import { Plus } from "lucide-react";
 import { getCompaniesProgress } from "@/lib/queries";
 import {
   CompanyRow,
   type SerializedAppForRow,
 } from "@/components/companies/CompanyRow";
-import { Button } from "@/components/ui/button";
+import { NewApplicationButton } from "@/components/companies/NewApplicationButton";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +20,7 @@ export default async function CompaniesPage() {
   return (
     <div className="py-6">
       <section className="rounded-card-lg bg-surface-bg p-6 shadow-soft">
-        {/* 卡片内 header：右上角"新增申请"按钮（仅渲染，Phase 4.4 接入） */}
+        {/* 卡片内 header：右上角"新增申请"按钮（Step 4.4 已接入 application-new Drawer） */}
         <header className="mb-6 flex items-center justify-between">
           <div>
             <h2 className="text-section-title text-text-primary">流程概览</h2>
@@ -29,10 +28,7 @@ export default async function CompaniesPage() {
               共 {rows.length} 家公司 · 按投递活跃度排序
             </p>
           </div>
-          <Button variant="default" disabled title="即将开放（Phase 4.4 接入）">
-            <Plus />
-            新增申请
-          </Button>
+          <NewApplicationButton />
         </header>
 
         {/* 公司行列表 · 公司间距 20px（space-y-5） */}

@@ -22,7 +22,7 @@
 | 1 | 数据层（6 个 model） | 4 | 4/4 | ✅✅✅✅ |
 | 2 | REST API（非 AI） | 6 | 6/6 | ✅✅✅✅✅✅ |
 | 3 | 三页骨架 | 5 | 2/5 | ✅✅⬜⬜⬜ |
-| 4 | Drawer + 手动 CRUD | 4 | 0/4 | ⬜⬜⬜⬜ |
+| 4 | Drawer + 手动 CRUD | 4 | 4/4 | ✅✅✅✅ |
 | 5 | Resume 上传预览关联 | 3 | 0/3 | ⬜⬜⬜ |
 | 6 | 豆包 AI 接入 | 6 | 0/6 | ⬜⬜⬜⬜⬜⬜ |
 | 7 | 打磨验收 | 4 | 0/4 | ⬜⬜⬜⬜ |
@@ -163,19 +163,30 @@
 
 ## Phase 4 · Drawer + 手动 CRUD
 
-- [ ] **Step 4.1** — 全局 Drawer 容器
-  - 完成日期：
-  - 关键产物：`components/drawer/DetailDrawer.tsx`（或类似）+ URL 参数方案
-- [ ] **Step 4.2** — StageDrawerContent 展示 + 编辑基础信息
-  - 完成日期：
-  - 关键产物：`components/drawer/StageDrawerContent.tsx`
-- [ ] **Step 4.3** — 三页接入行/节点点击 → 打开 Drawer
-  - 完成日期：
-- [ ] **Step 4.4** — 手动新增 / 删除事件
-  - 完成日期：
-  - 关键产物：`components/drawer/NewStageDrawer.tsx` + 三页入口按钮
+- [x] **Step 4.1** — 全局 Drawer 容器
+  - 完成日期：2026-04-18
+  - 关键产物：`components/ui/sheet.tsx`（shadcn Sheet new-york，440px 宽 + rounded-l-3xl + 240ms 动效 + 圆形 X 关闭按钮）/ `components/ui/dialog.tsx`（shadcn Dialog 精简版，供二次确认用）/ `components/ui/input.tsx` + `select.tsx` + `label.tsx` / `components/drawer/DetailDrawer.tsx`（URL search params 驱动：`?drawer=stage&id=…` / `stage-new` / `application-new`；支持刷新恢复状态 + 分享链接）/ `components/drawer/{StageDrawerContent,NewStageDrawerContent,NewApplicationDrawerContent}.tsx` / `components/common/ConfirmDeleteDialog.tsx` / `lib/drawerUrl.ts`（useOpenDrawer / useCloseDrawer）/ `app/layout.tsx` 挂 DetailDrawer + Suspense + Toaster(sonner) / `app/api/stages/[id]/detail/route.ts`（新端点，一次性返 stage+application+linkedResume）
+  - 新增依赖：`react-hook-form 7.72` / `@hookform/resolvers 5.2` / `sonner 2.0` / `@radix-ui/react-dialog 1.1` / `swr 2.4` / `server-only`（Phase 3.1 已装）
+  - 验证备注：typecheck 0 / build 通过 0 warning / SSR HTML 含 `DetailDrawer` + `Toaster` + `sonner` chunk 注入；URL 直接带 `?drawer=stage-new` 时 HTTP 200（Radix Dialog 的 content 在 client hydrate 后挂载，符合预期）/ `/api/stages/:id/detail` 端点合法 id 返 200 + 反序列化数组字段、非法 id 返 404
+- [x] **Step 4.2** — StageDrawerContent：展示 + 编辑基础信息
+  - 完成日期：2026-04-18
+  - 关键产物：`components/drawer/StageDrawerContent.tsx`（react-hook-form + zod；展示态默认只读，点"编辑"切表单态；保存并发 PATCH Application + Stage；保存成功 toast + `router.refresh()` 触发三页 SSR 重拉；非 dirty 保存按钮禁用；错误 toast 不 reset）
+  - 视觉：顶部概览（公司/部门·岗位/类型状态胶囊/时间/会议链接）/ 基础信息编辑区（6 字段 + 事件类型 + 状态 + 整体流程状态）/ 关联简历区（展示态，Phase 5.3 接切换）/ JD 信息区占位（Phase 6 接）
+  - 验证备注：E2E 6 步通过（POST App → POST Stage → GET detail → PATCH status 已完成 → PATCH companyName → 400 非法 status）。dirty 态按钮状态由 `form.formState.isDirty` 自动算出
+- [x] **Step 4.3** — 接入三页面的行/节点点击 → 打开 Drawer
+  - 完成日期：2026-04-18
+  - 关键产物：`lib/drawerUrl.ts` 工具 + 三页的 click handler 替换：
+    - `EventTable.tsx`：行点击 `openDrawer({ type: "stage", id })`
+    - `MonthView.tsx`：日历格内事件胶囊 click / 右侧事件列表 click 都走 stage drawer；**日期格点击时若当日无事件，自动开 `stage-new` Drawer 并预填日期**
+    - `CompanyRow.tsx`：节点 click，有 stage 开 stage drawer；无 stage（pending）开 stage-new 并预填 applicationId
+  - 验证备注：三页所有点击路径都通过 URL replace 切到 Drawer；保存后 `router.refresh()` 让三页 Server Component 重拉，同一 stage 从三个入口打开字段一致
+- [x] **Step 4.4** — 手动新增 / 删除事件 + 表格操作列接入
+  - 完成日期：2026-04-18
+  - 关键产物：`EventTable.tsx` 顶部 "新增事件" 按钮（开 stage-new Drawer）+ 操作列 4 个 icon 按钮（Eye 查看 / Check 标记完成 / Pencil 编辑 / Trash2 删除，Trash2 走 ConfirmDeleteDialog 二次确认）/ `NewApplicationButton.tsx`（`/companies` 右上"新增申请"开 application-new Drawer）/ `CompanyRow.tsx` 每个岗位条右侧 MoreHorizontal 菜单（新增流程节点 / 删除该岗位，删除走二次确认 + 级联删 Stage）/ `app/api/applications/route.ts` 新增 GET 列表端点（默认过滤"未投递"占位，供新建 Stage 时下拉选择）
+  - 决策：Drawer 不支持"现场创建 Application"（避免复杂 combobox）；如需新岗位 → `/companies` 右上"新增申请"。这保持 4 个 Drawer 类型单一职责：stage / stage-new / application-new（+ 可选第一个 stage）。
+  - 验证备注：E2E 9 步全过：新建 App → 新建 Stage → GET detail → PATCH 标记完成 → PATCH 改公司名 → 400 非法 status → DELETE Stage → DELETE Application → 404 确认删除。二次确认 Dialog 的取消 / 加载态 / 错误 toast 全就位
 
-**Phase 4 出口** ☐ 已追加 architecture.md 里程碑「手动 CRUD 闭环完成（含 Drawer）」
+**Phase 4 出口** ☑ 已追加 architecture.md 里程碑「手动 CRUD 闭环完成（含 Drawer）」
 
 ---
 

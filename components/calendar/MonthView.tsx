@@ -36,6 +36,7 @@ import {
 } from "date-fns";
 import { cn } from "@/lib/utils";
 import { fetchJson } from "@/lib/fetcher";
+import { useOpenDrawer } from "@/lib/drawerUrl";
 
 // ──────────────────────────────────────────────────────────────────────
 // 事件颜色规则（UI.md 9.4，与 EventTable 8.3 视觉一致）
@@ -117,6 +118,7 @@ export function MonthView({
   const [events, setEvents] = React.useState<CalendarEventVM[]>(initialEvents);
   const [loading, setLoading] = React.useState(false);
   const [selectedDay, setSelectedDay] = React.useState<Date>(new Date());
+  const openDrawer = useOpenDrawer();
 
   const currentRange = React.useRef(initialRange);
 
@@ -255,7 +257,13 @@ export function MonthView({
                 <button
                   type="button"
                   key={key}
-                  onClick={() => setSelectedDay(day)}
+                  onClick={() => {
+                    setSelectedDay(day);
+                    // Step 4.4 · 日期格子本身的点击：若当日无事件，打开新建 Drawer 并预填日期
+                    if (dayEvents.length === 0) {
+                      openDrawer({ type: "stage-new", date: ymd(day) });
+                    }
+                  }}
                   className={cn(
                     "flex min-h-[108px] flex-col rounded-card-md p-2 text-left transition-colors",
                     inMonth
@@ -285,8 +293,7 @@ export function MonthView({
                         key={e.id}
                         onClick={(ev) => {
                           ev.stopPropagation();
-                          // eslint-disable-next-line no-console
-                          console.log("event click", e.id);
+                          openDrawer({ type: "stage", id: e.id });
                         }}
                         className={cn(
                           "truncate rounded-pill px-2 py-0.5 text-[11px] leading-tight",
@@ -337,8 +344,7 @@ export function MonthView({
                   <li
                     key={e.id}
                     onClick={() => {
-                      // eslint-disable-next-line no-console
-                      console.log("event click", e.id);
+                      openDrawer({ type: "stage", id: e.id });
                     }}
                     className="cursor-pointer rounded-card-md bg-app-bg-secondary p-3 transition-all hover:-translate-y-0.5 hover:bg-soft-panel hover:shadow-soft"
                   >
