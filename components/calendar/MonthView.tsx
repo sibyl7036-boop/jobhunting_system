@@ -15,8 +15,8 @@
  *   - 7 列（周一~周日）× 5~6 行，每格 min-h 108px
  *   - 事件用胶囊小标签，颜色规则同 EventTable（UI.md 9.4）
  *   - 一格最多 3 条，超出用 +N 省略
- *   - 点击日期格：右侧 ListView 展示当日事件
- *   - 点击事件：console.log（Phase 4.3 接 Drawer）
+ *   - 点击日期格：右侧 ListView 展示当日事件；无事件则开 stage-new Drawer 预填日期
+ *   - 点击事件：打开 stage Drawer（Phase 4.3 已接）
  */
 
 import * as React from "react";

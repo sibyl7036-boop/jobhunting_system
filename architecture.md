@@ -15,7 +15,7 @@
 
 ## 🗺️ 目录树（当前真实状态）
 
-> 当前仓库处于"**Phase 6 完成 ✅**"——AI 5 大能力（解析邮件/JD/面试题/复盘/今日动向）+ 明日提醒全部接入，草稿态闭环、双缓存（IntelSummary by date + TomorrowTipCache by eventsHash）到位。共 18 个 API 路由。下一步 Phase 7 打磨验收。
+> 当前仓库处于"**v1.0 验收完成 ✅🎉**"——39/39 Step 全绿 · PRD 第 13 章 6 闭环 E2E 31 断言全通 · `pnpm lint/typecheck/build` 均 0 警告 · README 就绪 · 18 个 API + 5 个 AI 能力 + 3 页 + 全局 Drawer 全部到位。下一步由用户自行决定是否上生产或继续迭代。
 
 ```
 /Users/sibyl/Desktop/system/
@@ -185,30 +185,9 @@
 ├── scripts/smoke-closures.ts        ← 已有 · Step 7.3 · PRD 第 13 章 6 闭环 E2E 脚本（含真实 AI 调用 + 数据自清理）
 ├── scripts/fixtures/
 │   └── closure-tiny.pdf             ← 已有 · Step 7.3 · 580B 合法 PDF v1.4，闭环 6 上传 fixture
+├── README.md                        ← 已有 · Step 7.4 · 仓库门面（三步跑起来 + 环境变量 + 目录速查 + 文档索引）
 
-（以下 Phase 7.2+ 陆续产生）
-├── README.md                        ← 计划中 · 仓库门面（Phase 7.4）
-│
-├── app/api/ai/                      ← 计划中 · Phase 6 AI Route Handlers
-│   ├── parse-email/route.ts
-│   ├── parse-jd/route.ts
-│   ├── generate-questions/route.ts
-│   ├── review/route.ts
-│   └── daily-intel/route.ts
-│
-├── components/                      ← 计划中 · Phase 3.2+ 业务组件
-│   ├── ui/                          ← shadcn/ui 按需添加（card / dialog / sheet / table / badge 等）
-│   ├── dashboard/                   ← 首页 5 模块（Phase 3.2 / 3.3）
-│   ├── calendar/                    ← 日历月视图（Phase 3.4）
-│   ├── companies/                   ← 公司流程行（Phase 3.5）
-│   └── drawer/                      ← 全局 Drawer 容器（Phase 4）
-│
-├── lib/                             ← 计划中 · Phase 6+ 继续扩展
-│   ├── llmClient.ts                 ← Phase 6.1 Ark API 唯一出口 callAI
-│   ├── prompts.ts                   ← Phase 6.1 PRD 9.1~9.5 原文常量
-│   └── fakeIntelSource.ts           ← Phase 6.5 本地硬编码资讯
-│
-├── uploads/                         ← 计划中 · Phase 5.1 PDF 简历目录（gitignore）
+（Phase 7 已完成，无新增计划项）
 
 └── node_modules/                    ← 已有 · pnpm 安装产物（不进 git）
 ```

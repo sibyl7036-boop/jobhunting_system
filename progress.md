@@ -25,8 +25,8 @@
 | 4 | Drawer + 手动 CRUD | 4 | 4/4 | ✅✅✅✅ |
 | 5 | Resume 上传预览关联 | 3 | 3/3 | ✅✅✅ |
 | 6 | 豆包 AI 接入 | 6 | 6/6 | ✅✅✅✅✅✅ |
-| 7 | 打磨验收 | 4 | 3/4 | ✅✅✅⬜ |
-| **合计** | | **39** | **38/39** | **97%** |
+| 7 | 打磨验收 | 4 | 4/4 | ✅✅✅✅ |
+| **合计** | | **39** | **39/39** | **100% 🎉** |
 
 ---
 
@@ -279,10 +279,20 @@
     - [x] 闭环 6：简历上传关联（tiny PDF → 提取文本 "Hello Closure 6 Resume Demo" → 关联 Application → 被引用时 DELETE 409 → 解除关联后 200）
   - 验证备注：`pnpm tsx scripts/smoke-closures.ts` 一条命令跑完 6 闭环，**通过 31 / 失败 0 / 耗时 26.9s**。含真实豆包 AI 调用（4 个 AI 端点 + 草稿态 + 用户确认入库）。过程中捕到 smoke-closures 脚本初版的一个字段名错误——我误用 AI 输出原字段名 `questionSummary` 去 PATCH Stage，实际 Stage schema 是 `reviewQuestionSummary` 前缀（前端 AICopilot 做了正确映射）。修正脚本后全绿。AIRun 表新增约 5 条日志记录（脚本完成后仍保留，方便回溯）
   - 数据库最终状态：脚本完成后自动清理自己造的 5 个 Application + 其 Stage + 1 个 Resume 及 uploads/cmo4km74*.pdf，DB 回到跑脚本前的状态
-- [ ] **Step 7.4** — 最终清理（console / TODO / README / build / lint）
-  - 完成日期：
+- [x] **Step 7.4** — 最终清理（console / TODO / README / build / lint）
+  - 完成日期：2026-04-19
+  - 关键产物：`README.md`（仓库门面，三步跑起来 + 环境变量说明 + 目录速查 + 文档索引）；`components/calendar/MonthView.tsx` 清理一条过时头注释（原写"Phase 4.3 接 Drawer"，实际已在 Step 4.3 完成）
+  - 验证清单：
+    - [x] 应用代码（非 scripts/seed）内 `console.log` = 0、`TODO:` = 0、`FIXME:` = 0（grep 仅在 implementation_plan / progress / architecture 文档中出现历史记录）
+    - [x] `pnpm typecheck` 0 错误
+    - [x] `pnpm lint` 0 warning 0 error（`next lint` 提示 Next 16 将改用 ESLint CLI，与本项目 Next 15.5 锁定不冲突）
+    - [x] `pnpm build` 通过，所有路由编译成功
+    - [x] `.env.local` / `prisma/dev.db` / `uploads/` 全部在 gitignore（`git check-ignore` 命中三条）
+    - [x] `git status` 干净（仅 README.md + MonthView.tsx 注释修整，本 Step 即将 commit）
+    - [x] README 三步命令让新人 clone 即跑：install → migrate deploy + db seed → dev
+  - 验证备注：**97% → 100%** 项目完整交付。脚本目录保留：`seed.ts`、`smoke-api.ts`、`smoke-closures.ts` 均为必要工具（种子 + 非 AI 烟测 + 6 闭环 E2E），不删
 
-**Phase 7 出口** ☐ 已追加 architecture.md 里程碑「v1.0 验收完成」
+**Phase 7 出口** ☑ 已追加 architecture.md 里程碑「v1.0 验收完成（0 warning 0 error + 6 闭环通过 + 31 E2E 断言全绿 + README 就绪）」
 
 ---
 
