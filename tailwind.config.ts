@@ -85,6 +85,23 @@ const config: Config = {
         body: ["14px", { lineHeight: "1.5", fontWeight: "500" }],
         caption: ["12px", { lineHeight: "1.5", fontWeight: "500" }],
       },
+      keyframes: {
+        // ── UI.md 8.4 小猫呼吸 ──
+        "cat-breathe": {
+          "0%, 100%": { transform: "scale(1)" },
+          "50%": { transform: "scale(1.03)" },
+        },
+        // ── UI.md 13.4 AI 处理中轻微左右晃动 ──
+        "cat-wobble": {
+          "0%, 100%": { transform: "translateX(0) rotate(0deg)" },
+          "25%": { transform: "translateX(-1.5px) rotate(-2deg)" },
+          "75%": { transform: "translateX(1.5px) rotate(2deg)" },
+        },
+      },
+      animation: {
+        "cat-breathe": "cat-breathe 2.4s ease-in-out infinite",
+        "cat-wobble": "cat-wobble 0.6s ease-in-out infinite",
+      },
     },
   },
   plugins: [tailwindcssAnimate],

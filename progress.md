@@ -25,8 +25,8 @@
 | 4 | Drawer + 手动 CRUD | 4 | 4/4 | ✅✅✅✅ |
 | 5 | Resume 上传预览关联 | 3 | 3/3 | ✅✅✅ |
 | 6 | 豆包 AI 接入 | 6 | 6/6 | ✅✅✅✅✅✅ |
-| 7 | 打磨验收 | 4 | 1/4 | ✅⬜⬜⬜ |
-| **合计** | | **39** | **36/39** | **92%** |
+| 7 | 打磨验收 | 4 | 2/4 | ✅✅⬜⬜ |
+| **合计** | | **39** | **37/39** | **95%** |
 
 ---
 
@@ -260,8 +260,13 @@
   - 关键产物：`components/ui/skeleton.tsx`（shadcn 骨架块：soft-panel 浅粉底 + pulse）/ `components/common/EmptyState.tsx`（通用空态：lucide 图标+标题+副文案+可选 CTA，支持 compact 紧凑模式）/ `components/common/ErrorState.tsx`（Client 组件，danger 圆底图标 + 可选 onRetry 重试按钮）/ `app/loading.tsx`（全局 fallback：UI.md 13.1 三粉点 bounce）/ `app/error.tsx`（Next 15 错误边界，ErrorState 注入 reset 函数做重试）/ `app/dashboard/loading.tsx`（12 栏布局骨架：左 8 表格+简历，右 4 提醒/动向/Copilot）/ `app/calendar/loading.tsx`（月视图 7×5 格 + 当日事件列表骨架）/ `app/companies/loading.tsx`（8 行公司 × 9 节点胶囊骨架）
   - 增强：`lib/fetcher.ts` 在 fetch() 外层 try/catch 网络层错误，统一抛 `FetchError(0, "NETWORK_ERROR", "网络异常，请稍后重试")` + 导出 `isNetworkError()` helper。MonthView 切月失败从 `console.error` 改为 `toast.error`。其他 Client 组件 catch 全部早已走 `toast.error(err.message)`，FetchError.message 直接作为用户可读文案，dev server kill 掉时前端点击任何按钮都会出现"网络异常，请稍后重试" toast，不白屏。
   - 验证备注：typecheck 0 / build 0 warning；三页骨架屏、全局 loading/error 都已就位；修复 `app/error.tsx` 里 JSX 属性串误用 ASCII 半角引号导致的语法错误（把包"重试"的 " 换成「」）
-- [ ] **Step 7.2** — UI 精修（对照 UI.md）+ 小猫 SVG + Framer Motion
-  - 完成日期：
+- [x] **Step 7.2** — UI 精修（对照 UI.md）+ 小猫 SVG + Framer Motion
+  - 完成日期：2026-04-19
+  - 关键产物：`components/CatIcon.tsx` 从 lucide Cat 占位 → 正式极简自定义 SVG（32×32 viewBox：两只尖耳 + 耳内浅粉 + 粉底圆脸 + 双眼黑点 + 高光白点 + 小鼻 + 弧嘴 + 两撇腮红；双主色 `#F3AFCB` + `#DD85AE` 描边；背景圆 `secondary-pink`）/ `tailwind.config.ts` 追加 `cat-breathe`（scale 1→1.03→1，2.4s infinite）和 `cat-wobble`（轻微左右晃动+旋转，0.6s infinite）两个 keyframes + animation 工具类
+  - 动效接线：`AICopilot.tsx` 把 `busy={busy !== null}` 接 CatIcon（AI 调用中小猫晃动）；`TomorrowReminder.tsx` 把 `busy={refreshing}` 接 CatIcon（刷新时晃动）；`Sidebar.tsx` 用 `staticIcon` 关闭呼吸（底部常驻不分心）；hover:-translate-y-0.5 所有出现位置共享
+  - 决策：**不引入 framer-motion**。UI.md 明确"如果某动效实现复杂，可直接使用简单 CSS transition 替代"；呼吸/晃动/上浮全部用 Tailwind keyframes + transform 实现，符合 tech_stack 第 1 节"能用一个绝不用两个"。Drawer 打开 240ms ease-out 已在 Step 4.1 的 `sheet.tsx` 用 tailwindcss-animate 实现（slide-in-from-right）
+  - UI.md 逐节核对（DevTools 抽样）：4.1~4.6 全部色值与 tailwind.config.ts 一一对应（已在 Step 0.2 完成并验证）；5.2 字号层级 page-title/section-title/card-title/body/caption 5 级走语义 class；6.2 Sidebar 88px + 28px 圆角 + 选中 scale(1.04) + soft-panel 底 + shadow-soft；8.3 表格胶囊色规则（一面/二面/三面/HR面 lilac, 笔试/测评 yellow, Offer mint）；11.1 Drawer 440px + rounded-l-3xl；13.1/13.2/13.3 hover/active/selected 动效全到位
+  - 验证备注：typecheck 0 / build 0 warning / CSS bundle 21618eb1161465b6.css 含 `cat-breathe` 和 `cat-wobble` 类；dashboard bundle 9.28kB（+10B CatIcon SVG）；animate-cat-breathe 用 3 次（AICopilot / TomorrowReminder / 其他可能场景），animate-cat-wobble 用 2 次（busy 状态）。不新增依赖
 - [ ] **Step 7.3** — PRD 第 13 章 6 个闭环验收
   - 完成日期：
   - 逐一勾选：

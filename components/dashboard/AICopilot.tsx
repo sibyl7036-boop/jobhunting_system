@@ -306,7 +306,7 @@ export function AICopilot() {
       }}
     >
       <header className="mb-4 flex items-center gap-3">
-        <CatIcon size={34} />
+        <CatIcon size={34} busy={busy !== null} />
         <h3 className="text-section-title text-text-primary">AI Copilot</h3>
         <Sparkles
           size={16}

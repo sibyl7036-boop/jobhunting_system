@@ -59,7 +59,7 @@ export function TomorrowReminder({
     >
       <header className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <CatIcon size={34} />
+          <CatIcon size={34} busy={refreshing} />
           <h3 className="text-card-title text-text-primary">明日提醒</h3>
         </div>
         <div className="flex items-center gap-2">

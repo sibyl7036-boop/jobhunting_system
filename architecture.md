@@ -177,6 +177,11 @@
 │   ├── calendar/loading.tsx         ← 已有 · Step 7.1 · 月视图 7×5 格 + 当日列表骨架
 │   └── companies/loading.tsx        ← 已有 · Step 7.1 · 10 行 × 9 节点胶囊骨架
 ├── lib/fetcher.ts                   ← 升级 · Step 7.1 · fetch 外层 try/catch 抛 NETWORK_ERROR + 导出 isNetworkError()
+├── components/CatIcon.tsx           ← 升级 · Step 7.2 · 极简自定义 SVG（双耳 + 圆脸 + 双眼 + 弧嘴 + 腮红），支持 busy / staticIcon prop
+├── tailwind.config.ts               ← 升级 · Step 7.2 · 追加 cat-breathe / cat-wobble keyframes + animation 工具类
+├── components/dashboard/AICopilot.tsx ← 升级 · Step 7.2 · CatIcon busy={busy !== null}（AI 调用中晃动）
+├── components/dashboard/TomorrowReminder.tsx ← 升级 · Step 7.2 · CatIcon busy={refreshing}
+├── components/layout/Sidebar.tsx    ← 升级 · Step 7.2 · 底部 CatIcon staticIcon（关闭呼吸避免常驻分心）
 
 （以下 Phase 7.2+ 陆续产生）
 ├── README.md                        ← 计划中 · 仓库门面（Phase 7.4）

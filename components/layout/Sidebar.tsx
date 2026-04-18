@@ -85,7 +85,7 @@ export function Sidebar() {
         aria-label="AI Copilot"
         title="AI Copilot"
       >
-        <CatIcon size={40} />
+        <CatIcon size={40} staticIcon />
       </div>
     </aside>
   );
