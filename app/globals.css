@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * Step 0.1 基线：仅保证 Tailwind 3 能编译。
+ * Step 0.2 将在此扩展 UI.md 第 4 章全部色值令牌 + body 背景为 app-bg、文字色为 text-primary、行高 1.5。
+ */
+html,
+body {
+  height: 100%;
+}

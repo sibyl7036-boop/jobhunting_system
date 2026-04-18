@@ -18,7 +18,7 @@
 
 | Phase | 内容 | 步数 | 完成 | 总进度 |
 |---|---|---|---|---|
-| 0 | 项目骨架 + git 基线 + API 连通性验证 | 7 | 0/7 | ⬜⬜⬜⬜⬜⬜⬜ |
+| 0 | 项目骨架 + git 基线 + API 连通性验证 | 7 | 1/7 | ✅⬜⬜⬜⬜⬜⬜ |
 | 1 | 数据层（6 个 model） | 4 | 0/4 | ⬜⬜⬜⬜ |
 | 2 | REST API（非 AI） | 6 | 0/6 | ⬜⬜⬜⬜⬜⬜ |
 | 3 | 三页骨架 | 5 | 0/5 | ⬜⬜⬜⬜⬜ |
@@ -26,16 +26,16 @@
 | 5 | Resume 上传预览关联 | 3 | 0/3 | ⬜⬜⬜ |
 | 6 | 豆包 AI 接入 | 6 | 0/6 | ⬜⬜⬜⬜⬜⬜ |
 | 7 | 打磨验收 | 4 | 0/4 | ⬜⬜⬜⬜ |
-| **合计** | | **39** | **0/39** | **0%** |
+| **合计** | | **39** | **1/39** | **3%** |
 
 ---
 
 ## Phase 0 · 项目骨架
 
-- [ ] **Step 0.1** — Next.js 脚手架初始化
-  - 完成日期：
-  - 关键产物：`package.json` / `next.config.*` / `tailwind.config.*` / `app/`
-  - 验证备注：
+- [x] **Step 0.1** — Next.js 脚手架初始化
+  - 完成日期：2026-04-18
+  - 关键产物：`package.json` / `tsconfig.json` / `next.config.ts` / `tailwind.config.ts` / `postcss.config.mjs` / `.eslintrc.json` / `next-env.d.ts` / `app/` / `public/`
+  - 验证备注：Next 15.5.15 + React 18.3 + Tailwind 3.4.19 + TS 5.9 + ESLint 8.57 + eslint-config-next 15.5（官方脚手架默认 Next 16 + Tailwind 4 + React 19，与 tech_stack 规格不符，已强制降版）。build 3.4s / lint 0 warn / dev 3000 HTTP 200 含中文内容。已去掉 Geist 字体引用（Step 0.2 换 PingFang SC）；页面暂保留脚手架欢迎页（Step 0.5 替换为重定向到 /dashboard）。
 - [ ] **Step 0.1.5** — 验证 git 仓库状态并建立提交基线
   - 完成日期：
   - 关键产物：`.git` 初始化就绪 / 首次基线 commit / `phase0-step1-done` tag

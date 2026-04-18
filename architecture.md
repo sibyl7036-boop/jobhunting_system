@@ -15,8 +15,7 @@
 
 ## 🗺️ 目录树（当前真实状态）
 
-> 当前仓库处于"**文档阶段**"，只有 Markdown 规格文档。Next.js 项目尚未初始化。
-> 下方"计划中"的文件/目录在 `implementation_plan.md` 执行到相应 Phase 时才会出现，届时需把对应行从"计划中"移入"已有"。
+> 当前仓库处于"**Phase 0 · Step 0.1 完成**"——Next.js 15.5 + React 18.3 + Tailwind 3.4 骨架已就绪，欢迎页可访问。后续 Step 0.2~0.6 + Phase 1~7 陆续产生的文件已在下方"计划中"标注。
 
 ```
 /Users/sibyl/Desktop/system/
@@ -27,27 +26,35 @@
 ├── progress.md                      ← 已有 · 进度真相（逐步勾选清单）
 ├── architecture.md                  ← 已有 · 文件地图（本文件）
 ├── CODEBUDDY.md                     ← 已有 · AI Agent 入口（首读）
-└── .workbuddy/                      ← 已有 · 工作记忆（不进 git，见下方说明）
+├── .env.local                       ← 已有 · 环境变量（DATABASE_URL / DOUBAO_*）；不进 git
+├── .gitignore                       ← 已有 · 保护 node_modules / .next / .env* / dev.db / uploads / .workbuddy 等
+├── .workbuddy/                      ← 已有 · 工作记忆（不进 git）
+│
+│ ── 以下为 Phase 0 Step 0.1 产生 ──
+├── package.json                     ← 已有 · Next 15.5 + React 18.3 + Tailwind 3.4 + TS 5.9（降版锁定自脚手架默认 Next 16）
+├── pnpm-lock.yaml                   ← 已有 · 依赖锁定
+├── tsconfig.json                    ← 已有 · TypeScript 配置，含 `@/*` path alias
+├── next.config.ts                   ← 已有 · Next.js 配置（当前为空 defaults）
+├── next-env.d.ts                    ← 已有 · Next.js 自动生成（gitignore 忽略）
+├── tailwind.config.ts               ← 已有 · Tailwind 3 主题骨架（Step 0.2 扩展 UI.md 色值令牌）
+├── postcss.config.mjs               ← 已有 · PostCSS 走 tailwindcss + autoprefixer
+├── .eslintrc.json                   ← 已有 · ESLint 8 配置，extends next/core-web-vitals + next/typescript
+├── app/
+│   ├── layout.tsx                   ← 已有 · 最小根布局（已去 Geist，zh-CN）
+│   ├── page.tsx                     ← 已有 · 脚手架欢迎页（Step 0.5 替换为重定向 /dashboard）
+│   ├── globals.css                  ← 已有 · Tailwind 3 三件套 + 最小基线（Step 0.2 扩展）
+│   └── favicon.ico                  ← 已有 · 默认图标
+├── public/                          ← 已有 · 静态资源（next.svg、vercel.svg 等；Phase 7.2 清理）
 
-（以下 Phase 0 起陆续产生）
-├── package.json                     ← 计划中 · pnpm 包清单与脚本（Phase 0.1 产生）
-├── tsconfig.json                    ← 计划中 · TS 配置（Phase 0.1 产生）
-├── next.config.*                    ← 计划中 · Next.js 配置（Phase 0.1 产生）
-├── tailwind.config.*                ← 计划中 · Tailwind 主题（马卡龙粉色令牌）（Phase 0.2 产生）
-├── postcss.config.*                 ← 计划中 · PostCSS 配置（Phase 0.1 产生）
+（以下 Phase 0.2 起陆续产生）
 ├── components.json                  ← 计划中 · shadcn/ui 配置（Phase 0.3 产生）
-├── .env / .env.local                ← 计划中 · 环境变量（不进 git）
-├── .gitignore                       ← 计划中 · 忽略 node_modules / dev.db / uploads / .env.local 等
 ├── README.md                        ← 计划中 · 仓库门面，写"三条命令跑起来"（Phase 7.4 产生）
 │
-├── app/                             ← 计划中 · Next.js App Router 根目录
-│   ├── layout.tsx                   ← 全局布局（左导航 + 顶 Header + 内容区 + Drawer 容器）
-│   ├── page.tsx                     ← 根路由 → 重定向到 /dashboard
-│   ├── globals.css                  ← Tailwind 指令 + CSS 变量基线
-│   ├── dashboard/page.tsx           ← 首页（流程表格 + 明日提醒 + 大厂动向 + 简历 + AI Copilot）
-│   ├── calendar/page.tsx            ← 日历页（月视图）
-│   ├── companies/page.tsx           ← 大厂流程页（10 家公司纵向 + 流程节点横向）
-│   └── api/
+├── app/                             ← 已有部分，以下子目录 Phase 0.5 起陆续产生
+│   ├── dashboard/page.tsx           ← 计划中 · 首页（Phase 0.5 占位、Phase 3.2+3.3 实现）
+│   ├── calendar/page.tsx            ← 计划中 · 日历页（Phase 0.5 占位、Phase 3.4 实现）
+│   ├── companies/page.tsx           ← 计划中 · 大厂流程页（Phase 0.5 占位、Phase 3.5 实现）
+│   └── api/                         ← 计划中 · Phase 2 起 REST API Route Handlers
 │       ├── resumes/
 │       │   ├── route.ts             ← GET 列表
 │       │   ├── upload/route.ts      ← POST 上传（multipart PDF）
@@ -73,7 +80,7 @@
 │           ├── review/route.ts      ← POST 面试复盘
 │           └── daily-intel/route.ts ← GET 今日大厂动向摘要（带日缓存）
 │
-├── components/
+├── components/                      ← 计划中 · Phase 0.3 产生 components/ui/，Phase 3+ 产生业务组件
 │   ├── ui/                          ← shadcn/ui 生成物（button / card / dialog / sheet / table / badge 等）
 │   ├── layout/
 │   │   ├── Sidebar.tsx              ← 左侧导航
@@ -94,7 +101,7 @@
 │   │   └── NewStageDrawer.tsx       ← 新建事件内容
 │   └── CatIcon.tsx                  ← UI.md 指定的小猫 SVG
 │
-├── lib/
+├── lib/                             ← 计划中 · Phase 0.3+0.4 起产生
 │   ├── db.ts                        ← Prisma Client 单例（dev 模式挂 globalThis 防 HMR 泄漏）
 │   ├── utils.ts                     ← shadcn 生成的 cn() 辅助等
 │   ├── fetcher.ts                   ← 最小化 fetch 封装（自动抛错）
@@ -103,21 +110,21 @@
 │   ├── prompts.ts                   ← PRD 9.1~9.5 的 5 个 system prompt 原文常量
 │   ├── fakeIntelSource.ts           ← 本地硬编码的大厂资讯样例（供 daily-intel 使用）
 │   ├── queries/                     ← 各 API 对应的前端 query 函数
-│   └── schemas/                     ← 5 实体 + 5 AI 输出的 zod schema
+│   └── schemas/                     ← 6 实体 + 5 AI 输出的 zod schema
 │
-├── prisma/
+├── prisma/                          ← 计划中 · Phase 0.4 产生
 │   ├── schema.prisma                ← 数据模型（Resume / Application / Stage / AIRun / IntelSummary / TomorrowTipCache）
 │   ├── seed.ts                      ← 种子脚本（预置 10 家大厂占位 Application）
 │   ├── migrations/                  ← 迁移历史（进 git）
 │   └── dev.db                       ← SQLite 数据库文件（不进 git）
 │
-├── uploads/                         ← PDF 简历本地存储目录（不进 git，运行时自动创建）
+├── uploads/                         ← 计划中 · PDF 简历本地存储目录（不进 git，运行时自动创建）
 │
-├── scripts/
+├── scripts/                         ← 计划中 · Phase 0.6 起产生
 │   ├── test-ark-api.ts              ← 【临时 · Phase 0.6 产生 → Phase 6.1 完成后删除】Ark API 连通性冒烟脚本（测试 /chat/completions vs /responses）
 │   └── smoke-api.ts                 ← 非 AI REST API 烟测脚本（一条命令跑通 CRUD）
 │
-└── node_modules/                    ← pnpm 安装产物（不进 git）
+└── node_modules/                    ← 已有 · pnpm 安装产物（不进 git）
 ```
 
 ---
@@ -195,6 +202,7 @@
 6. **API Key 边界** → `process.env.DOUBAO_*` 只允许在 `app/api/**/route.ts` 和 `lib/llmClient.ts` 里被读取，绝不下发到客户端
 7. **AI 草稿态** → 任何 AI 路由**不写业务表**（只写 `AIRun` 日志），返回结果由前端收下→人工确认→再调 PATCH 入库
 8. **底座模型** → Endpoint `ep-20260418165808-rvgk2` 后端绑 **DeepSeek 3.2**；切模型由用户在火山方舟控制台操作，项目代码不动
+9. **前端技术栈版本锁定（2026-04-18 Step 0.1 决策）** → `create-next-app@latest` 默认拉 Next 16 + Tailwind 4 + React 19，与 `tech_stack.md` 规格不符、且会让后续 Tailwind 配置指令失效。本项目**强制降版到 Next 15 + Tailwind 3 + React 18 + ESLint 8**（通过手写 `package.json` 锁定，具体版本：next ^15.1 / tailwindcss ^3.4 / react ^18.3 / eslint ^8.57 / eslint-config-next ^15.1）。未来升级需同步重写 `tailwind.config.ts` 和 implementation_plan 相关步骤。
 
 ---
 
