@@ -15,7 +15,7 @@
 
 ## 🗺️ 目录树（当前真实状态）
 
-> 当前仓库处于"**Phase 0 · Step 0.1 完成**"——Next.js 15.5 + React 18.3 + Tailwind 3.4 骨架已就绪，欢迎页可访问。后续 Step 0.2~0.6 + Phase 1~7 陆续产生的文件已在下方"计划中"标注。
+> 当前仓库处于"**Phase 0 完成**"——Next.js 15.5 骨架 + Tailwind 3.4 + shadcn/ui + Prisma 5.22 + 布局三件套 + Ark API 已冒烟验证（走 /chat/completions）。Phase 1 数据建模待开始。
 
 ```
 /Users/sibyl/Desktop/system/
@@ -26,104 +26,111 @@
 ├── progress.md                      ← 已有 · 进度真相（逐步勾选清单）
 ├── architecture.md                  ← 已有 · 文件地图（本文件）
 ├── CODEBUDDY.md                     ← 已有 · AI Agent 入口（首读）
-├── .env.local                       ← 已有 · 环境变量（DATABASE_URL / DOUBAO_*）；不进 git
+├── .env                             ← 已有 · Prisma CLI 专用（只有 DATABASE_URL）；不进 git
+├── .env.local                       ← 已有 · Next.js runtime 环境变量（DATABASE_URL / DOUBAO_*）；不进 git
 ├── .gitignore                       ← 已有 · 保护 node_modules / .next / .env* / dev.db / uploads / .workbuddy 等
 ├── .workbuddy/                      ← 已有 · 工作记忆（不进 git）
 │
-│ ── 以下为 Phase 0 Step 0.1 产生 ──
-├── package.json                     ← 已有 · Next 15.5 + React 18.3 + Tailwind 3.4 + TS 5.9（降版锁定自脚手架默认 Next 16）
+│ ── Phase 0 Step 0.1 产生 ──
+├── package.json                     ← 已有 · Next 15.5 + React 18.3 + Tailwind 3.4 + TS 5.9 + Prisma 5.22 + shadcn 依赖
 ├── pnpm-lock.yaml                   ← 已有 · 依赖锁定
+├── pnpm-workspace.yaml              ← 已有 · onlyBuiltDependencies 白名单（@prisma/engines / prisma / tailwindcss-oxide）
 ├── tsconfig.json                    ← 已有 · TypeScript 配置，含 `@/*` path alias
 ├── next.config.ts                   ← 已有 · Next.js 配置（当前为空 defaults）
-├── next-env.d.ts                    ← 已有 · Next.js 自动生成（gitignore 忽略）
-├── tailwind.config.ts               ← 已有 · Tailwind 3 主题骨架（Step 0.2 扩展 UI.md 色值令牌）
-├── postcss.config.mjs               ← 已有 · PostCSS 走 tailwindcss + autoprefixer
+├── next-env.d.ts                    ← 已有 · Next.js 自动生成（gitignore 忽略；仓库初始 commit 保留了一份）
 ├── .eslintrc.json                   ← 已有 · ESLint 8 配置，extends next/core-web-vitals + next/typescript
+│
+│ ── Phase 0 Step 0.2 / 0.3 产生 ──
+├── tailwind.config.ts               ← 已有 · UI.md 4.1~4.6 全部色值 + 4.5 阴影 + 5.1 字体 + 5.2 字号 + 5.4 圆角 + tailwindcss-animate plugin
+├── postcss.config.mjs               ← 已有 · PostCSS 走 tailwindcss + autoprefixer
+├── components.json                  ← 已有 · shadcn/ui 配置（new-york / neutral / cssVars / @/* alias）
+│
 ├── app/
-│   ├── layout.tsx                   ← 已有 · 最小根布局（已去 Geist，zh-CN）
-│   ├── page.tsx                     ← 已有 · 脚手架欢迎页（Step 0.5 替换为重定向 /dashboard）
-│   ├── globals.css                  ← 已有 · Tailwind 3 三件套 + 最小基线（Step 0.2 扩展）
-│   └── favicon.ico                  ← 已有 · 默认图标
-├── public/                          ← 已有 · 静态资源（next.svg、vercel.svg 等；Phase 7.2 清理）
+│   ├── layout.tsx                   ← 已有 · 三区布局（Sidebar + Header + main），zh-CN + UI.md 语义令牌
+│   ├── page.tsx                     ← 已有 · 重定向到 /dashboard
+│   ├── globals.css                  ← 已有 · Tailwind 3 三件套 + body 基线（app-bg + text-primary + PingFang + 行高 1.5）
+│   ├── favicon.ico                  ← 已有 · 默认图标
+│   ├── dashboard/page.tsx           ← 已有 · 占位页（Phase 3.2+3.3 实现真实模块）
+│   ├── calendar/page.tsx            ← 已有 · 占位页（Phase 3.4 实现月视图）
+│   └── companies/page.tsx           ← 已有 · 占位页（Phase 3.5 实现）
+├── public/                          ← 已有 · 静态资源（next.svg 等；Phase 7.2 清理）
+│
+│ ── Phase 0 Step 0.3 / 0.5 产生 ──
+├── components/
+│   ├── ui/
+│   │   └── button.tsx               ← 已有 · shadcn Button，variant 映射 UI.md 4.2 粉色阶梯 + 4.6 状态色
+│   ├── layout/
+│   │   ├── Sidebar.tsx              ← 已有 · 左侧固定导航栏（UI.md 6.2 · 88px/圆角28px/半透明白+blur/胶囊）
+│   │   └── Header.tsx               ← 已有 · 顶部 Header（UI.md 6.3 · 薄轻通透，按路由切 UI.md 8.2/9/10 标题）
+│   └── CatIcon.tsx                  ← 已有 · 小猫占位（lucide Cat；Phase 7.2 换 UI.md 12.3 自定义 SVG）
+│
+│ ── Phase 0 Step 0.4 产生 ──
+├── lib/
+│   └── utils.ts                     ← 已有 · shadcn 约定的 cn() 辅助（clsx + tailwind-merge）
+├── lib/
+│   └── db.ts                        ← 已有 · Prisma Client 单例（dev 模式挂 globalThis 防 HMR 泄漏）
+├── prisma/
+│   └── schema.prisma                ← 已有 · 最小版（sqlite datasource + prisma-client-js generator）；Step 1.1 扩展 6 个 model
+│
+│ ── Phase 0 Step 0.6 产生 ──
+└── scripts/
+    └── test-ark-api.ts              ← 已有 · 【临时，Phase 6.1 完成后删除】Ark API 冒烟脚本（5 用例实测，已决策走 /chat/completions + response_format）
 
-（以下 Phase 0.2 起陆续产生）
-├── components.json                  ← 计划中 · shadcn/ui 配置（Phase 0.3 产生）
+（以下 Phase 1+ 陆续产生）
 ├── README.md                        ← 计划中 · 仓库门面，写"三条命令跑起来"（Phase 7.4 产生）
 │
-├── app/                             ← 已有部分，以下子目录 Phase 0.5 起陆续产生
-│   ├── dashboard/page.tsx           ← 计划中 · 首页（Phase 0.5 占位、Phase 3.2+3.3 实现）
-│   ├── calendar/page.tsx            ← 计划中 · 日历页（Phase 0.5 占位、Phase 3.4 实现）
-│   ├── companies/page.tsx           ← 计划中 · 大厂流程页（Phase 0.5 占位、Phase 3.5 实现）
-│   └── api/                         ← 计划中 · Phase 2 起 REST API Route Handlers
-│       ├── resumes/
-│       │   ├── route.ts             ← GET 列表
-│       │   ├── upload/route.ts      ← POST 上传（multipart PDF）
-│       │   └── [id]/
-│       │       ├── route.ts         ← PATCH 改名 / DELETE
-│       │       └── file/route.ts    ← GET 流式返回 PDF 文件
-│       ├── applications/
-│       │   ├── route.ts             ← POST 创建
-│       │   └── [id]/route.ts        ← GET（含 stages）/ PATCH / DELETE
-│       ├── stages/
-│       │   ├── route.ts             ← POST 创建
-│       │   └── [id]/route.ts        ← PATCH / DELETE
-│       ├── dashboard/
-│       │   └── events/route.ts      ← GET ?range=Nd 的流程事件
-│       ├── calendar/
-│       │   └── events/route.ts      ← GET ?start=&end= 的流程事件
-│       ├── companies/
-│       │   └── progress/route.ts    ← GET 10 家公司 × Application × Stage 全量
-│       └── ai/
-│           ├── parse-email/route.ts ← POST 解析面试邮件（走豆包 · 输出 JSON · 草稿态）
-│           ├── parse-jd/route.ts    ← POST 解析 JD
-│           ├── generate-questions/route.ts ← POST 生成面试题
-│           ├── review/route.ts      ← POST 面试复盘
-│           └── daily-intel/route.ts ← GET 今日大厂动向摘要（带日缓存）
-│
-├── components/                      ← 计划中 · Phase 0.3 产生 components/ui/，Phase 3+ 产生业务组件
-│   ├── ui/                          ← shadcn/ui 生成物（button / card / dialog / sheet / table / badge 等）
-│   ├── layout/
-│   │   ├── Sidebar.tsx              ← 左侧导航
-│   │   └── Header.tsx               ← 顶部 Header（含小猫 SVG）
+├── app/api/                         ← 计划中 · Phase 2 起 REST API Route Handlers
+│   ├── resumes/
+│   │   ├── route.ts                 ← GET 列表
+│   │   ├── upload/route.ts          ← POST 上传（multipart PDF）
+│   │   └── [id]/
+│   │       ├── route.ts             ← PATCH 改名 / DELETE
+│   │       └── file/route.ts        ← GET 流式返回 PDF 文件
+│   ├── applications/
+│   │   ├── route.ts                 ← POST 创建
+│   │   └── [id]/route.ts            ← GET（含 stages）/ PATCH / DELETE
+│   ├── stages/
+│   │   ├── route.ts                 ← POST 创建
+│   │   └── [id]/route.ts            ← PATCH / DELETE
 │   ├── dashboard/
-│   │   ├── EventTable.tsx           ← 首页时间维度流程表格
-│   │   ├── TomorrowReminder.tsx     ← 明日 AI 提醒卡片
-│   │   ├── DailyIntel.tsx           ← 今日大厂动向卡片
-│   │   ├── ResumeCard.tsx           ← 我的简历卡片（列表 + 上传）
-│   │   └── AICopilot.tsx            ← AI Copilot 卡片（输入 + 4 快捷按钮）
+│   │   └── events/route.ts          ← GET ?range=Nd 的流程事件
 │   ├── calendar/
-│   │   └── MonthView.tsx            ← 日历月视图
+│   │   └── events/route.ts          ← GET ?start=&end= 的流程事件
 │   ├── companies/
-│   │   └── CompanyRow.tsx           ← 单家大厂的流程行
-│   ├── drawer/
-│   │   ├── DetailDrawer.tsx         ← 全局右侧 Drawer 容器（URL 参数驱动）
-│   │   ├── StageDrawerContent.tsx   ← Stage 详情内容
-│   │   └── NewStageDrawer.tsx       ← 新建事件内容
-│   └── CatIcon.tsx                  ← UI.md 指定的小猫 SVG
+│   │   └── progress/route.ts        ← GET 10 家公司 × Application × Stage 全量
+│   └── ai/
+│       ├── parse-email/route.ts     ← POST 解析面试邮件（走 /chat/completions · 输出 JSON · 草稿态）
+│       ├── parse-jd/route.ts        ← POST 解析 JD
+│       ├── generate-questions/route.ts ← POST 生成面试题
+│       ├── review/route.ts          ← POST 面试复盘
+│       └── daily-intel/route.ts     ← GET 今日大厂动向摘要（按生成日本地时区缓存）
 │
-├── lib/                             ← 计划中 · Phase 0.3+0.4 起产生
-│   ├── db.ts                        ← Prisma Client 单例（dev 模式挂 globalThis 防 HMR 泄漏）
-│   ├── utils.ts                     ← shadcn 生成的 cn() 辅助等
+├── components/                      ← 计划中 · Phase 3+ 产生业务组件
+│   ├── ui/                          ← shadcn/ui 后续按需添加（card / dialog / sheet / table / badge 等）
+│   ├── dashboard/                   ← 首页 5 模块
+│   ├── calendar/                    ← 日历组件
+│   ├── companies/                   ← 公司流程行
+│   └── drawer/                      ← 全局右侧 Drawer 容器及内容组件
+│
+├── lib/                             ← 计划中 · Phase 2+ 起产生
 │   ├── fetcher.ts                   ← 最小化 fetch 封装（自动抛错）
 │   ├── api.ts                       ← API route 通用：jsonOk / jsonError / withApiHandler
-│   ├── llmClient.ts                 ← 豆包 API 唯一出口（原生 fetch + 写 AIRun 日志）
+│   ├── llmClient.ts                 ← Ark API 唯一出口 callAI（/chat/completions + response_format）
 │   ├── prompts.ts                   ← PRD 9.1~9.5 的 5 个 system prompt 原文常量
 │   ├── fakeIntelSource.ts           ← 本地硬编码的大厂资讯样例（供 daily-intel 使用）
 │   ├── queries/                     ← 各 API 对应的前端 query 函数
 │   └── schemas/                     ← 6 实体 + 5 AI 输出的 zod schema
 │
-├── prisma/                          ← 计划中 · Phase 0.4 产生
-│   ├── schema.prisma                ← 数据模型（Resume / Application / Stage / AIRun / IntelSummary / TomorrowTipCache）
+├── prisma/                          ← 计划中 · Phase 1 继续扩展
 │   ├── seed.ts                      ← 种子脚本（预置 10 家大厂占位 Application）
 │   ├── migrations/                  ← 迁移历史（进 git）
 │   └── dev.db                       ← SQLite 数据库文件（不进 git）
 │
 ├── uploads/                         ← 计划中 · PDF 简历本地存储目录（不进 git，运行时自动创建）
 │
-├── scripts/                         ← 计划中 · Phase 0.6 起产生
-│   ├── test-ark-api.ts              ← 【临时 · Phase 0.6 产生 → Phase 6.1 完成后删除】Ark API 连通性冒烟脚本（测试 /chat/completions vs /responses）
-│   └── smoke-api.ts                 ← 非 AI REST API 烟测脚本（一条命令跑通 CRUD）
-│
+└── scripts/
+    └── smoke-api.ts                 ← 计划中 · Phase 2.6 非 AI REST API 烟测脚本
+
 └── node_modules/                    ← 已有 · pnpm 安装产物（不进 git）
 ```
 
@@ -193,10 +200,12 @@
 
 1. **Prisma 单例** → 所有 DB 访问只走 `lib/db.ts` 导出的实例，不要 `new PrismaClient()`
 2. **Ark（豆包 / DeepSeek 3.2）唯一出口** → 所有 AI 调用只走 `lib/llmClient.ts` 的 `callAI`（兼容别名 `callDoubao`），它负责 fetch + 日志 + 错误分类
-3. **Ark API 调用路径决策** → 🔄 **待 Step 0.6 冒烟测试完成后锁定**
-   - 候选：`/chat/completions`（OpenAI 兼容）或 `/responses`（火山方舟新 API）
-   - 决策规则：谁能稳定输出合法 JSON 选谁；都行时选 `/chat/completions`
-   - 决策落地：Step 0.6 完成后，在此节追加一段"**已决策：走 XXX 路径，理由 YYY**"
+3. **Ark API 调用路径决策** → ✅ **已锁定（2026-04-18 Step 0.6 冒烟测试）：走 `/chat/completions` + `response_format: { type: "json_object" }`**
+   - 实测结果：Case A（chat/completions + response_format）和 Case C（responses + text.format）都能稳定返回合法 JSON；Case B、D（纯 prompt）返回会被 markdown ` ```json ... ``` ` 围栏包裹，无法直接 JSON.parse
+   - 选 A 不选 C 的理由：OpenAI 兼容格式、请求体更扁平（messages vs input 嵌套 input_text）、响应解析更直接（choices[0].message.content vs 遍历 output[].content[].text）、工具链更丰富
+   - 纯文本场景（PRD 9.5 今日大厂动向 / Step 6.6 明日提醒）：走同一路径 `/chat/completions`，不传 `response_format`，Case E 实测 200 + 拿到纯文本 "今日晴暖，微风拂面，适宜出行。"
+   - Endpoint 响应的实际模型 id：`deepseek-v3-2-2512`（与用户告知的 DeepSeek 3.2 一致）
+   - `lib/llmClient.ts`（Step 6.1）按此决策实现，不再保留运行时切换能力（候选已收敛）
 4. **Prompt 原文** → `lib/prompts.ts` 的 5 个常量必须和 PRD 9.1~9.5 **逐字一致**
 5. **中文枚举** → `stageType` / `currentStatus` / `stage.status` / `resume.tag` 等字段永远存中文原值（`HR面`、`待参加`、`产品` 等）
 6. **API Key 边界** → `process.env.DOUBAO_*` 只允许在 `app/api/**/route.ts` 和 `lib/llmClient.ts` 里被读取，绝不下发到客户端

@@ -49,3 +49,5 @@ uploads/
 
 # ---- WorkBuddy 工作记忆（跨会话上下文，不进 git） ----
 .workbuddy/
+
+/lib/generated/prisma

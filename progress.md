@@ -18,7 +18,7 @@
 
 | Phase | 内容 | 步数 | 完成 | 总进度 |
 |---|---|---|---|---|
-| 0 | 项目骨架 + git 基线 + API 连通性验证 | 7 | 1/7 | ✅⬜⬜⬜⬜⬜⬜ |
+| 0 | 项目骨架 + git 基线 + API 连通性验证 | 7 | 7/7 | ✅✅✅✅✅✅✅ |
 | 1 | 数据层（6 个 model） | 4 | 0/4 | ⬜⬜⬜⬜ |
 | 2 | REST API（非 AI） | 6 | 0/6 | ⬜⬜⬜⬜⬜⬜ |
 | 3 | 三页骨架 | 5 | 0/5 | ⬜⬜⬜⬜⬜ |
@@ -26,7 +26,7 @@
 | 5 | Resume 上传预览关联 | 3 | 0/3 | ⬜⬜⬜ |
 | 6 | 豆包 AI 接入 | 6 | 0/6 | ⬜⬜⬜⬜⬜⬜ |
 | 7 | 打磨验收 | 4 | 0/4 | ⬜⬜⬜⬜ |
-| **合计** | | **39** | **1/39** | **3%** |
+| **合计** | | **39** | **7/39** | **18%** |
 
 ---
 
@@ -36,38 +36,40 @@
   - 完成日期：2026-04-18
   - 关键产物：`package.json` / `tsconfig.json` / `next.config.ts` / `tailwind.config.ts` / `postcss.config.mjs` / `.eslintrc.json` / `next-env.d.ts` / `app/` / `public/`
   - 验证备注：Next 15.5.15 + React 18.3 + Tailwind 3.4.19 + TS 5.9 + ESLint 8.57 + eslint-config-next 15.5（官方脚手架默认 Next 16 + Tailwind 4 + React 19，与 tech_stack 规格不符，已强制降版）。build 3.4s / lint 0 warn / dev 3000 HTTP 200 含中文内容。已去掉 Geist 字体引用（Step 0.2 换 PingFang SC）；页面暂保留脚手架欢迎页（Step 0.5 替换为重定向到 /dashboard）。
-- [ ] **Step 0.1.5** — 验证 git 仓库状态并建立提交基线
-  - 完成日期：
-  - 关键产物：`.git` 初始化就绪 / 首次基线 commit / `phase0-step1-done` tag
-  - 验证备注：
-- [ ] **Step 0.2** — 配置 Tailwind 马卡龙粉主题
-  - 完成日期：
-  - 关键产物：`tailwind.config.*`（扩展 colors）/ `app/globals.css`
-  - 验证备注：
-- [ ] **Step 0.3** — 接入 shadcn/ui
-  - 完成日期：
-  - 关键产物：`components/ui/button.tsx` / `lib/utils.ts` / CSS 变量覆盖
-  - 验证备注：
-- [ ] **Step 0.4** — 接入 Prisma + SQLite（仅连通，不建模）
-  - 完成日期：
-  - 关键产物：`prisma/schema.prisma`（空）/ `lib/db.ts` / `.env` / `.gitignore` 增补
-  - 验证备注：
-- [ ] **Step 0.5** — 全局布局骨架（左导航 + 顶 Header + 内容区）
-  - 完成日期：
-  - 关键产物：`app/layout.tsx` / `app/dashboard/page.tsx` / `app/calendar/page.tsx` / `app/companies/page.tsx`
-  - 验证备注：
-- [ ] **Step 0.6** — 🧪 Ark API 连通性冒烟测试（强制）
-  - 完成日期：
-  - 关键产物：`scripts/test-ark-api.ts`（临时脚本）+ architecture.md "关键契约点 · Ark API 调用路径决策"
+- [x] **Step 0.1.5** — 验证 git 仓库状态并建立提交基线
+  - 完成日期：2026-04-18
+  - 关键产物：Step 0.1 的 commit `527851b` + tag `phase0-step1-done`（已随 Step 0.1 一并完成）
+  - 验证备注：.git/ 存在、working tree clean、.env.local 未追踪、tag 已推到 origin、.gitignore 含 .env*/node_modules/.next/dev.db/uploads/.workbuddy 全部关键项。实际上这些动作在 Step 0.1 完成时已经顺手做了，本步只是补充验证。
+- [x] **Step 0.2** — 配置 Tailwind 马卡龙粉主题
+  - 完成日期：2026-04-18
+  - 关键产物：`tailwind.config.ts`（UI.md 4.1~4.6 全部色值 + 4.5 阴影 + 5.1 字体 + 5.2 字号层级 + 5.4 圆角）/ `app/globals.css`（body 背景 app-bg / 文字 text-primary / PingFang 字体链 / 行高 1.5）
+  - 验证备注：`pnpm build` 后 grep `.next/static/css/` 验证：bg-primary=rgb(243 175 203)=#F3AFCB ✅ / body bg=#fff7fb ✅ / body color=#47384a ✅ / font-family: PingFang SC 链 ✅ / shadow-soft=0 8px 24px rgba(214,164,187,0.10) ✅ / rounded-pill=999px ✅。临时 probe 元素验证完已删除。
+- [x] **Step 0.3** — 接入 shadcn/ui
+  - 完成日期：2026-04-18
+  - 关键产物：`components.json`（new-york / neutral / cssVars / @/* alias）/ `components/ui/button.tsx`（shadcn Button 按 UI.md variant 映射 primary / primary-hover / primary-strong / 浅粉ghost）/ `lib/utils.ts`（cn 辅助）/ `tailwind.config.ts` 加 tailwindcss-animate plugin / 新增依赖：class-variance-authority 0.7.1 / clsx 2.1.1 / tailwind-merge 3.5.0 / lucide-react 1.8.0 / tailwindcss-animate 1.0.7 / @radix-ui/react-slot 1.2.4
+  - 验证备注：shadcn init 未跑 CLI（非 TTY），直接写等价 components.json + Button 组件。pnpm build 通过；grep CSS 产物确认 `hover\:bg-primary-hover` / `active\:bg-primary-strong` / `rounded-btn-lg` 全部编译出来。临时 Button probe 已删除。
+- [x] **Step 0.4** — 接入 Prisma + SQLite（仅连通，不建模）
+  - 完成日期：2026-04-18
+  - 关键产物：`prisma/schema.prisma`（最小版，datasource sqlite + generator prisma-client-js）/ `lib/db.ts`（PrismaClient 单例 + dev 模式 globalThis）/ `.env`（Prisma CLI 专用，只有 DATABASE_URL，已 gitignore）
+  - 依赖：prisma 5.22.0（devDep）+ @prisma/client 5.22.0。`create-next-app` 不装 Prisma，初装 `pnpm dlx prisma init` 默认拉 Prisma 7（结构大变：prisma.config.ts / output 改成 lib/generated/prisma / datasource url 从 config 注入）→ 已强制降版到 5.22
+  - 验证备注：`pnpm exec prisma -v` 认得 5.22 / `pnpm exec tsc --noEmit` 0 错误 / `pnpm build` 通过 / `.env` 和 `.env.local` 都被 gitignore 拦住（git check-ignore 输出两者文件名 = 已忽略）
+- [x] **Step 0.5** — 全局布局骨架（左导航 + 顶 Header + 内容区）
+  - 完成日期：2026-04-18
+  - 关键产物：`app/layout.tsx`（三区布局，Sidebar + Header + main，最大宽 1600px，左右 padding 32px）/ `app/page.tsx`（重定向到 /dashboard）/ `app/dashboard/page.tsx` / `app/calendar/page.tsx` / `app/companies/page.tsx`（3 个占位页）/ `components/layout/Sidebar.tsx`（88px 宽 + 圆角 28px + 半透明白 + blur + 3 导航项 + 底部 CatIcon）/ `components/layout/Header.tsx`（按路由切 UI.md 8.2/9/10 标题 + 日期 pill + 头像占位）/ `components/CatIcon.tsx`（Phase 7.2 前占位，lucide Cat 装浅粉圆底）。新增依赖：date-fns 4.1.0
+  - 验证备注：4 条路由都编译出静态页面。`/` 返 307 重定向 location:/dashboard；`/dashboard` 200 含 Header 文案"今天也离理想 offer" + 占位"首页占位"；`/calendar` 200 含"从日期视角"+"日历页占位"；`/companies` 200 含"从公司维度"+"大厂流程页占位"。颜色全走 Tailwind 语义令牌 无 hex。
+- [x] **Step 0.6** — 🧪 Ark API 连通性冒烟测试（强制）
+  - 完成日期：2026-04-18
+  - 关键产物：`scripts/test-ark-api.ts`（5 用例冒烟 + 脱敏 log + 30s 超时）+ architecture.md 关键契约点 3 已更新为"走 /chat/completions + response_format"
   - 测试结果：
-    - [ ] A: `/chat/completions` + `response_format:json_object` → ＿＿
-    - [ ] B: `/chat/completions` 纯 prompt 约束 → ＿＿
-    - [ ] C: `/responses` + `text.format` → ＿＿
-    - [ ] D: `/responses` 纯 prompt 约束 → ＿＿
-  - 最终选定路径：`/chat/completions` 或 `/responses`
-  - 验证备注：
+    - [x] A: `/chat/completions` + `response_format:json_object` → 200 ✓ JSON ✓（选中）
+    - [x] B: `/chat/completions` 纯 prompt 约束 → 200 但返回含 markdown 围栏，JSON.parse 失败
+    - [x] C: `/responses` + `text.format` → 200 ✓ JSON ✓（备选）
+    - [x] D: `/responses` 纯 prompt 约束 → 200 但返回含 markdown 围栏
+    - [x] E: `/chat/completions` + 纯文本（非 JSON 场景）→ 200 ✓ 拿到"今日晴暖，微风拂面，适宜出行。"
+  - 最终选定路径：`/chat/completions`
+  - 验证备注：Endpoint 后绑的实际模型 id = `deepseek-v3-2-2512`（与用户告知的 DeepSeek 3.2 一致）。脚本保留，Phase 6 Step 6.1 完成后删除。
 
-**Phase 0 出口** ☐ 已追加 architecture.md 里程碑「项目骨架搭建完成 + Ark API 连通性已验证」
+**Phase 0 出口** ☑ 已追加 architecture.md 里程碑「项目骨架搭建完成 + Ark API 连通性已验证」
 
 ---
 

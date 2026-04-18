@@ -1,0 +1,12 @@
+// Prisma schema · Step 0.4 最小可用版
+// Step 1.1 将在此扩展 6 个 model（Resume / Application / Stage / AIRun / IntelSummary / TomorrowTipCache）
+// 约束见 implementation_plan.md Step 1.1。
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
