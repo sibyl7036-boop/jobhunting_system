@@ -25,8 +25,8 @@
 | 4 | Drawer + 手动 CRUD | 4 | 4/4 | ✅✅✅✅ |
 | 5 | Resume 上传预览关联 | 3 | 3/3 | ✅✅✅ |
 | 6 | 豆包 AI 接入 | 6 | 6/6 | ✅✅✅✅✅✅ |
-| 7 | 打磨验收 | 4 | 2/4 | ✅✅⬜⬜ |
-| **合计** | | **39** | **37/39** | **95%** |
+| 7 | 打磨验收 | 4 | 3/4 | ✅✅✅⬜ |
+| **合计** | | **39** | **38/39** | **97%** |
 
 ---
 
@@ -267,15 +267,18 @@
   - 决策：**不引入 framer-motion**。UI.md 明确"如果某动效实现复杂，可直接使用简单 CSS transition 替代"；呼吸/晃动/上浮全部用 Tailwind keyframes + transform 实现，符合 tech_stack 第 1 节"能用一个绝不用两个"。Drawer 打开 240ms ease-out 已在 Step 4.1 的 `sheet.tsx` 用 tailwindcss-animate 实现（slide-in-from-right）
   - UI.md 逐节核对（DevTools 抽样）：4.1~4.6 全部色值与 tailwind.config.ts 一一对应（已在 Step 0.2 完成并验证）；5.2 字号层级 page-title/section-title/card-title/body/caption 5 级走语义 class；6.2 Sidebar 88px + 28px 圆角 + 选中 scale(1.04) + soft-panel 底 + shadow-soft；8.3 表格胶囊色规则（一面/二面/三面/HR面 lilac, 笔试/测评 yellow, Offer mint）；11.1 Drawer 440px + rounded-l-3xl；13.1/13.2/13.3 hover/active/selected 动效全到位
   - 验证备注：typecheck 0 / build 0 warning / CSS bundle 21618eb1161465b6.css 含 `cat-breathe` 和 `cat-wobble` 类；dashboard bundle 9.28kB（+10B CatIcon SVG）；animate-cat-breathe 用 3 次（AICopilot / TomorrowReminder / 其他可能场景），animate-cat-wobble 用 2 次（busy 状态）。不新增依赖
-- [ ] **Step 7.3** — PRD 第 13 章 6 个闭环验收
-  - 完成日期：
+- [x] **Step 7.3** — PRD 第 13 章 6 个闭环验收
+  - 完成日期：2026-04-19
+  - 关键产物：`scripts/smoke-closures.ts`（E2E 脚本，一条命令跑完 6 闭环 + 自动清理造出的数据）/ `scripts/fixtures/closure-tiny.pdf`（Python 手写 580 字节合法 PDF v1.4，供闭环 6 上传用）
   - 逐一勾选：
-    - [ ] 闭环 1：AI 解析写入
-    - [ ] 闭环 2：手动录入
-    - [ ] 闭环 3：详情编辑
-    - [ ] 闭环 4：AI 面试题
-    - [ ] 闭环 5：AI 复盘
-    - [ ] 闭环 6：简历上传关联
+    - [x] 闭环 1：AI 解析写入（邮件 → 草稿 → 建 Application + Stage → dashboard / calendar / companies 三视图同步）
+    - [x] 闭环 2：手动录入（POST Application + Stage → dashboard 可见）
+    - [x] 闭环 3：详情编辑（GET /stages/:id/detail → PATCH Application + PATCH Stage 都 200）
+    - [x] 闭环 4：AI 面试题（解析 JD → PATCH JD 四字段 → 生成 4 题 → PATCH interviewQuestions → 回读对齐）
+    - [x] 闭环 5：AI 复盘（转录 → AI 返 3 字段 → PATCH `reviewQuestionSummary` + `reviewAnswerSummary` + `reviewSuggestion` → 回读对齐）
+    - [x] 闭环 6：简历上传关联（tiny PDF → 提取文本 "Hello Closure 6 Resume Demo" → 关联 Application → 被引用时 DELETE 409 → 解除关联后 200）
+  - 验证备注：`pnpm tsx scripts/smoke-closures.ts` 一条命令跑完 6 闭环，**通过 31 / 失败 0 / 耗时 26.9s**。含真实豆包 AI 调用（4 个 AI 端点 + 草稿态 + 用户确认入库）。过程中捕到 smoke-closures 脚本初版的一个字段名错误——我误用 AI 输出原字段名 `questionSummary` 去 PATCH Stage，实际 Stage schema 是 `reviewQuestionSummary` 前缀（前端 AICopilot 做了正确映射）。修正脚本后全绿。AIRun 表新增约 5 条日志记录（脚本完成后仍保留，方便回溯）
+  - 数据库最终状态：脚本完成后自动清理自己造的 5 个 Application + 其 Stage + 1 个 Resume 及 uploads/cmo4km74*.pdf，DB 回到跑脚本前的状态
 - [ ] **Step 7.4** — 最终清理（console / TODO / README / build / lint）
   - 完成日期：
 

@@ -182,6 +182,9 @@
 ├── components/dashboard/AICopilot.tsx ← 升级 · Step 7.2 · CatIcon busy={busy !== null}（AI 调用中晃动）
 ├── components/dashboard/TomorrowReminder.tsx ← 升级 · Step 7.2 · CatIcon busy={refreshing}
 ├── components/layout/Sidebar.tsx    ← 升级 · Step 7.2 · 底部 CatIcon staticIcon（关闭呼吸避免常驻分心）
+├── scripts/smoke-closures.ts        ← 已有 · Step 7.3 · PRD 第 13 章 6 闭环 E2E 脚本（含真实 AI 调用 + 数据自清理）
+├── scripts/fixtures/
+│   └── closure-tiny.pdf             ← 已有 · Step 7.3 · 580B 合法 PDF v1.4，闭环 6 上传 fixture
 
 （以下 Phase 7.2+ 陆续产生）
 ├── README.md                        ← 计划中 · 仓库门面（Phase 7.4）
