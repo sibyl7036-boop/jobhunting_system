@@ -2,11 +2,13 @@
  * /api/resumes/[id]
  *
  * PATCH · 改名 / 改 tag
- * DELETE · 删除；若被某 Application.linkedResumeId 引用则返 409
+ * DELETE · 删除；若被某 Application.linkedResumeId 引用则返 409；成功后同步清掉 uploads/<id>.pdf
  *
- * 对应 PRD 7.1 / implementation_plan Step 2.1
+ * 对应 PRD 7.1 / implementation_plan Step 2.1 + Step 5.1
  */
 
+import fs from "node:fs/promises";
+import path from "node:path";
 import { prisma } from "@/lib/db";
 import {
   jsonOk,
@@ -16,6 +18,8 @@ import {
   parseJsonBody,
 } from "@/lib/api";
 import { resumeUpdateInputSchema } from "@/lib/schemas";
+
+const UPLOADS_DIR = path.join(process.cwd(), "uploads");
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -43,7 +47,7 @@ export const DELETE = withApiHandler<RouteContext>(async (_req, ctx) => {
   const existing = await prisma.resume.findUnique({ where: { id } });
   if (!existing) throw notFound(`Resume id=${id} 不存在`);
 
-  // 引用校验：该 Resume 是否被某个 Application 的 linkedResumeId 引用
+  // 引用校验
   const refs = await prisma.application.findMany({
     where: { linkedResumeId: id },
     select: { id: true, companyName: true, roleName: true },
@@ -60,5 +64,17 @@ export const DELETE = withApiHandler<RouteContext>(async (_req, ctx) => {
   }
 
   await prisma.resume.delete({ where: { id } });
+
+  // 同步清理物理文件（失败不阻断，只 log）
+  const filePath = path.join(UPLOADS_DIR, `${id}.pdf`);
+  try {
+    await fs.unlink(filePath);
+  } catch (e) {
+    // 文件可能本来就不存在；log 但不抛
+    if ((e as NodeJS.ErrnoException).code !== "ENOENT") {
+      console.warn(`[resumes] 删除文件失败 ${filePath}:`, e);
+    }
+  }
+
   return jsonOk({ id, deleted: true });
 });

@@ -129,6 +129,19 @@
 │   └── stages/[id]/detail/route.ts  ← 已有 · Step 4.1 · Drawer 专用 GET，一次性返 stage+application+linkedResume（含 JSON 数组反序列化）
 ├── app/layout.tsx                   ← 升级 · Step 4.1 · 挂 Suspense+DetailDrawer + Toaster(sonner) + 粉色风格 toast 样式
 
+│ ── Phase 5 产物（Resume 上传 / 预览 / 关联） ──
+├── app/api/resumes/
+│   ├── upload/route.ts              ← 已有 · Step 5.1 · POST multipart/form-data；存盘到 uploads/<id>.pdf；pdf-parse v2 提取文本 + 控制字符清洗；runtime='nodejs'
+│   └── [id]/file/route.ts           ← 已有 · Step 5.1 · GET 流式返 application/pdf（浏览器 iframe 直接渲染）
+├── components/resume/
+│   ├── UploadResumeDialog.tsx       ← 已有 · Step 5.2 · 上传 Dialog（拖放区 + name 预填 + tag + warning toast）
+│   ├── RenameResumeDialog.tsx       ← 已有 · Step 5.2 · 改名 / 改 tag（react-hook-form + dirty 控制保存）
+│   └── ResumePreviewDialog.tsx      ← 已有 · Step 5.2 · 预览 Dialog（70vw × 85vh 内嵌 iframe；复用在 Step 5.3）
+├── components/dashboard/ResumeCard.tsx  ← 升级 · Step 5.2 · 所有按钮实装（上传 / 预览 / 改名 / 删除）
+├── components/drawer/StageDrawerContent.tsx  ← 升级 · Step 5.3 · 关联简历 Select + CurrentResumePreview 子组件 + 嵌套预览 Dialog
+├── uploads/                         ← 已有 · Step 5.1 · 用户上传 PDF 存储目录（gitignore，DELETE Resume 时同步清）
+├── next.config.ts                   ← 升级 · Step 5.1 · serverExternalPackages 标 pdf-parse / pdfjs-dist 为外部包
+
 （以下 Phase 3+ 陆续产生）
 ├── README.md                        ← 计划中 · 仓库门面（Phase 7.4）
 │
@@ -240,6 +253,10 @@
 13. **API 时间语义（2026-04-18 Step 2.3 决策）** → 全部本地时区。`/api/dashboard/events?range=Nd` 返回 `[今天 00:00:00.000, 今天+N 天 00:00:00.000)` 半开区间内的 Stage；`/api/calendar/events?start&end` 返回 `[start 00:00:00.000, end 23:59:59.999]` 闭区间内的 Stage。日期字符串只接受 `YYYY-MM-DD`，range 只接受 `Nd`（N ∈ [1, 365]）。
 14. **数据请求方式（2026-04-18 Step 3.1 决策）** → 读写分层。**首屏 SSR 读**走 `lib/queries/*`（Server Component 直调 Prisma，零 HTTP 开销、无 absoluteUrl 烦恼），`lib/queries/` 所有模块顶部 `import "server-only"` 作为 Client Component 误引入的守卫。**客户端交互写（新增/编辑/删除）**走 `lib/fetcher.ts` 的 `fetchJson` 调 `/api/*`（错误结构遵守关键契约点 12）。两者共享同一份 Prisma 单例 + `lib/serialize.ts` 序列化规则。Phase 4 Drawer 之后的所有 CRUD 按这个约定落地。新增依赖：server-only 0.0.1。
 15. **日历视图自研而非 react-day-picker（2026-04-18 Step 3.4 决策）** → `components/calendar/MonthView.tsx` 手写 7×N grid（date-fns + Tailwind `grid-cols-7`），不装 react-day-picker。理由：需求是"展示事件"而非"选日期"；react-day-picker 强项用不上，手写仅需已装依赖、布局更可控（UI.md 9.3 "每格足够留白" + 胶囊 + "+N" 省略都是自定义渲染）。首屏 SSR 注入月网格事件，切月由 Client 端直接 fetch `/api/calendar/events`（闭区间与 route 一致）。
+16. **Drawer 状态管理方式（2026-04-18 Step 4.1 决策）** → **URL search params** 驱动，而非 React Context / Zustand。三种类型：`?drawer=stage&id=…` / `?drawer=stage-new[&applicationId=…][&date=YYYY-MM-DD]` / `?drawer=application-new`。优点：刷新恢复状态 + 可分享链接 + 三页共用一套逻辑。关闭时自动剥掉 drawer/id/applicationId/date 四个参数。工具：`lib/drawerUrl.ts` 的 `useOpenDrawer` / `useCloseDrawer`。挂载点：`app/layout.tsx` 下 Suspense + DetailDrawer（Next 15 对 useSearchParams 强制要求 Suspense 边界）。
+17. **客户端三方库依赖栈（2026-04-18 Phase 4 锁定）** → Form：`react-hook-form 7.72` + `@hookform/resolvers 5.2`（zod integration）；Data fetching（Client）：`swr 2.4`（Drawer 详情拉取 + Phase 6 AI 轮询复用）；Toast：`sonner 2.0`（全局 Toaster 挂 layout）；Dialog 基础组件：`@radix-ui/react-dialog 1.1`（Sheet/Dialog 共享底座）。没装 @radix-ui/react-select（native select 够用），没装 Zustand / Jotai（URL 参数够用），没装 react-query（SWR 更轻）。
+18. **PDF 处理栈（2026-04-18 Phase 5 锁定）** → 解析用 `pdf-parse 2.4`（v2 API：`new PDFParse({ data }).getText()`，和 v1 的 `pdf(buffer)` 不兼容）；**预览用浏览器原生 iframe**（tech_stack 禁用清单里的 react-pdf），70vw×85vh 的 Dialog 承载，内置 PDF 工具栏支持缩放/下载。`next.config.ts` 必须把 `pdf-parse` + `pdfjs-dist` 加进 `serverExternalPackages`，否则 Next 15 server bundler 会报 "Object.defineProperty called on non-object"。上传 route 必须 `export const runtime = "nodejs"`（默认 edge-light 跑不起来）。上传存盘路径统一 `uploads/<resumeId>.pdf`（文件名 = DB id），DELETE Resume 时同步清理物理文件。
+19. **PDF 文本清洗规则（2026-04-18 Step 5.1 决策）** → pdf-parse 输出的原文可能含裸控制字符（U+0000~001F），直接 `NextResponse.json()` 产出的响应会让严格 JSON 解析器（jq / python json / node JSON.parse）炸掉（浏览器 fetch.json 能容忍）。服务端在落库前做清洗：`\r\n`→`\n`、删除除 `\t\n` 外的 C0/DEL 控制字符（换成空格）、连续空白压缩。清洗后的 `extractedText` 是"可直接拼进 prompt、可直接 JSON 序列化"的纯文本。
 
 ---
 

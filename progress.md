@@ -23,7 +23,7 @@
 | 2 | REST API（非 AI） | 6 | 6/6 | ✅✅✅✅✅✅ |
 | 3 | 三页骨架 | 5 | 2/5 | ✅✅⬜⬜⬜ |
 | 4 | Drawer + 手动 CRUD | 4 | 4/4 | ✅✅✅✅ |
-| 5 | Resume 上传预览关联 | 3 | 0/3 | ⬜⬜⬜ |
+| 5 | Resume 上传预览关联 | 3 | 3/3 | ✅✅✅ |
 | 6 | 豆包 AI 接入 | 6 | 0/6 | ⬜⬜⬜⬜⬜⬜ |
 | 7 | 打磨验收 | 4 | 0/4 | ⬜⬜⬜⬜ |
 | **合计** | | **39** | **22/39** | **56%** |
@@ -192,16 +192,22 @@
 
 ## Phase 5 · Resume 上传预览关联
 
-- [ ] **Step 5.1** — `POST /api/resumes/upload` + `GET /api/resumes/:id/file`
-  - 完成日期：
-  - 关键产物：`app/api/resumes/upload/route.ts` / `app/api/resumes/[id]/file/route.ts` / `uploads/` 目录
-- [ ] **Step 5.2** — 首页「我的简历」卡片接入
-  - 完成日期：
-  - 关键产物：`components/dashboard/ResumeCard.tsx`（完整态）
-- [ ] **Step 5.3** — Drawer 中切换关联简历
-  - 完成日期：
+- [x] **Step 5.1** — `POST /api/resumes/upload` + `GET /api/resumes/:id/file`
+  - 完成日期：2026-04-18
+  - 关键产物：`app/api/resumes/upload/route.ts`（multipart/form-data；文件/MIME/大小校验；uploads/<id>.pdf 落盘；pdf-parse v2 提取文本 + 控制字符清洗；失败不阻断返 warning；`export const runtime = "nodejs"`）/ `app/api/resumes/[id]/file/route.ts`（流式返 PDF 含 Content-Disposition/Content-Length/Cache-Control）/ `app/api/resumes/[id]/route.ts` 升级：DELETE 同步清 uploads/<id>.pdf / `next.config.ts`：加 `serverExternalPackages: ["pdf-parse", "pdfjs-dist"]`
+  - 新增依赖：`pdf-parse 2.4` + `@types/pdf-parse 1.1`（devDep）
+  - 踩坑：pdf-parse v2 用 `new PDFParse({ data }).getText()`（不再是 v1 的 `pdf(buffer)`）；Next 15 server bundler 直接打包 pdfjs-dist 会报 "Object.defineProperty called on non-object"，必须走 serverExternalPackages；pdf-parse 输出的 `\n\f\t` 要清洗成普通换行/空格否则 NextResponse.json 产出的裸控制字符会让严格 JSON 解析器（jq/python）挂掉（浏览器 fetch.json 能吞但 DB 里存裸控制字符也影响后续 AI prompt）
+  - 验证备注：curl + jq E2E 9 场景全过：合法 tiny.pdf → 201 + extractedText="Hello Job Hunt Resume Demo\\n\\n-- 1 of 1 --"；PNG 伪装 → 400；>10MB → 413；损坏 PDF → 201 + warning="文本提取失败：Invalid PDF structure." + extractedText=null；GET file → 200 + application/pdf + 555B + `file` 确认 PDF v1.4；被 Application 引用 → DELETE 409；解除引用后 → DELETE 200；uploads/ 目录物理文件删除
+- [x] **Step 5.2** — 首页"我的简历"卡片接入
+  - 完成日期：2026-04-18
+  - 关键产物：`components/resume/UploadResumeDialog.tsx`（文件选择 + 虚线拖放区 + name 预填 + tag Select + 10MB 提示 + warning toast）/ `RenameResumeDialog.tsx`（react-hook-form + 改名 + 改 tag + dirty 态）/ `ResumePreviewDialog.tsx`（70vw × 85vh 大 Dialog 内嵌 iframe + "新窗口打开"入口）/ `components/dashboard/ResumeCard.tsx` 整体升级：空态引导 / 列表项可点（整行 → 预览，操作列 Pencil 改名 / Trash2 删除）/ 删除走 ConfirmDeleteDialog（409 引用错误会自动 toast "该简历被 ...岗位 使用"）
+  - 验证备注：已走通 Step 5.1 的 API E2E + Step 5.2 组件全部 typecheck 0 / build 0 warning；dashboard bundle 7.19kB（+ 3 个简历 Dialog）
+- [x] **Step 5.3** — Drawer 中切换关联简历
+  - 完成日期：2026-04-18
+  - 关键产物：`StageDrawerContent.tsx` 的"关联简历"区改为：Select 列出全部 Resume（含"— 未关联 —"空选项）+ `CurrentResumePreview` 子组件实时拿 `form.watch("linkedResumeId")` 渲染当前简历名+标签+预览按钮；form schema 加 `linkedResumeId` 字段；保存时空串 → null 传给 `/api/applications/:id` PATCH（后端已用 nested connect/disconnect 处理）；点预览复用 `ResumePreviewDialog` 嵌套在 Drawer 之上
+  - 验证备注：E2E 跑通：上传 A+B 简历 → PATCH 关联 A → GET 带 join 返 linkedResume 完整对象 → 切到 B → 断开 null；`/api/dashboard/events` 返的 application.linkedResume 同步刷新（首页表格"关联简历"列据此展示）
 
-**Phase 5 出口** ☐ 已追加 architecture.md 里程碑「Resume 模块完整闭环」
+**Phase 5 出口** ☑ 已追加 architecture.md 里程碑「Resume 模块完整闭环：上传 / 预览 / 改名 / 删除 / 关联切换」
 
 ---
 

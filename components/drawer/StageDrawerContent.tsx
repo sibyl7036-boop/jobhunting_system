@@ -28,6 +28,7 @@ import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { fetchJson } from "@/lib/fetcher";
 import { useRouter } from "next/navigation";
+import { ResumePreviewDialog } from "@/components/resume/ResumePreviewDialog";
 import {
   STAGE_TYPES,
   STAGE_STATUSES,
@@ -74,6 +75,8 @@ const formSchema = z.object({
   departmentName: z.string(),
   roleName: z.string().min(1, "岗位不能为空"),
   currentStatus: z.enum(APPLICATION_STATUSES as unknown as [string, ...string[]]),
+  /** 关联简历 id，空串表示不关联（保存时转 null） */
+  linkedResumeId: z.string(),
   // Stage 侧
   type: z.enum(STAGE_TYPES as unknown as [string, ...string[]]),
   status: z.enum(STAGE_STATUSES as unknown as [string, ...string[]]),
@@ -120,6 +123,9 @@ export function StageDrawerContent({ stageId, onClose }: Props) {
   const router = useRouter();
   const [isEditing, setIsEditing] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
+  const [previewResume, setPreviewResume] = React.useState<
+    { id: string; name: string } | null
+  >(null);
 
   // 第一步：拿到 Stage 所属的 Application。由于我们的 URL 只带 stage id，
   // 而 API 是 /api/applications/:id 返回 stages[]，这里用"全局小查询"：先拉所有 dashboard+calendar 不行
@@ -148,12 +154,18 @@ export function StageDrawerContent({ stageId, onClose }: Props) {
       departmentName: "",
       roleName: "",
       currentStatus: "未投递",
+      linkedResumeId: "",
       type: "一面",
       status: "待参加",
       time: "",
       meetingLink: "",
     },
   });
+
+  // Step 5.3 · 简历列表（SWR）供"关联简历"下拉
+  const { data: allResumes } = useSWR<
+    Array<{ id: string; name: string; tag: string }>
+  >("/api/resumes", swrFetcher);
 
   // 数据到了：重置表单
   React.useEffect(() => {
@@ -163,6 +175,7 @@ export function StageDrawerContent({ stageId, onClose }: Props) {
       departmentName: data.application.departmentName,
       roleName: data.application.roleName,
       currentStatus: data.application.currentStatus,
+      linkedResumeId: data.application.linkedResumeId ?? "",
       type: data.stage.type,
       status: data.stage.status,
       time: isoToLocalInput(data.stage.time),
@@ -183,6 +196,8 @@ export function StageDrawerContent({ stageId, onClose }: Props) {
             departmentName: values.departmentName,
             roleName: values.roleName,
             currentStatus: values.currentStatus,
+            // 空串 → null（后端用 nested connect/disconnect 处理）
+            linkedResumeId: values.linkedResumeId || null,
           }),
         }),
         fetchJson(`/api/stages/${data.stage.id}`, {
@@ -225,7 +240,6 @@ export function StageDrawerContent({ stageId, onClose }: Props) {
 
   const stage = data.stage;
   const app = data.application;
-  const resume = app.linkedResume;
 
   return (
     <>
@@ -367,34 +381,30 @@ export function StageDrawerContent({ stageId, onClose }: Props) {
             </div>
           </section>
 
-          {/* D. 关联简历区（UI.md 11.2 D）· 展示态，切换放 Phase 5 */}
-          <section className="space-y-2 border-t border-border-light pt-5">
+          {/* D. 关联简历区（UI.md 11.2 D · Step 5.3 实装） */}
+          <section className="space-y-3 border-t border-border-light pt-5">
             <h4 className="text-card-title text-text-primary">关联简历</h4>
-            {resume ? (
-              <div className="flex items-center justify-between rounded-card-md bg-app-bg-secondary p-3">
-                <div>
-                  <p className="text-body font-medium text-text-primary">
-                    {resume.name}
-                  </p>
-                  <p className="text-caption text-text-tertiary">
-                    标签：{resume.tag}
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  disabled
-                  title="即将开放（Phase 5）"
-                >
-                  预览
-                </Button>
-              </div>
-            ) : (
-              <p className="text-body text-text-tertiary">
-                还未关联简历（Phase 5 开放切换）
-              </p>
-            )}
+
+            <Field label="选择简历">
+              <Select
+                disabled={!isEditing}
+                {...form.register("linkedResumeId")}
+              >
+                <option value="">— 未关联 —</option>
+                {(allResumes ?? []).map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name}（{r.tag}）
+                  </option>
+                ))}
+              </Select>
+            </Field>
+
+            {/* 当前关联简历的预览入口（使用 form.watch 实时拿到最新 id） */}
+            <CurrentResumePreview
+              selectedId={form.watch("linkedResumeId")}
+              allResumes={allResumes ?? []}
+              onPreview={(r) => setPreviewResume(r)}
+            />
           </section>
 
           {/* JD 信息区先空着（Phase 6 在 JD 解析里展开） */}
@@ -422,6 +432,13 @@ export function StageDrawerContent({ stageId, onClose }: Props) {
           关闭
         </Button>
       </SheetFooter>
+
+      {/* Step 5.3 · 简历预览 Dialog（嵌套在 Drawer 之上） */}
+      <ResumePreviewDialog
+        open={previewResume !== null}
+        onOpenChange={(v) => !v && setPreviewResume(null)}
+        resume={previewResume}
+      />
     </>
   );
 }
@@ -461,4 +478,54 @@ function statusChip(status: string): string {
     default:
       return "bg-neutral/40 text-text-secondary";
   }
+}
+
+/**
+ * Step 5.3 · 关联简历区的"当前选中简历预览入口"
+ *
+ * selectedId 来自 form.watch("linkedResumeId")，实时反映用户在 select 里的选择。
+ * 空串时显示"未关联"提示；有值时显示简历名 + 标签 + 预览按钮。
+ */
+function CurrentResumePreview({
+  selectedId,
+  allResumes,
+  onPreview,
+}: {
+  selectedId: string;
+  allResumes: Array<{ id: string; name: string; tag: string }>;
+  onPreview: (resume: { id: string; name: string }) => void;
+}) {
+  if (!selectedId) {
+    return (
+      <p className="text-caption text-text-tertiary">
+        还未关联简历，切换后请记得保存
+      </p>
+    );
+  }
+  const match = allResumes.find((r) => r.id === selectedId);
+  if (!match) {
+    return (
+      <p className="text-caption text-danger">
+        选中的简历已被删除，请重新选择
+      </p>
+    );
+  }
+  return (
+    <div className="flex items-center justify-between rounded-card-md bg-app-bg-secondary p-3">
+      <div>
+        <p className="text-body font-medium text-text-primary">
+          {match.name}
+        </p>
+        <p className="text-caption text-text-tertiary">标签：{match.tag}</p>
+      </div>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => onPreview({ id: match.id, name: match.name })}
+      >
+        预览
+      </Button>
+    </div>
+  );
 }
