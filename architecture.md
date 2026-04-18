@@ -103,6 +103,9 @@
 ├── components/calendar/
 │   └── MonthView.tsx                ← 已有 · Step 3.4 · 月视图（7 列 grid + 当日事件列表 + 月份切换，Client Component 拉 /api/calendar/events）
 ├── app/calendar/page.tsx            ← Step 3.4 · Server Component SSR 注入首屏月网格事件，后续切月由 Client 端 fetch
+├── components/companies/
+│   └── CompanyRow.tsx               ← 已有 · Step 3.5 · 大厂单行（9 节点胶囊 + 颜色 4 态 + hover 浮起 + 细线连接 + MoreHorizontal 占位）
+├── app/companies/page.tsx           ← Step 3.5 · Server Component 拉 getCompaniesProgress，10 家按 PRD 顺序 divide-y 分隔
 
 （以下 Phase 3+ 陆续产生）
 ├── README.md                        ← 计划中 · 仓库门面（Phase 7.4）
@@ -213,6 +216,8 @@
 11. **JSON 字符串数组约定** → SQLite 不支持数组，`Application.jdKeywords` / `Application.expectedSkills` / `Application.interviewQuestions` / `AIRun.outputJson` 在 DB 里统一用 `String?` 存 JSON 字符串；应用层（API route）读写时 `JSON.parse` / `JSON.stringify` 转换；zod schema 在应用层用原生 `z.array(z.string())` / `z.record()` 类型。
 12. **API 错误结构规约（2026-04-18 Step 2.1/2.5 决策）** → 所有 API route 必经 `withApiHandler` 包装。成功返数据；失败返 `{ error: { code, message, details? } }` + HTTP 4xx/5xx。`code` 枚举：`VALIDATION_ERROR`（400）/ `NOT_FOUND`（404）/ `CONFLICT`（409）/ `INTERNAL_ERROR`（500）。zod 校验失败会被 `withApiHandler` 自动转为 400。Prisma 外键 update 必须用 nested `connect/disconnect`（不能直接赋 `linkedResumeId`）。
 13. **API 时间语义（2026-04-18 Step 2.3 决策）** → 全部本地时区。`/api/dashboard/events?range=Nd` 返回 `[今天 00:00:00.000, 今天+N 天 00:00:00.000)` 半开区间内的 Stage；`/api/calendar/events?start&end` 返回 `[start 00:00:00.000, end 23:59:59.999]` 闭区间内的 Stage。日期字符串只接受 `YYYY-MM-DD`，range 只接受 `Nd`（N ∈ [1, 365]）。
+14. **数据请求方式（2026-04-18 Step 3.1 决策）** → 读写分层。**首屏 SSR 读**走 `lib/queries/*`（Server Component 直调 Prisma，零 HTTP 开销、无 absoluteUrl 烦恼），`lib/queries/` 所有模块顶部 `import "server-only"` 作为 Client Component 误引入的守卫。**客户端交互写（新增/编辑/删除）**走 `lib/fetcher.ts` 的 `fetchJson` 调 `/api/*`（错误结构遵守关键契约点 12）。两者共享同一份 Prisma 单例 + `lib/serialize.ts` 序列化规则。Phase 4 Drawer 之后的所有 CRUD 按这个约定落地。新增依赖：server-only 0.0.1。
+15. **日历视图自研而非 react-day-picker（2026-04-18 Step 3.4 决策）** → `components/calendar/MonthView.tsx` 手写 7×N grid（date-fns + Tailwind `grid-cols-7`），不装 react-day-picker。理由：需求是"展示事件"而非"选日期"；react-day-picker 强项用不上，手写仅需已装依赖、布局更可控（UI.md 9.3 "每格足够留白" + 胶囊 + "+N" 省略都是自定义渲染）。首屏 SSR 注入月网格事件，切月由 Client 端直接 fetch `/api/calendar/events`（闭区间与 route 一致）。
 
 ---
 

@@ -26,7 +26,7 @@
 | 5 | Resume 上传预览关联 | 3 | 0/3 | ⬜⬜⬜ |
 | 6 | 豆包 AI 接入 | 6 | 0/6 | ⬜⬜⬜⬜⬜⬜ |
 | 7 | 打磨验收 | 4 | 0/4 | ⬜⬜⬜⬜ |
-| **合计** | | **39** | **21/39** | **54%** |
+| **合计** | | **39** | **22/39** | **56%** |
 
 ---
 
@@ -147,14 +147,17 @@
   - 完成日期：2026-04-18
   - 关键产物：`components/dashboard/TomorrowReminder.tsx`（粉黄渐变 `#FFF7D8→#FFF3FA` + CatIcon + Bell + 硬编码"明天暂无流程安排..."）/ `DailyIntel.tsx`（粉紫→浅黄 `#F8F5FF→#FFF8E8` + Sparkles + "暂无动向" + "AI 摘要"标签）/ `ResumeCard.tsx`（列表态：FileText 图标 + 标签胶囊 4 色映射（产品=lilac/运营=peach/算法=mint/通用=neutral）+ Eye/Trash2/Upload 按钮全 `disabled` + title="即将开放"；空态：FolderClosed + "先放一份简历进来吧"）/ `AICopilot.tsx`（粉紫渐变大卡 + CatIcon + textarea radius=18px placeholder 与 UI.md 8.7 原文 100% 一致 + 4 个胶囊快捷按钮 console.log）/ `app/dashboard/page.tsx` 升级为 12 栏布局（lg:col-span-8 左 + lg:col-span-4 右；并发拉 events + resumes）
   - 验证备注：typecheck 0 / build 通过 /dashboard 5.7kB（4 个 Client 组件）/ dev HTTP 200 · HTML 36KB / grep 22 个关键字全部命中（含 `lg:col-span-8` `lg:col-span-4` `FFF7D8` `FFF8E8` `FFF1F7` `border-radius:18px` `disabled=""` `粘贴面试邮件` `解析面试邮件` `放 2~3 份常用版本就够了` 等） / 所有卡片走 `rounded-card-md/lg` + `shadow-soft` + `hover:-translate-y-0.5 hover:shadow-hover` 统一视觉规则 / 简历卡 disabled 按钮 tooltip 用原生 `title` 属性（不引入新依赖）
-- [ ] **Step 3.4** — `/calendar` 月视图
-  - 完成日期：
-  - 关键产物：`app/calendar/page.tsx` / `components/calendar/MonthView.tsx`
-- [ ] **Step 3.5** — `/companies` 大厂流程页
-  - 完成日期：
-  - 关键产物：`app/companies/page.tsx` / `components/companies/CompanyRow.tsx`
+- [x] **Step 3.4** — `/calendar` 月视图
+  - 完成日期：2026-04-18
+  - 关键产物：`components/calendar/MonthView.tsx`（Client Component：12 栏布局左 8 月视图 + 右 4 当日事件列表 / 7×N grid 周一起始 / 每格 min-h 108px / 上月/今天/下月按钮 / 胶囊色规则复用 EventTable 的 typeChipClass / 超 3 条用 +N / 点日期格更新 `selectedDay` / 点事件 console.log）/ `app/calendar/page.tsx`（SSR 拉当月网格事件数据注入给 MonthView，切月由 Client 端直接 fetch /api/calendar/events）
+  - 决策：**不用 react-day-picker，手写 7 列 grid**。理由：需求是"展示事件"而非"选日期"；react-day-picker 的强项用不上，手写只依赖已装的 date-fns + Tailwind grid，代码更少、布局更可控（UI.md 9.3 "每格足够留白"要求精细控制）。已写入 architecture.md 关键契约点 15。
+  - 验证备注：typecheck 0 / build 通过（/calendar 3.26kB ƒ Dynamic）/ 顺带清了 EventTable 的一个未用 import，build 无 ESLint warning / dev HTTP 200 HTML 35KB / 4/18 格子渲染 `bg-secondary-lilac`（一面）+ 右侧"当日 1 个事件" + "14:30"时间，4/19 格子渲染 `bg-secondary-yellow`（笔试） / 布局 class `grid-cols-7` / `lg:col-span-8` / `lg:col-span-4` 都在 / "上一月"/"下一月"/"今天" 按钮 DOM 齐全，Client state 切月触发 useEffect 重新 fetch
+- [x] **Step 3.5** — `/companies` 大厂流程页
+  - 完成日期：2026-04-18
+  - 关键产物：`components/companies/CompanyRow.tsx`（Client Component：PRD 硬顺序 9 个节点胶囊 + nodeStateFor 判定 4 态 + 节点颜色映射 passed=mint/active=primary+glow/failed=danger浅化/pending=neutral + hover 浮起 + 细线连接器 + 公司列宽 160px + 流程区 overflow-x-auto + MoreHorizontal 占位）/ `app/companies/page.tsx`（Server Component 直调 getCompaniesProgress + 序列化传 Client；右上"新增申请"按钮 disabled + title 提示；公司间用 `divide-y divide-border-light` 分隔）
+  - 验证备注：typecheck 0 / build 通过（/companies 1.52kB ƒ Dynamic，0 warning）/ dev HTTP 200 HTML 37KB / 10 家公司名全部渲染（按 PRD 5.3.3 顺序）/ 只有腾讯有真实 Application（IEG·游戏产品 + 一面已通过 + 二面待参加）其他 9 家渲染"未投递"+"还没有在这家公司开始流程" / 节点颜色 `bg-secondary-mint`（已通过）+ `bg-primary`（当前进行中）+ `bg-neutral`（未开始）+ `shadow-[0_0_12px_rgba(243,175,203,0.4)]`（进行中 glow）全部命中 / 节点 `h-9`（36px，落在 34~38 规格）+ `rounded-pill` 圆角胶囊 / 公司列 `w-[160px]`（落在 140~180 规格）/ MoreHorizontal 按钮 `aria-label="更多操作"` 已渲染（disabled，Phase 4.4 接菜单）
 
-**Phase 3 出口** ☐ 已追加 architecture.md 里程碑「三页面骨架完成（只读）」
+**Phase 3 出口** ☑ 已追加 architecture.md 里程碑「三页面骨架完成（只读）」
 
 ---
 
