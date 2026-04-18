@@ -1,0 +1,30 @@
+# ---- 环境变量 / 密钥 ----
+.env
+.env.local
+.env.*.local
+
+# ---- Node / pnpm ----
+node_modules/
+.pnpm-store/
+.pnpm-debug.log*
+
+# ---- Next.js ----
+.next/
+out/
+next-env.d.ts
+
+# ---- Prisma ----
+prisma/dev.db
+prisma/dev.db-journal
+
+# ---- 运行时上传 ----
+uploads/
+
+# ---- 系统 / 编辑器 ----
+.DS_Store
+.vscode/
+.idea/
+*.log
+
+# ---- WorkBuddy 工作记忆（跨会话上下文，不进 git） ----
+.workbuddy/
