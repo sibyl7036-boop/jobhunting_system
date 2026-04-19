@@ -26,6 +26,7 @@
 ├── progress.md                      ← 已有 · 进度真相（逐步勾选清单）
 ├── architecture.md                  ← 已有 · 文件地图（本文件）
 ├── CODEBUDDY.md                     ← 已有 · AI Agent 入口（首读）
+├── CHANGELOG.md                     ← 已有 · v1.0 后维护期动作流水（做了什么 / 为什么 / 验证 / 踩坑）
 ├── .env                             ← 已有 · Prisma CLI 专用（DATABASE_URL="file:./dev.db"）；不进 git
 ├── .env.local                       ← 已有 · Next.js runtime（DATABASE_URL="file:./dev.db" + DOUBAO_*）；不进 git
 ├── .gitignore                       ← 已有 · 保护 node_modules / .next / .env* / dev.db / uploads / .workbuddy 等
@@ -203,11 +204,12 @@
 | `job_hunt_flow_board_prd.md` | **产品真相**。数据模型、API 契约、页面规格、AI 提示词原文、6 个验收闭环。 | 所有人 |
 | `UI.md` | **视觉真相**。浅色马卡龙色系、布局、组件、交互动效。 | 所有人 |
 | `tech_stack.md` | **落地真相**。Next.js + SQLite + Prisma + shadcn/ui + 豆包。含禁用方案清单。 | AI Agent |
-| `implementation_plan.md` | **步骤真相**。7 Phase / 39 Step 指令手册，每步含验证清单，严禁代码。 | AI Agent |
-| `progress.md` | **进度真相**。逐步勾选清单，配合 implementation_plan 使用。 | AI Agent |
-| `architecture.md` | **文件地图**（本文件）。每个文件/文件夹的作用。 | AI Agent |
-| `CODEBUDDY.md` | **入口**。AI Agent 进入仓库第一读物，含强制阅读门禁。 | AI Agent |
-| `README.md` | 仓库门面，人类读者看（Phase 7.4 才产出）。 | 人类 |
+| `implementation_plan.md` | **步骤真相**（v1.0 历史快照）。7 Phase / 39 Step 指令手册，每步含验证清单。维护期不修改。 | AI Agent |
+| `progress.md` | **进度真相**（v1.0 历史快照）。逐步勾选清单，39/39 已完成。维护期不修改。 | AI Agent |
+| `architecture.md` | **文件地图 + 关键契约点**（本文件）。每个文件/文件夹的作用 + 所有架构决策。 | AI Agent |
+| `CHANGELOG.md` | **改过啥**。v1.0 后维护期每次改动的动作流水（做了什么 / 为什么 / 验证 / 踩坑）。 | AI Agent |
+| `CODEBUDDY.md` | **入口**。AI Agent 进入仓库第一读物，含两种模式门禁 + 14 条工作守则。 | AI Agent |
+| `README.md` | 仓库门面，人类读者看（Phase 7.4 产出）。 | 人类 |
 
 ### B. 配置层
 
@@ -283,6 +285,7 @@
 20. **明日提醒缓存方案（2026-04-19 Step 6.6 决策）** → 复用 Phase 1.1 已建的 `TomorrowTipCache` 表（`date @unique` + `tipText` + `eventsHash` + ...），**按"事件集合 SHA-256"被动失效**，而非主动清理。`eventsHash = sha256(JSON.stringify(明天 Stage[].map({id,time,type,status}).sortById))`；查 TomorrowTipCache(date=明天) + hash 一致 → 直接返；hash 不一致 / 未命中 → 调 AI + upsert；明天事件为空 → 返 UI.md 空态原文 "明天暂无流程安排，可以安心休息一下。"（不调 AI）。好处：任何手动/AI CRUD 改明天 Stage 都自动让 hash 不匹配，无需手动清缓存。前端 RefreshCw 按钮走 `POST /api/ai/tomorrow-tip/refresh`（先 delete 缓存，再调 `getTomorrowTip({force:true})`）。
 21. **AI 调用 4 种错误分类（2026-04-19 Step 6.1 决策）** → `lib/llmClient.ts` 的 `AIError.code` 枚举：`AI_CONFIG_MISSING`（env 三件套缺）/ `AI_CALL_TIMEOUT`（30s）/ `AI_CALL_FAILED`（网络/HTTP 4xx-5xx/响应体异常）/ `AI_PARSE_FAILED`（expectJson=true 时 JSON.parse 失败）。所有 AI route 的 handler 在 catch 时把 `AIError` 包成 502 `INTERNAL_ERROR` 返前端，并在 `details.code` 里带上细分 code；`AIRun.errorMessage` 也用 `"<code>: <msg>"` 前缀，便于 Prisma Studio 里肉眼分类。日志脱敏：catch 时 `console.error` 只打 taskType + code，禁止打 Authorization / key / 完整 url。
 22. **AI 草稿态前端流程（2026-04-19 Step 6.3 决策）** → PRD 3.2 硬性规则：AI 解析结果 **不写业务表**（只写 AIRun 日志），由前端收下作为 "草稿" 再由用户确认后走 PATCH/POST 入库。具体 4 条：(a) 解析邮件 → sessionStorage 暂存 → 打开 `application-new` Drawer 自动预填所有字段 → 保存时一次性建 Application + 首个 Stage；(b) 解析 JD → 选 Application → 内联展示 → 点"采纳保存" PATCH /api/applications/:id 写 jdText/jdSummary/jdKeywords/expectedSkills；(c) 生成面试题 → 选 Application → 点采纳 PATCH 写 `Application.interviewQuestions`（共享题库，同 Application 所有 Stage 共用）；(d) 生成复盘 → 选 Stage → 点采纳 PATCH 写 Stage 的 review 三字段。
+23. **维护期工作流（2026-04-19 v1.0 交付后决策）** → v1.0 交付后进入"维护期"，工作模式与建设期不同：①进门先读 `CODEBUDDY.md` + `architecture.md`（本文件） + `CHANGELOG.md` 最近 3 条 + `MEMORY.md`，**不再读** `implementation_plan.md` / `progress.md`（v1.0 历史快照）；②任何改动都先发"自检单"（影响范围 / 数据模型 / 契约冲突 / 验证方法）给用户点头；③建独立分支（`tweak/*` / `feat/*` / `deploy/*` / `refactor/*` / `fix/*`）；④关键改动加 inline 注释格式 `// [YYYY-MM-DD <branch>] <原因>`；⑤完工后必做 5 件事：三件套 0 警告、追加 `CHANGELOG.md` 条目（4 问题格式）、更新本文件目录树（若动了文件）、追加新契约点（若有新决策）、`<type>-<描述>-<yyyymmdd>` 命名 tag + push。Commit message 里附 CHANGELOG 条目日期 + 本文件契约点编号作为交叉引用。
 
 ---
 

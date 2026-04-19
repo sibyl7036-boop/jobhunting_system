@@ -6,37 +6,46 @@
 
 ## 🚨 0. 写代码前的强制阅读门禁（硬性前置条件）
 
-> **以下 4 份文件必须完整阅读完毕，才允许写/改任何代码。不是浏览、不是扫一眼，是完整读完。**
+> **进入仓库的 Agent 必须按"当前所处的模式"读指定文件，读完才允许写/改代码。**
+>
+> 两种模式以"**v1.0 是否已交付**"为分界：看 `CHANGELOG.md` 顶部是否已有 `[v1.0] · 2026-04-19` 基线条目。
+
+### 模式 A · 建设期（Phase 0~7 尚未完结，**本仓库已不适用**，保留给未来重启新 Phase）
+
+必读 6 份：`job_hunt_flow_board_prd.md` → `UI.md` → `tech_stack.md` → `architecture.md` → `implementation_plan.md` → `progress.md`。详见本文件历史版本。
+
+### 模式 B · 维护期（**v1.0 已交付后的默认模式**）
+
+必读 4 份（**顺序即优先级**）：
 
 | # | 文件 | 为什么必须读 |
 |---|---|---|
-| 1 | [`job_hunt_flow_board_prd.md`](./job_hunt_flow_board_prd.md) | **产品真相**：数据模型、API 契约、页面规格、AI 提示词原文、验收标准。字段名/枚举值/URL 以 PRD 为准。 |
-| 2 | [`UI.md`](./UI.md) | **视觉真相**：浅色马卡龙色系、布局、组件、交互动效。偏离 UI.md 的配色/结构视为缺陷。 |
-| 3 | [`tech_stack.md`](./tech_stack.md) | **落地真相**：技术栈选型、目录结构、依赖清单、启动命令、6 天实现顺序、禁用方案清单。 |
-| 4 | [`architecture.md`](./architecture.md) | **文件地图**：仓库里每个文件/文件夹是干什么的。进来 30 秒定位代码。 |
-| 5 | [`implementation_plan.md`](./implementation_plan.md) | **步骤真相**：分 7 个 Phase / 39 步的执行手册。按顺序照做、每步都有验证清单、完成后必须更新 progress.md。 |
-| 6 | [`progress.md`](./progress.md) | **进度真相**：逐步勾选清单。进来就能看到当前做到哪、下一步做什么。 |
+| 1 | [`CODEBUDDY.md`](./CODEBUDDY.md)（本文件） | **工作守则**（14 节）+ 红线（草稿态 / Key 边界 / 中文枚举）+ 文档分工规则 |
+| 2 | [`architecture.md`](./architecture.md) | **文件地图 + 关键契约点**（22+ 条架构决策）。30 秒定位代码；找到自己要做的改动有没有和已有决策冲突 |
+| 3 | [`CHANGELOG.md`](./CHANGELOG.md) 最近 3 条 | **最近改过什么** · 避免重复造轮子或破坏前次改动 |
+| 4 | [`.workbuddy/memory/MEMORY.md`](./.workbuddy/memory/MEMORY.md) | **用户偏好 + 项目约定**（跨会话稳定事实） |
 
-**冲突时的权威优先级：PRD > UI.md > tech_stack.md。** `architecture.md` 记录"**是什么**"、`progress.md` 记录"**做到哪**"、`implementation_plan.md` 记录"**怎么做**"，三者互不越位。
+**PRD / UI.md / tech_stack.md / implementation_plan.md / progress.md** 作为 v1.0 历史快照保留，**按需**查阅（比如改 UI 时查 UI.md 色值 / 改 AI prompt 时查 PRD 9.x），不是每次必读。
 
-**验证清单（动手前自检）**：
-- [ ] 我已完整读完 `job_hunt_flow_board_prd.md`（1050+ 行）
-- [ ] 我已完整读完 `UI.md`
-- [ ] 我已完整读完 `tech_stack.md`
-- [ ] 我已读完 `architecture.md`，了解每个文件/文件夹的作用
-- [ ] 我已读完 `progress.md`，知道当前应从哪个 Step 开始
-- [ ] 我已读完 `implementation_plan.md` 中我要执行的 Phase/Step 的完整指令
-- [ ] 我要做的改动不会与 PRD 冲突、不会破坏已有功能
+### 验证清单（动手前自检）
+
+- [ ] 我已读完 `CODEBUDDY.md`，理解工作守则和文档分工
+- [ ] 我已读完 `architecture.md` 关键契约点，确认要做的改动与它们无冲突
+- [ ] 我已读完 `CHANGELOG.md` 最近 3 条
+- [ ] 我已读完 `MEMORY.md` 最新状态
+- [ ] 我已经把"本次改动自检单"（影响范围 / 数据模型 / 契约冲突 / 验证方法）同步给用户并获得点头
 
 **任何一条没打勾，就不要开始写代码。**
+
+冲突时的权威优先级：**PRD > UI.md > tech_stack.md**。`architecture.md` 记录"**是什么**"、`CHANGELOG.md` 记录"**改过啥**"、`MEMORY.md` 记录"**用户偏好**"，互不越位。
 
 ---
 
 ## 1. 仓库当前状态
 
-**截至 2026-04-18：** 仓库只有 4 份 Markdown 文档（3 份规格 + 本文件），还没有任何代码、`package.json`、`.git`、`node_modules`。项目处于"**文档已就绪、待初始化**"阶段。
+**截至 2026-04-19：v1.0 已交付。** 39/39 Step 全绿 · 18 个 API route（6 AI + 12 业务）· 3 页 + 全局 Drawer · PRD 6 闭环 E2E 通过 31/0 · `pnpm lint/typecheck/build` 均 0 警告 · `CHANGELOG.md` 已建立。后续所有改动走**模式 B 维护期工作流**（见第 12 节）。
 
-真实的"已建成什么"以 [`architecture.md`](./architecture.md) 为准，每次进入仓库**先读它**，判断当前到哪一步。
+真实的"已建成什么"以 [`architecture.md`](./architecture.md) 为准；"最近改过啥"以 [`CHANGELOG.md`](./CHANGELOG.md) 为准。
 
 ---
 
@@ -212,22 +221,39 @@ REST 风格，按实体分组：
 
 | 文件 | 记录什么 | 什么时候必须更新 |
 |---|---|---|
-| `architecture.md` | **是什么**：每个文件/文件夹的作用（文件地图） | 每当**新增 / 删除 / 重命名 / 移动**任何文件或目录时 |
-| `progress.md` | **做到哪**：逐步勾选清单（39 个 Step 的完成状态） | 每完成 `implementation_plan.md` 的一个 Step 的**全部验证清单** |
-| `implementation_plan.md` | **怎么做**：7 Phase / 39 Step 的指令手册 | 计划本身调整时（正常情况不动） |
+| `architecture.md` | **是什么**：每个文件/文件夹的作用（文件地图）+ 关键契约点 | 新增 / 删除 / 重命名 / 移动文件时；做出新的技术决策时追加契约点 |
+| `progress.md` | **做到哪**：Phase 0~7 逐步勾选清单（v1.0 历史快照） | **v1.0 后不再修改**，作为历史参照 |
+| `implementation_plan.md` | **怎么做**：7 Phase / 39 Step 指令手册（v1.0 历史快照） | **v1.0 后不再修改**，除非要启动新 Phase |
+| `CHANGELOG.md` | **改过啥**：v1.0 后每次改动的动作流水 + 原因 + 踩坑 | **每次维护期改动必须追加一条** |
 
-### 行为准则
-- **开始工作前**：读 `progress.md` 看下一个该做的 Step → 翻 `implementation_plan.md` 读该 Step 完整指令 → 读 `architecture.md` 确认相关文件的定位
-- **工作中**：新建任何文件/目录前，看 `architecture.md` 里是否已经规划了位置；如没有，先在 `architecture.md` 登记再动手
+### 行为准则 · 两种模式
+
+#### 模式 A：建设期（Phase 0~7 已完结，不适用）
+- 读 `progress.md` 看下一个该做的 Step → 翻 `implementation_plan.md` 读该 Step 完整指令 → 按步实现 → 勾 `progress.md` + 更 `architecture.md`
+
+#### 模式 B：维护期（**v1.0 之后的默认模式**）
+- **开始工作前**：
+  1. 读 `CODEBUDDY.md` 第 14 节工作守则（红线不变）
+  2. 读 `architecture.md` 关键契约点（看有没有和自己要做的事相冲突的决策）
+  3. 读 `CHANGELOG.md` 最近 3 条（看最近动过什么，避免重复造轮子或破坏前次改动）
+  4. 读 `MEMORY.md`（用户偏好 + 项目约定）
+- **发自检单确认**：在对话里先答 4 个问题（影响范围 / 数据模型 / 契约冲突 / 验证方法），用户点头后才改代码
+- **工作中**：
+  1. 建独立分支（`tweak/*` / `feat/*` / `deploy/*` / `refactor/*` / `fix/*`）
+  2. 关键改动处加中文 inline 注释：`// [YYYY-MM-DD <branch>] <一句话原因>`
+  3. schema 改动必跟 `pnpm exec prisma migrate dev --name <name>`
 - **工作后**：
-  1. 走完当前 Step 的**全部验证清单**
-  2. 在 `progress.md` 把该 Step 从 `[ ]` 改成 `[x]` 并填完成日期
-  3. 若本次新增了文件/目录，把它补登到 `architecture.md` 对应位置
-  4. 若完成的是一个完整 Phase（全 Step 都打勾），在 `progress.md` 的 Phase 出口勾 "已追加 architecture.md 里程碑"，并在 `architecture.md` 顶部加一条简短的 Phase 完成记录（一两句话）
+  1. 跑三件套（`typecheck` / `lint` / `build`）必须 0 warning 0 error
+  2. 按改动大小决定是否跑 `smoke-api.ts` 或 `smoke-closures.ts` 回归
+  3. **在 `CHANGELOG.md` 顶部追加一条**（4 问题格式：做了什么 / 为什么 / 怎么验证 / 踩坑）
+  4. 若新增 / 删除 / 重命名文件 → 更新 `architecture.md` 目录树
+  5. 若做了新的技术决策 → 追加 `architecture.md` 关键契约点第 N+1 条（带日期 + 分支名）
+  6. commit + tag（格式：`<type>-<描述>-<yyyymmdd>`，如 `tweak-resume-tag-20260420`）
+  7. push origin + `git push origin --tags`
 - **若发现文档与实际代码不一致**：以**代码为准**，立刻校正文档
 
 ### 不写就算没做完
-Step 做完了但 `progress.md` 没勾、新建了文件但 `architecture.md` 没登记 —— 都算**未完成**。下一次 Agent 进来会重新做，浪费你时间。
+改完了代码但 `CHANGELOG.md` 没追加 / 新建了文件但 `architecture.md` 没登记 / 做了架构决策但没追加契约点 —— 都算**未完成**。下一次 Agent 进来会重新做判断，浪费你时间。
 
 ---
 
