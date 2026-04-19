@@ -83,6 +83,73 @@
 
 <!-- 未来新条目插在这行下方，最新的在最上面 -->
 
+## [未发布] · 2026-04-19（当天第 4 条）
+
+### feat: 上传路由加 Vercel 环境降级（分支 main · 直接提交）
+
+**做了什么**
+- `app/api/resumes/upload/route.ts` 顶部加环境探测：`process.env.VERCEL === "1"` 时直接 `throw new ApiError("FEATURE_UNAVAILABLE_IN_DEMO", "演示环境暂不支持简历上传，本地运行可体验完整功能", 503)`，不进入下游的文件写盘逻辑
+- `lib/api.ts` 的 `ApiErrorCode` 枚举新增 `"FEATURE_UNAVAILABLE_IN_DEMO"`（保持类型安全）
+- 本地开发不受影响（`VERCEL` 只有 Vercel 环境有，值固定是 `"1"`）
+- 前端 `UploadResumeDialog.tsx` 未动——原有 catch 直接 toast 后端 error.message，降级文案会直接展示给用户
+
+**为什么**
+- 部署只是 demo 展示，不想花 1 小时改造 PDF 存储到 Vercel Blob
+- Vercel Serverless 容器没有持久化文件系统，本地 `uploads/` 写盘在云上会随函数冷启动丢失；与其上传成功再 404，不如直接友好报错
+- 方案 B1（降级）优于方案 B2（让它崩）：用户看到 toast "演示环境暂不支持..." 比看到 "网络异常" 体验好得多
+
+**怎么验证**
+- `pnpm typecheck` ✔ / `pnpm lint` ✔ / `pnpm build` ✔
+- 本地 `VERCEL` 未设，走原路径；TS 类型对，枚举扩展没破坏 `withApiHandler` 的错误分派
+- 实际 Vercel 上的行为会在部署后访问上传对话框点提交时验证（应看到 toast "演示环境暂不支持简历上传..."）
+
+**踩坑**
+- 第一次写 `new ApiError(503, code, message)` 是错的——`ApiError` 构造器签名是 `(code, message, status, details?)`，不是 `(status, code, message)`。TS 报错时才注意到
+- 构造器参数顺序错 + 新 code 没扩枚举，两个 TS 错同时出现——修 5 分钟
+
+**关联 commit / tag / 分支**
+- commit: （本次提交后回填）
+- tag: `feat-upload-demo-fallback-20260419`
+- 分支: `main`（纯小改动不开分支）
+
+**对应 architecture.md 契约点**
+- 新增第 24 条：部署环境上传路由降级策略
+
+---
+
+## [未发布] · 2026-04-19（当天第 3 条）
+
+### chore: 清理本地已上传的简历 PDF（分支 main · 直接提交）
+
+**做了什么**
+- 解除 1 个 Application（美团·产品经理）的 `linkedResumeId` 引用（走 Prisma nested disconnect）
+- DELETE 1 条 Resume 记录（`南京大学_香港科技大学_王语彤_简历`，tag=产品）
+- 物理删除 `uploads/cmo538x7d0003ggjr0neekzjb.pdf`（410KB）
+- `uploads/` 目录留空
+
+**为什么**
+- 准备部署到 Vercel 之前，把真实简历从本地 DB + 文件系统清掉，避免任何意外泄漏路径
+- 部署环境的 DB 本身是全新的 Neon 空库，但本地 uploads/ 若被打包进仓库（虽然 gitignore）也容易误操作
+
+**怎么验证**
+- `ls uploads/` 返回空（只有 `.` 和 `..`）
+- Prisma 查 Resume 表：0 条
+- Prisma 查 `linkedResumeId NOT NULL` 的 Application：0 条
+- 本次不跑 smoke-closures（它自带数据自清理，不依赖 uploads 现状）
+
+**踩坑**
+- 无（Prisma onDelete=SetNull 本应让 DELETE Resume 时自动置空 linkedResumeId，但 route 层的 409 保护更早触发；从脚本层手动 disconnect 一次更稳）
+
+**关联 commit / tag / 分支**
+- commit: （本次提交后回填，和下一条合并成一个 commit）
+- tag: `chore-clear-resumes-20260419`
+- 分支: `main`
+
+**对应 architecture.md 契约点**
+- 无新契约
+
+---
+
 ## [未发布] · 2026-04-19（当天第 2 条）
 
 ### fix: 删除本该在 Phase 6 清理的临时冒烟脚本（分支 main）

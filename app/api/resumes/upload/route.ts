@@ -37,6 +37,17 @@ const MAX_BYTES = 10 * 1024 * 1024; // 10MB
 const UPLOADS_DIR = path.join(process.cwd(), "uploads");
 
 export const POST = withApiHandler(async (req) => {
+  // [2026-04-19 deploy/vercel-postgres] 演示环境降级：Vercel Serverless 容器无持久化
+  // 文件系统，本地 uploads/ 写盘在云上会随函数冷启动丢失。部署目标只是 demo，
+  // 不做 Blob 改造，直接友好报错即可。详见 architecture.md 契约点 24。
+  if (process.env.VERCEL === "1") {
+    throw new ApiError(
+      "FEATURE_UNAVAILABLE_IN_DEMO",
+      "演示环境暂不支持简历上传，本地运行可体验完整功能",
+      503
+    );
+  }
+
   // 1. 拿 multipart body
   let form: FormData;
   try {

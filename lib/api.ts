@@ -15,6 +15,7 @@ export type ApiErrorCode =
   | "VALIDATION_ERROR"
   | "NOT_FOUND"
   | "CONFLICT"
+  | "FEATURE_UNAVAILABLE_IN_DEMO"
   | "INTERNAL_ERROR";
 
 export interface ApiErrorBody {
