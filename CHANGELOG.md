@@ -83,6 +83,35 @@
 
 <!-- 未来新条目插在这行下方，最新的在最上面 -->
 
+## [未发布] · 2026-04-19（当天第 2 条）
+
+### fix: 删除本该在 Phase 6 清理的临时冒烟脚本（分支 main）
+
+**做了什么**
+- 删除 `scripts/test-ark-api.ts`（Phase 0 Step 0.6 的 Ark API 冒烟脚本，计划在 Step 6.1 完成后删除但当时漏删）
+
+**为什么**
+- Phase 0 该脚本就标注了"临时，Phase 6.1 完成后删除"（详见 `architecture.md` 目录树历史注释）
+- 上一个 commit `9e66579` 追加文档时顺带把它 add 进来了，暴露出"漏删"这个旧 bug
+- 按维护期工作流，发现问题立刻补 commit 修复，不改写历史
+
+**怎么验证**
+- `ls scripts/` 不再包含 test-ark-api.ts
+- `pnpm typecheck` ✔（虽然 scripts 不进 tsc，但防御性检查）
+
+**踩坑**
+- 上次清理时没 `git status` 确认工作区干净，以后收尾 commit 前必须 `git status` 看一眼 Untracked files
+
+**关联 commit / tag / 分支**
+- commit: （本次提交后回填）
+- tag: `fix-cleanup-arkapi-smoke-20260419`
+- 分支: `main`
+
+**对应 architecture.md 契约点**
+- 无新契约
+
+---
+
 ## [未发布] · 2026-04-19
 
 ### docs: 建立维护期工作流与改动留痕基建（分支 main · 直接提交）
