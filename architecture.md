@@ -15,7 +15,7 @@
 
 ## 🗺️ 目录树（当前真实状态）
 
-> 当前仓库处于"**v1.0 验收完成 ✅🎉**"——39/39 Step 全绿 · PRD 第 13 章 6 闭环 E2E 31 断言全通 · `pnpm lint/typecheck/build` 均 0 警告 · README 就绪 · 18 个 API + 5 个 AI 能力 + 3 页 + 全局 Drawer 全部到位。下一步由用户自行决定是否上生产或继续迭代。
+> 当前仓库处于"**v1.0 + 公网 demo 已上线 ✅🌐**"——39/39 Step 全绿 · PRD 第 13 章 6 闭环 E2E 本地 31/0 公网 24/1（唯一"失败"是降级策略的 PDF 上传 503，见契约点 24）· `pnpm lint/typecheck/build` 均 0 警告 · Neon Postgres（Singapore pooled） + Vercel 部署就绪 · **Demo: https://system-pi-three.vercel.app**
 
 ```
 /Users/sibyl/Desktop/system/

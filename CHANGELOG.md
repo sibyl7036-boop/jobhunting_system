@@ -83,6 +83,44 @@
 
 <!-- 未来新条目插在这行下方，最新的在最上面 -->
 
+## [v1.0-demo] · 2026-04-19（当天第 6 条）🚀
+
+### deploy: 部署到 Vercel 成功 · 公网可访问（分支 main）
+
+**做了什么**
+- Vercel 项目 `system-pi-three` 创建并导入 GitHub `sibyl7036-boop/system`
+- Vercel Environment Variables 配置 4 条：`DATABASE_URL`（Neon pooled）+ `DOUBAO_API_KEY` + `DOUBAO_BASE_URL` + `DOUBAO_MODEL`
+- 初次 deploy 成功：Build 过程含 `prisma generate && prisma migrate deploy && next build`，3~5 分钟完成
+- 公网 URL：**https://system-pi-three.vercel.app**
+
+**为什么**
+- v1.0 交付后为展示 demo 所做的最后一步
+- 跳过 PDF 存储改造（方案 B1 已在契约点 24 落地），节省 60 分钟
+
+**怎么验证**
+- `curl https://system-pi-three.vercel.app/dashboard` → 200 · 1.24s
+- `curl https://system-pi-three.vercel.app/companies` → 200 · 1.54s
+- `curl https://system-pi-three.vercel.app/api/companies/progress` → 200 · 返回 10 家大厂数据
+- `SMOKE_BASE_URL=https://system-pi-three.vercel.app pnpm tsx scripts/smoke-closures.ts` → **通过 24 / 失败 1 / 耗时 49.4s**
+  - 失败的 1 个是闭环 6.a 上传 PDF 返 HTTP 503（**符合预期的降级行为**，契约点 24）
+  - 其余 5 个业务闭环全绿（含 4 个真实豆包 AI 调用 + 三视图同步 + Drawer CRUD）
+
+**踩坑**
+- Vercel 自动给项目加了 `-pi-three` 后缀（不是 `system` 单词名冲突就是算法选的），URL 不是最好看的 `system.vercel.app` 但没关系；后续可在 Settings → Domains 改名或绑定自定义域名
+- 公网 E2E 比本地慢 15 秒（34.5s → 49.4s），主要是 Vercel Serverless 冷启动 + 跨洋网络延迟累积
+
+**关联 commit / tag / 分支**
+- 本次纯云端配置，无代码改动
+- tag: `deploy-vercel-live-20260419`
+- 分支: `main`
+
+**对应 architecture.md 契约点**
+- 无新契约（契约点 24、25 在前几条中已建立完整决策链）
+
+**Demo URL**：https://system-pi-three.vercel.app
+
+---
+
 ## [未发布] · 2026-04-19（当天第 5 条）
 
 ### deploy: 数据库从 SQLite 迁移到 Neon Postgres（分支 main · 直接提交）
