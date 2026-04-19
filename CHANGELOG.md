@@ -83,6 +83,45 @@
 
 <!-- 未来新条目插在这行下方，最新的在最上面 -->
 
+## [未发布] · 2026-04-19（当天第 5 条）
+
+### deploy: 数据库从 SQLite 迁移到 Neon Postgres（分支 main · 直接提交）
+
+**做了什么**
+- `prisma/schema.prisma` datasource provider 从 `sqlite` 改为 `postgresql`，并更新头部注释
+- 旧 SQLite 迁移归档到 `prisma/_sqlite_archive/`（20260418121855_init/ + migration_lock.toml），保留作历史参照
+- 对 Neon 跑 `pnpm exec prisma migrate dev --name init_postgres` → 产出新迁移 `prisma/migrations/20260419021839_init_postgres/migration.sql`，6 张表全部建成
+- `pnpm exec prisma db seed` 往 Neon 写入 10 家大厂占位 Application
+- `.env` 和 `.env.local` 的 `DATABASE_URL` 从 `file:./dev.db` 换成 Neon 连接串（Singapore 区 pooled，含 `channel_binding=require`）
+- `package.json` 的 `build` 脚本前缀加 `prisma generate && prisma migrate deploy &&`，Vercel 每次部署自动同步 Prisma Client + 应用迁移
+- 本地 `prisma/dev.db` 保留（gitignore，如需回退到 SQLite 改 DATABASE_URL 即可，但现在本地连的是 Neon）
+- 未改任何业务代码（0 行 `.tsx` / `.ts` 业务逻辑变化，schema 字段类型全是 Prisma 通用类型 Postgres 原生兼容）
+
+**为什么**
+- Vercel Serverless 容器没有持久化文件系统，SQLite 的 `dev.db` 文件部署到云上会随函数冷启动丢失
+- Neon 免费版 0.5GB Postgres 对个人 demo 完全够用
+- 本地和生产用同一个 Neon 实例（demo 项目无多环境需求）省事；真要隔离可以再开一个 Neon branch
+
+**怎么验证**
+- `pnpm exec prisma migrate dev --name init_postgres` ✔（6 表建成 + Client 重生成）
+- `pnpm exec prisma db seed` ✔（10 家大厂幂等写入）
+- `pnpm typecheck` ✔ / `pnpm lint` ✔ / `pnpm build` ✔（build 内含 migrate deploy 验收）
+- `pnpm tsx scripts/smoke-closures.ts` **通过 31 / 失败 0 / 34.5s**——完整 6 闭环 E2E 跑在 Neon Postgres + 真实豆包 AI 上全绿。耗时从 SQLite 的 26.9s 增至 34.5s，多出的 7.6s 是跨洋网络延迟（本机 → Singapore Neon），可接受
+
+**踩坑**
+- 无。`prisma migrate dev` 对 Postgres 产出的 migration.sql 和 SQLite 方言差异很大（CREATE TABLE 语法、DEFAULT 子句、FK 约束写法），但 Prisma 会自动处理；我们的 schema 本来就用通用字段类型，零业务代码改动
+- Neon 第一次访问慢 5~10 秒属正常（免费版休眠唤醒），写入 `architecture.md` 契约点 25 防止下次新人误以为是 bug
+
+**关联 commit / tag / 分支**
+- commit: （本次提交后回填）
+- tag: `deploy-neon-postgres-20260419`
+- 分支: `main`（纯基础设施改造直接提交；Vercel 部署下一次做）
+
+**对应 architecture.md 契约点**
+- 新增第 25 条：数据库迁移策略（SQLite → Postgres + 归档路径 + Neon 冷启动说明）
+
+---
+
 ## [未发布] · 2026-04-19（当天第 4 条）
 
 ### feat: 上传路由加 Vercel 环境降级（分支 main · 直接提交）

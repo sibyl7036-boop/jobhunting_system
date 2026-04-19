@@ -54,10 +54,11 @@
 │
 │ ── Phase 1 产物（6 个 model + 种子 + zod） ──
 ├── prisma/
-│   ├── schema.prisma                ← 6 个 model（Resume / Application（含 interviewQuestions）/ Stage / AIRun / IntelSummary / TomorrowTipCache）
+│   ├── schema.prisma                ← 6 个 model（Resume / Application（含 interviewQuestions）/ Stage / AIRun / IntelSummary / TomorrowTipCache）· provider=postgresql（2026-04-19 起）
 │   ├── seed.ts                      ← 幂等种子：10 家大厂占位
-│   ├── migrations/20260418121855_init/  ← 首次迁移（6 表 + 索引）
-│   └── dev.db                       ← SQLite 文件（gitignore）
+│   ├── migrations/20260419021839_init_postgres/  ← 现行 Postgres 初始迁移（6 表 + 索引）
+│   ├── _sqlite_archive/             ← 归档：旧 SQLite 迁移（20260418121855_init + migration_lock.toml），历史参照用
+│   └── dev.db                       ← SQLite 本地遗留文件（gitignore），回退 SQLite 时用
 ├── lib/schemas/
 │   ├── enums.ts                     ← 6 组中文枚举 + zod enum
 │   ├── entities.ts                  ← 6 实体 schema + Create/Update 派生 + z.infer 类型
@@ -287,6 +288,7 @@
 22. **AI 草稿态前端流程（2026-04-19 Step 6.3 决策）** → PRD 3.2 硬性规则：AI 解析结果 **不写业务表**（只写 AIRun 日志），由前端收下作为 "草稿" 再由用户确认后走 PATCH/POST 入库。具体 4 条：(a) 解析邮件 → sessionStorage 暂存 → 打开 `application-new` Drawer 自动预填所有字段 → 保存时一次性建 Application + 首个 Stage；(b) 解析 JD → 选 Application → 内联展示 → 点"采纳保存" PATCH /api/applications/:id 写 jdText/jdSummary/jdKeywords/expectedSkills；(c) 生成面试题 → 选 Application → 点采纳 PATCH 写 `Application.interviewQuestions`（共享题库，同 Application 所有 Stage 共用）；(d) 生成复盘 → 选 Stage → 点采纳 PATCH 写 Stage 的 review 三字段。
 23. **维护期工作流（2026-04-19 v1.0 交付后决策）** → v1.0 交付后进入"维护期"，工作模式与建设期不同：①进门先读 `CODEBUDDY.md` + `architecture.md`（本文件） + `CHANGELOG.md` 最近 3 条 + `MEMORY.md`，**不再读** `implementation_plan.md` / `progress.md`（v1.0 历史快照）；②任何改动都先发"自检单"（影响范围 / 数据模型 / 契约冲突 / 验证方法）给用户点头；③建独立分支（`tweak/*` / `feat/*` / `deploy/*` / `refactor/*` / `fix/*`）；④关键改动加 inline 注释格式 `// [YYYY-MM-DD <branch>] <原因>`；⑤完工后必做 5 件事：三件套 0 警告、追加 `CHANGELOG.md` 条目（4 问题格式）、更新本文件目录树（若动了文件）、追加新契约点（若有新决策）、`<type>-<描述>-<yyyymmdd>` 命名 tag + push。Commit message 里附 CHANGELOG 条目日期 + 本文件契约点编号作为交叉引用。
 24. **部署环境上传路由降级（2026-04-19 feat-upload-demo-fallback 决策）** → 用户选择部署 demo 到 Vercel 时不做 PDF 存储改造（省 1 小时）。由于 Vercel Serverless 容器没有持久化文件系统，`app/api/resumes/upload/route.ts` 在函数入口处做环境探测：`process.env.VERCEL === "1"` 时直接 `throw new ApiError("FEATURE_UNAVAILABLE_IN_DEMO", "演示环境暂不支持简历上传，本地运行可体验完整功能", 503)`，不进入写盘流程。前端 `UploadResumeDialog.tsx` 无需改动——原有 catch 会把后端 error.message 直接 toast 给用户，降级文案体验友好。其他简历功能（GET 列表 / 预览 / 删除）在空 DB 下都自然走空态，不报错。未来若真要支持云端上传，改回去的路径是：移除这 5 行 early return + 装 `@vercel/blob` + 改 upload/file/delete 三个 route 走 Blob API，预计 60 分钟。为什么用 `process.env.VERCEL` 而不是自定义环境变量：这是 Vercel 平台自动注入的变量（Vercel 官方保证存在且值为 `"1"`），不用额外配置。
+25. **数据库从 SQLite 迁到 Neon Postgres（2026-04-19 deploy-neon-postgres 决策）** → 为支持 Vercel Serverless 部署（容器无持久化文件系统），datasource provider 从 `sqlite` 改为 `postgresql`。本地开发和生产 Vercel 都连**同一个 Neon 实例**（Singapore pooled 连接），demo 项目无多环境隔离需求。迁移策略：①旧 SQLite 迁移归档到 `prisma/_sqlite_archive/` 不删（历史参照）；②新 Postgres 迁移由 `prisma migrate dev --name init_postgres` 重新生成，落在 `prisma/migrations/20260419021839_init_postgres/`；③`prisma/dev.db` 保留在本地（gitignore，需要回退时改 `DATABASE_URL="file:./dev.db"` 即可恢复）；④`package.json` 的 `build` 脚本前缀加 `prisma generate && prisma migrate deploy &&`，保证 Vercel 每次部署自动同步 Prisma Client + 幂等应用迁移。连接串必须用 Neon 的 **pooled** 版本（主机名带 `-pooler`），否则 Serverless 并发会爆连接数。Neon 免费版闲置 5 分钟会休眠，下次访问唤醒需 5~10 秒——不是 bug 是免费档特性。schema 6 个 model 字段类型全是 Prisma 通用类型（String / Int / DateTime / Boolean），SQLite 和 Postgres 都原生兼容，**零业务代码改动**。`Application.jdKeywords / expectedSkills / interviewQuestions / AIRun.outputJson` 继续沿用"存 JSON 字符串"的约定（契约点 11），Postgres 虽支持原生数组/JSONB 但保持既有约定零迁移成本。
 
 ---
 

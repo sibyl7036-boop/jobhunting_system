@@ -5,9 +5,13 @@
 //   - Application.interviewQuestions（Step 6.3 AI 面试题共享题库，JSON 化 string[]）
 //   - TomorrowTipCache（Step 6.6 明日 AI 提醒的 eventsHash 被动失效缓存）
 //
+// [2026-04-19 deploy/vercel-postgres] datasource provider 从 sqlite 改为 postgresql
+// 理由：Vercel Serverless 不能用本地 SQLite 文件（容器重建会丢数据）。详见 architecture.md 契约点 25。
+//
 // 关键约束：
-//   1. 所有枚举值保留 PRD 规定的中文原值，SQLite 无原生枚举，用 String 字段 + zod 校验（Phase 1.4）
-//   2. jdKeywords / expectedSkills / interviewQuestions 是 string[]，SQLite 无数组，存 JSON 字符串，读写时 JSON.parse/stringify
+//   1. 所有枚举值保留 PRD 规定的中文原值，用 String 字段 + zod 校验（Phase 1.4）
+//   2. jdKeywords / expectedSkills / interviewQuestions 是 string[]，沿用"存 JSON 字符串"的约定
+//      （SQLite 时代的历史决定，Postgres 虽然支持原生数组但保持业务代码零改动，契约点 11）
 //   3. AIRun.outputJson 同理存 JSON 字符串
 //   4. 时间字段统一 DateTime
 //   5. Stage.applicationId onDelete Cascade（Application 删除时自动删 Stage）
@@ -18,7 +22,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
