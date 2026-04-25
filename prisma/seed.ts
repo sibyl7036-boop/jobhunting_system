@@ -9,11 +9,9 @@
  * 如需预置演示数据，可按 userId 创建（本脚本暂不涉及）。
  */
 
-async function main() {
+(async () => {
   console.log("▶ Seed: noop（数据按用户维度隔离，不需要全局预置）");
-}
-
-main().catch((e) => {
+})().catch((e) => {
   console.error("❌ Seed 失败:", e);
   process.exit(1);
 });

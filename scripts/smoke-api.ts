@@ -61,7 +61,7 @@ async function req(
   return { status: res.status, body: parsed };
 }
 
-async function main() {
+(async () => {
   console.log(`▶ smoke-api.ts · base=${BASE}`);
 
   // ── /api/resumes GET ──
@@ -180,9 +180,7 @@ async function main() {
   console.log("────────────────────────────");
   if (fail > 0) process.exit(1);
   console.log("✅ 全部通过");
-}
-
-main().catch((e) => {
+})().catch((e) => {
   console.error("smoke-api 崩了：", e);
   process.exit(2);
 });

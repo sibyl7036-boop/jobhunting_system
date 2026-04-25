@@ -19,7 +19,7 @@
  */
 
 import * as React from "react";
-import useSWR, { mutate as globalMutate } from "swr";
+import useSWR from "swr";
 import { toast } from "sonner";
 import {
   StickyNote,

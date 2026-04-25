@@ -50,7 +50,7 @@ function Illo({
   label,
   gradient,
 }: {
-  icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>;
+  icon: any;
   label: string;
   gradient: string;
 }) {
