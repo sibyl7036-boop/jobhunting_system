@@ -59,6 +59,11 @@ interface CallAIParams {
   expectJson?: boolean;
   /** 写入 AIRun.inputText 的字符串（默认 userPrompt）；用于把 systemPrompt 剥离时瘦身 */
   logInputText?: string;
+  /**
+   * [2026-04-25 auth-v1] 归属用户，写入 AIRun.userId。
+   * 不传则视为系统调用（AIRun.userId=null）。
+   */
+  userId?: string | null;
 }
 
 interface CallAIResult<T = unknown> {
@@ -103,6 +108,7 @@ export async function callAI<T = unknown>(
   }
 
   const logInput = params.logInputText ?? params.userPrompt;
+  const ownerUserId = params.userId ?? null;
 
   let resp: Response;
   try {
@@ -126,6 +132,7 @@ export async function callAI<T = unknown>(
     // 脱敏日志：打出 task 和 code，不打 Authorization / url query
     console.error("[llmClient] fetch failed", { taskType: params.taskType, code });
     await writeAIRun({
+      userId: ownerUserId,
       taskType: params.taskType,
       inputText: logInput,
       outputText: "",
@@ -145,6 +152,7 @@ export async function callAI<T = unknown>(
       status: resp.status,
     });
     await writeAIRun({
+      userId: ownerUserId,
       taskType: params.taskType,
       inputText: logInput,
       outputText: "",
@@ -161,6 +169,7 @@ export async function callAI<T = unknown>(
     raw = await resp.json();
   } catch (e) {
     await writeAIRun({
+      userId: ownerUserId,
       taskType: params.taskType,
       inputText: logInput,
       outputText: "",
@@ -179,6 +188,7 @@ export async function callAI<T = unknown>(
 
   if (!content) {
     await writeAIRun({
+      userId: ownerUserId,
       taskType: params.taskType,
       inputText: logInput,
       outputText: JSON.stringify(raw).slice(0, 500),
@@ -196,6 +206,7 @@ export async function callAI<T = unknown>(
       parsed = JSON.parse(content) as T;
     } catch (e) {
       await writeAIRun({
+        userId: ownerUserId,
         taskType: params.taskType,
         inputText: logInput,
         outputText: content,
@@ -213,6 +224,7 @@ export async function callAI<T = unknown>(
 
   // 成功 → 写 AIRun
   const run = await writeAIRun({
+    userId: ownerUserId,
     taskType: params.taskType,
     inputText: logInput,
     outputText: content,
@@ -228,10 +240,11 @@ export async function callAI<T = unknown>(
 export const callDoubao = callAI;
 
 // ──────────────────────────────────────────────────────────────────────
-// 内部：写 AIRun 日志
+// 内部：写 AIRun 日志（[2026-04-25 auth-v1] 支持 userId 归属）
 // ──────────────────────────────────────────────────────────────────────
 
 async function writeAIRun(params: {
+  userId?: string | null;
   taskType: AITaskType;
   inputText: string;
   outputText: string;
@@ -242,6 +255,7 @@ async function writeAIRun(params: {
   try {
     return await prisma.aIRun.create({
       data: {
+        userId: params.userId ?? null,
         taskType: params.taskType,
         inputText: params.inputText.slice(0, 20_000), // 安全截断
         outputText: params.outputText.slice(0, 20_000),

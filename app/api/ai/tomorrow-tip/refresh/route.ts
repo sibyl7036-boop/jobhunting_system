@@ -1,28 +1,17 @@
 /**
- * POST /api/ai/tomorrow-tip/refresh · 强制重算明日提醒
+ * POST /api/ai/tomorrow-tip/refresh
  *
- * 前端点 RefreshCw 按钮会调这个端点：先删当日 TomorrowTipCache，再调 getTomorrowTip 重算。
- * GET 版本其实 dashboard Server Component 就能直接用，不需要再建 route。
+ * 强制清空明日提醒缓存并重新生成
+ * [2026-04-25 auth-v1] 按当前用户隔离
  */
 
-import { jsonOk, jsonError, withApiHandler } from "@/lib/api";
-import {
-  clearTomorrowTipCache,
-  getTomorrowTip,
-} from "@/lib/queries/tomorrowTip";
-
-export const runtime = "nodejs";
+import { jsonOk, withApiHandler } from "@/lib/api";
+import { clearTomorrowTipCache, getTomorrowTip } from "@/lib/queries";
+import { requireCurrentUser } from "@/lib/auth";
 
 export const POST = withApiHandler(async () => {
-  await clearTomorrowTipCache();
-  try {
-    const result = await getTomorrowTip({ force: true });
-    return jsonOk(result);
-  } catch (e) {
-    return jsonError(
-      "INTERNAL_ERROR",
-      `tomorrow-tip refresh failed: ${e instanceof Error ? e.message : String(e)}`,
-      502
-    );
-  }
+  const user = await requireCurrentUser();
+  await clearTomorrowTipCache(user.id);
+  const result = await getTomorrowTip(user.id, { force: true });
+  return jsonOk(result);
 });

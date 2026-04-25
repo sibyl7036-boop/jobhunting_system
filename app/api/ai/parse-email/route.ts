@@ -1,83 +1,76 @@
 /**
  * POST /api/ai/parse-email
  *
- * 从面试邮件 / 通知 / 聊天记录文本中抽取流程字段（PRD 9.1）。
+ * 入参：{ inputText: string } 8~20000 字
+ * 出参：{ draft: AIParseEmailOutput, runId: string }
  *
- * 入参：{ inputText: string }
- * 出参：AI 解析的草稿 JSON（不落业务表，由前端收下 → 用户编辑 → 再走 PATCH/POST 入库）
- *
- * 所有调用都会在 AIRun 表写一条日志（由 callAI 负责）。
+ * [2026-04-25 auth-v1] 需要登录；AIRun.userId = 当前用户
  */
 
+import { NextResponse } from "next/server";
 import { z } from "zod";
 import {
   jsonOk,
   withApiHandler,
   parseJsonBody,
   validationError,
-  jsonError,
+  ApiError,
 } from "@/lib/api";
 import { callAI, AIError } from "@/lib/llmClient";
 import { SYS_PARSE_EMAIL, userPromptParseEmail } from "@/lib/prompts";
-import { aiParseEmailOutputSchema } from "@/lib/schemas";
+import {
+  aiParseEmailOutputSchema,
+  type AIParseEmailOutput,
+} from "@/lib/schemas/ai-outputs";
+import { requireCurrentUser } from "@/lib/auth";
 
-export const runtime = "nodejs";
-
-const inputSchema = z.object({
+const bodySchema = z.object({
   inputText: z
     .string()
-    .min(5, "文本太短，至少 5 个字")
-    .max(20000, "文本过长（超过 20000 字），请精简后重试"),
+    .trim()
+    .min(8, "面试邮件/通知文本至少 8 字")
+    .max(20_000, "文本过长（≤20000 字）"),
 });
 
 export const POST = withApiHandler(async (req) => {
+  const user = await requireCurrentUser();
   const body = await parseJsonBody(req);
-  const { inputText } = inputSchema.parse(body);
+  const parsed = bodySchema.safeParse(body);
+  if (!parsed.success) {
+    throw validationError(parsed.error.issues[0]?.message ?? "参数非法");
+  }
 
   try {
-    const { json, text, runId } = await callAI({
+    const { json, runId } = await callAI<AIParseEmailOutput>({
       taskType: "parse_email",
       systemPrompt: SYS_PARSE_EMAIL,
-      userPrompt: userPromptParseEmail(inputText),
+      userPrompt: userPromptParseEmail(parsed.data.inputText),
       expectJson: true,
-      logInputText: inputText, // 只记原始文本，不含 prompt 模板
+      logInputText: parsed.data.inputText,
+      userId: user.id,
     });
 
-    // zod 校验 AI 输出结构（stageType 必须落在 9 个中文枚举内）
-    const parsed = aiParseEmailOutputSchema.safeParse(json);
-    if (!parsed.success) {
-      return jsonError(
-        "INTERNAL_ERROR",
-        "AI 返回结构不符合预期，请稍后重试或换一段更清晰的文本",
-        502,
+    const check = aiParseEmailOutputSchema.safeParse(json);
+    if (!check.success) {
+      return NextResponse.json(
         {
-          code: "AI_SCHEMA_MISMATCH",
-          raw: text,
-          issues: parsed.error.issues.map((i) => ({
-            path: i.path.join("."),
-            message: i.message,
-          })),
-        }
+          error: {
+            code: "AI_SCHEMA_MISMATCH",
+            message: "AI 返回字段不符合约定结构",
+            details: check.error.issues.slice(0, 3),
+          },
+        },
+        { status: 502 }
       );
     }
 
-    return jsonOk({
-      runId,
-      draft: parsed.data,
-    });
+    return jsonOk({ draft: check.data, runId });
   } catch (e) {
     if (e instanceof AIError) {
-      return jsonError("INTERNAL_ERROR", `${e.code}: ${e.message}`, 502, {
-        code: e.code,
-      });
-    }
-    if (e instanceof z.ZodError) {
-      throw validationError(
-        "入参校验失败",
-        e.issues.map((i) => ({
-          path: i.path.join("."),
-          message: i.message,
-        }))
+      throw new ApiError(
+        "INTERNAL_ERROR",
+        `AI 调用失败：${e.message}`,
+        e.code === "AI_CALL_TIMEOUT" ? 504 : 502
       );
     }
     throw e;

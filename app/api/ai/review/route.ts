@@ -1,81 +1,90 @@
 /**
  * POST /api/ai/review
  *
- * 面试复盘：根据录音转文字内容输出 `{ questionSummary, answerSummary, suggestion }`（PRD 9.4）
+ * 入参：{ stageId: string, transcriptText: string } 30~30000 字
+ * 出参：{ draft: AIReviewOutput, runId: string }
  *
- * 入参：{ stageId: string, transcriptText: string }
- * 出参：{ runId, draft: {...} }
- *
- * 不落库，前端收下 → 编辑 → 保存走 PATCH /api/stages/:id 写 review 三字段
+ * [2026-04-25 auth-v1]
+ *   - 必须登录
+ *   - stageId 必须属于当前用户（Stage.application.userId 校验）
+ *   - 结果不直接落库（草稿态），由前端确认后 PATCH /api/stages/:id 保存
  */
 
+import { NextResponse } from "next/server";
 import { z } from "zod";
 import {
   jsonOk,
   withApiHandler,
   parseJsonBody,
   validationError,
-  jsonError,
   notFound,
+  ApiError,
 } from "@/lib/api";
+import { prisma } from "@/lib/db";
 import { callAI, AIError } from "@/lib/llmClient";
 import { SYS_REVIEW, userPromptReview } from "@/lib/prompts";
-import { aiReviewOutputSchema } from "@/lib/schemas";
-import { prisma } from "@/lib/db";
+import {
+  aiReviewOutputSchema,
+  type AIReviewOutput,
+} from "@/lib/schemas/ai-outputs";
+import { requireCurrentUser } from "@/lib/auth";
 
-export const runtime = "nodejs";
-
-const inputSchema = z.object({
+const bodySchema = z.object({
   stageId: z.string().min(1, "stageId 必填"),
   transcriptText: z
     .string()
-    .min(30, "转录文本太短（至少 30 字）")
-    .max(40000, "转录文本过长（超过 40000 字），请精简"),
+    .trim()
+    .min(30, "转录文本至少 30 字")
+    .max(30_000, "转录文本过长（≤30000 字）"),
 });
 
 export const POST = withApiHandler(async (req) => {
+  const user = await requireCurrentUser();
   const body = await parseJsonBody(req);
-  const { stageId, transcriptText } = inputSchema.parse(body);
+  const parsed = bodySchema.safeParse(body);
+  if (!parsed.success) {
+    throw validationError(parsed.error.issues[0]?.message ?? "参数非法");
+  }
 
-  const stage = await prisma.stage.findUnique({ where: { id: stageId } });
-  if (!stage) throw notFound(`Stage ${stageId} 不存在`);
+  const stage = await prisma.stage.findUnique({
+    where: { id: parsed.data.stageId },
+    include: { application: { select: { userId: true } } },
+  });
+  if (!stage || stage.application.userId !== user.id) {
+    throw notFound(`Stage id=${parsed.data.stageId} 不存在`);
+  }
 
   try {
-    const { json, text, runId } = await callAI({
+    const { json, runId } = await callAI<AIReviewOutput>({
       taskType: "review",
       systemPrompt: SYS_REVIEW,
-      userPrompt: userPromptReview(transcriptText),
+      userPrompt: userPromptReview(parsed.data.transcriptText),
       expectJson: true,
-      logInputText: `[stage=${stageId}] transcript.len=${transcriptText.length}`,
+      logInputText: `stageId=${stage.id} ${parsed.data.transcriptText.slice(0, 500)}`,
+      userId: user.id,
     });
 
-    const parsed = aiReviewOutputSchema.safeParse(json);
-    if (!parsed.success) {
-      return jsonError(
-        "INTERNAL_ERROR",
-        "AI 返回结构不符合预期，请稍后重试",
-        502,
+    const check = aiReviewOutputSchema.safeParse(json);
+    if (!check.success) {
+      return NextResponse.json(
         {
-          code: "AI_SCHEMA_MISMATCH",
-          raw: text,
-          issues: parsed.error.issues.map((i) => ({
-            path: i.path.join("."),
-            message: i.message,
-          })),
-        }
+          error: {
+            code: "AI_SCHEMA_MISMATCH",
+            message: "AI 返回字段不符合约定结构",
+            details: check.error.issues.slice(0, 3),
+          },
+        },
+        { status: 502 }
       );
     }
-    return jsonOk({ runId, draft: parsed.data });
+
+    return jsonOk({ draft: check.data, runId });
   } catch (e) {
     if (e instanceof AIError) {
-      return jsonError("INTERNAL_ERROR", `${e.code}: ${e.message}`, 502, {
-        code: e.code,
-      });
-    }
-    if (e instanceof z.ZodError) {
-      throw validationError(
-        "入参校验失败",
-        e.issues.map((i) => ({ path: i.path.join("."), message: i.message }))
+      throw new ApiError(
+        "INTERNAL_ERROR",
+        `AI 调用失败：${e.message}`,
+        e.code === "AI_CALL_TIMEOUT" ? 504 : 502
       );
     }
     throw e;

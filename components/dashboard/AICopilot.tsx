@@ -1,24 +1,30 @@
 "use client";
 
 /**
- * components/dashboard/AICopilot.tsx
+ * components/dashboard/AICopilot.tsx · 极简奶油风
  *
  * AI Copilot 卡片（UI.md 8.7 + PRD 5.1.5）
  *
- * Step 6.3 实装：4 个快捷按钮全部接线
  *   - 解析面试邮件：调 /api/ai/parse-email → 弹出 Stage Drawer 预填
  *   - 解析 JD：选 Application → 调 /api/ai/parse-jd → 内联展示 → 保存 PATCH
- *   - 生成面试题：选 Application → 调 /api/ai/generate-questions → 展示可编辑列表 → 保存
- *   - 生成复盘：选 Stage → 调 /api/ai/review → 展示 3 个小卡片 → 保存 PATCH
+ *   - 生成面试题：选 Application → 调 /api/ai/generate-questions → 保存
+ *   - 生成复盘：选 Stage → 调 /api/ai/review → 保存 PATCH
  */
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import useSWR from "swr";
-import { Loader2, Sparkles, CheckCircle2 } from "lucide-react";
+import {
+  Loader2,
+  Sparkles,
+  CheckCircle2,
+  Mail,
+  FileSearch,
+  MessageSquareQuote,
+  ClipboardList,
+} from "lucide-react";
 
-import { CatIcon } from "@/components/CatIcon";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -29,11 +35,41 @@ import { useOpenDrawer } from "@/lib/drawerUrl";
 
 type Action = "parse_email" | "parse_jd" | "generate_questions" | "review";
 
-const ACTIONS: Array<{ key: Action; label: string }> = [
-  { key: "parse_email", label: "解析面试邮件" },
-  { key: "parse_jd", label: "解析 JD" },
-  { key: "generate_questions", label: "生成面试题" },
-  { key: "review", label: "生成复盘" },
+const ACTIONS: Array<{
+  key: Action;
+  label: string;
+  Icon: typeof Mail;
+  tint: string;
+  iconColor: string;
+}> = [
+  {
+    key: "parse_email",
+    label: "解析面试邮件",
+    Icon: Mail,
+    tint: "bg-[#FAE6EA] hover:bg-[#f5d5dd] border-[#f3d9df]",
+    iconColor: "text-[#c86d85]",
+  },
+  {
+    key: "parse_jd",
+    label: "解析 JD",
+    Icon: FileSearch,
+    tint: "bg-[#EDE7F5] hover:bg-[#e3daf0] border-[#dfd2ee]",
+    iconColor: "text-[#8a6fa5]",
+  },
+  {
+    key: "generate_questions",
+    label: "生成面试题",
+    Icon: ClipboardList,
+    tint: "bg-[#FBF4D4] hover:bg-[#f5ecc0] border-[#f0e5b0]",
+    iconColor: "text-[#a08a3a]",
+  },
+  {
+    key: "review",
+    label: "生成复盘",
+    Icon: MessageSquareQuote,
+    tint: "bg-[#E8EFE3] hover:bg-[#dde7d6] border-[#d7e2cd]",
+    iconColor: "text-[#70876a]",
+  },
 ];
 
 interface AppRow {
@@ -43,10 +79,6 @@ interface AppRow {
   roleName: string;
   stages?: Array<{ id: string; type: string; time: string | null }>;
 }
-
-// ──────────────────────────────────────────────────────────────────────
-// AI 结果类型
-// ──────────────────────────────────────────────────────────────────────
 
 interface DraftParseEmail {
   companyName: string | null;
@@ -84,12 +116,7 @@ type AnyDraft =
     }
   | { kind: "review"; data: DraftReview; stageId: string };
 
-// Step 6.3 · sessionStorage key：解析邮件草稿跨 Drawer 传递
 export const SS_KEY_EMAIL_DRAFT = "jhb:emailDraft";
-
-// ──────────────────────────────────────────────────────────────────────
-// 主组件
-// ──────────────────────────────────────────────────────────────────────
 
 export function AICopilot() {
   const router = useRouter();
@@ -100,12 +127,10 @@ export function AICopilot() {
   const [selectedAppId, setSelectedAppId] = React.useState("");
   const [selectedStageId, setSelectedStageId] = React.useState("");
 
-  // 拉 Application 下拉（排除"未投递"占位）
   const { data: apps } = useSWR<AppRow[]>(
     "/api/applications",
     (url: string) => fetchJson<AppRow[]>(url)
   );
-  // 复盘需要 Stage 列表：用 dashboard events（近 60 天）充当一个"所有有时间的 Stage"源
   type EventRow = {
     id: string;
     type: string;
@@ -214,20 +239,17 @@ export function AICopilot() {
     }
   };
 
-  // 采纳草稿
   const applyDraft = async () => {
     if (!draft) return;
 
     if (draft.kind === "parse_email") {
-      // 把草稿写进 sessionStorage，打开"新增申请" Drawer 自动预填
-      // 面试邮件一般指向一个新岗位，走 application-new（公司+部门+岗位+第一个 Stage 一起建）
       try {
         sessionStorage.setItem(
           SS_KEY_EMAIL_DRAFT,
           JSON.stringify(draft.data)
         );
       } catch {
-        /* sessionStorage 可能被禁用，忽略 */
+        /* ignore */
       }
       openDrawer({ type: "application-new" });
       setDraft(null);
@@ -242,7 +264,7 @@ export function AICopilot() {
             jdSummary: draft.data.jdSummary,
             jdKeywords: draft.data.jdKeywords,
             expectedSkills: draft.data.expectedSkills,
-            jdText: input || undefined, // 顺便把原始 JD 也存
+            jdText: input || undefined,
           }),
         });
         toast.success("JD 解析已写入岗位");
@@ -300,64 +322,75 @@ export function AICopilot() {
 
   return (
     <section
-      className="relative overflow-hidden rounded-card-lg p-6 shadow-soft transition-all duration-200 hover:-translate-y-0.5 hover:shadow-hover"
-      style={{
-        background: "linear-gradient(135deg, #FFF1F7 0%, #F8F5FF 100%)",
-      }}
+      className="surface p-5 animate-fade-in-up"
+      style={{ animationDelay: "0.1s" }}
     >
-      <header className="mb-4 flex items-center gap-3">
-        <CatIcon size={34} busy={busy !== null} />
-        <h3 className="text-section-title text-text-primary">AI Copilot</h3>
-        <Sparkles
-          size={16}
-          className="ml-auto text-primary-strong"
-          strokeWidth={1.8}
-        />
+      <header className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#EDE7F5]">
+            <Sparkles size={15} className="text-[#8a6fa5]" strokeWidth={2} />
+          </div>
+          <div>
+            <h3 className="text-card-title text-[#5b4a4a]">AI Copilot</h3>
+            <p className="text-[11px] text-[#b4a79e]">
+              {busy ? "思考中…" : "粘贴文本，帮你整理"}
+            </p>
+          </div>
+        </div>
+        <span className="inline-flex items-center gap-1 rounded-full border border-[#f1e8e0] bg-[#fdfbf8] px-2 py-0.5 text-[10px] font-semibold text-[#b4a79e]">
+          BETA
+        </span>
       </header>
 
-      {/* 统一输入框 */}
-      <textarea
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        rows={5}
-        placeholder="粘贴面试邮件、JD 或面试转录，我来帮你整理 ✨"
-        className={cn(
-          "w-full resize-none border border-border-light bg-surface-bg p-4",
-          "text-body text-text-primary placeholder:text-text-tertiary",
-          "focus:outline-none focus:ring-2 focus:ring-primary/40",
-          "transition-colors"
-        )}
-        style={{ borderRadius: 18 }}
-        disabled={busy !== null}
-      />
+      {/* 输入框 */}
+      <div className="relative">
+        <textarea
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          rows={5}
+          placeholder="粘贴面试邮件、JD 或面试转录…"
+          className={cn(
+            "w-full resize-none rounded-2xl border border-[#f1e8e0] bg-[#fdfbf8] p-3.5",
+            "text-body text-[#5b4a4a] placeholder:text-[#b4a79e]",
+            "focus:outline-none focus:border-[#e9b99a] focus:bg-white",
+            "transition-all"
+          )}
+          disabled={busy !== null}
+        />
+        <div className="absolute bottom-2 right-3 text-[11px] text-[#b4a79e]">
+          {input.length} 字
+        </div>
+      </div>
 
-      {/* 快捷按钮 */}
-      <div className="mt-3 flex flex-wrap gap-2">
-        {ACTIONS.map(({ key, label }) => (
+      {/* 快捷按钮 · 2 列 · 极简彩色格 */}
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        {ACTIONS.map(({ key, label, Icon, tint, iconColor }) => (
           <button
             key={key}
             type="button"
             disabled={busy !== null}
             onClick={() => runAction(key)}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-pill bg-surface-bg/80 px-4 py-2",
-              "text-caption font-medium text-text-primary",
-              "transition-all hover:bg-secondary-pink/60 hover:-translate-y-px",
-              "active:scale-[0.98]",
-              "disabled:pointer-events-none disabled:opacity-50"
+              "group inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5",
+              "text-[12px] font-medium text-[#5b4a4a]",
+              "transition-all duration-200",
+              "active:scale-[0.97]",
+              "disabled:pointer-events-none disabled:opacity-50",
+              tint
             )}
           >
             {busy === key ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : null}
+            ) : (
+              <Icon size={13} className={iconColor} strokeWidth={2} />
+            )}
             {label}
           </button>
         ))}
       </div>
 
-      {/* 选岗位 / 选 Stage：按需显示 */}
+      {/* 选岗位 / 选 Stage */}
       {(needsAppSelect ||
-        // 即便还没点按钮，如果用户选了 parse_jd / generate_questions 的动作前想先选岗位，也允许
         (input === "" && apps && apps.length > 0)) && (
         <div className="mt-4 space-y-1.5">
           <Label>关联岗位（解析 JD / 生成面试题 需要）</Label>
@@ -399,16 +432,12 @@ export function AICopilot() {
         </div>
       )}
 
-      {/* 草稿结果卡片 */}
+      {/* 草稿预览 */}
       {draft && (
-        <div className="mt-4 rounded-card-md bg-surface-bg/90 p-4 shadow-soft">
+        <div className="mt-4 rounded-2xl border border-[#f1e8e0] bg-[#fdfbf8] p-4">
           <DraftPreview draft={draft} />
           <div className="mt-3 flex items-center justify-end gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setDraft(null)}
-            >
+            <Button variant="ghost" size="sm" onClick={() => setDraft(null)}>
               放弃
             </Button>
             <Button size="sm" onClick={applyDraft}>
@@ -422,16 +451,12 @@ export function AICopilot() {
   );
 }
 
-// ──────────────────────────────────────────────────────────────────────
-// 草稿预览
-// ──────────────────────────────────────────────────────────────────────
-
 function DraftPreview({ draft }: { draft: AnyDraft }) {
   if (draft.kind === "parse_email") {
     const d = draft.data;
     return (
       <div className="space-y-1 text-caption">
-        <p className="text-card-title text-text-primary">面试邮件解析结果</p>
+        <p className="text-card-title text-[#5b4a4a]">面试邮件解析结果</p>
         <Row k="公司">{d.companyName ?? "—"}</Row>
         <Row k="部门">{d.departmentName ?? "—"}</Row>
         <Row k="岗位">{d.roleName ?? "—"}</Row>
@@ -439,7 +464,7 @@ function DraftPreview({ draft }: { draft: AnyDraft }) {
         <Row k="时间">{d.time ?? "—"}</Row>
         <Row k="会议链接">{d.meetingLink ?? "—"}</Row>
         {d.jdText && (
-          <p className="mt-2 text-caption text-text-tertiary">
+          <p className="mt-2 text-[11px] text-[#b4a79e]">
             JD 片段：{d.jdText.slice(0, 80)}…
           </p>
         )}
@@ -450,19 +475,19 @@ function DraftPreview({ draft }: { draft: AnyDraft }) {
     const d = draft.data;
     return (
       <div className="space-y-2 text-caption">
-        <p className="text-card-title text-text-primary">JD 解析结果</p>
-        <p className="text-body text-text-primary">{d.jdSummary}</p>
+        <p className="text-card-title text-[#5b4a4a]">JD 解析结果</p>
+        <p className="text-body text-[#5b4a4a]">{d.jdSummary}</p>
         <div className="flex flex-wrap gap-1">
           {d.jdKeywords.map((k) => (
             <span
               key={k}
-              className="inline-flex items-center rounded-pill bg-secondary-lilac px-2 py-0.5 text-text-primary"
+              className="inline-flex items-center rounded-full border border-[#ede7f5] bg-[#f7f4fb] px-2 py-0.5 text-[#8a6fa5]"
             >
               {k}
             </span>
           ))}
         </div>
-        <ul className="ml-5 list-disc text-text-secondary">
+        <ul className="ml-5 list-disc text-[#8a7972]">
           {d.expectedSkills.map((s, i) => (
             <li key={i}>{s}</li>
           ))}
@@ -473,14 +498,14 @@ function DraftPreview({ draft }: { draft: AnyDraft }) {
   if (draft.kind === "generate_questions") {
     return (
       <div className="space-y-2">
-        <p className="text-card-title text-text-primary">生成的面试题</p>
+        <p className="text-card-title text-[#5b4a4a]">生成的面试题</p>
         <ol className="space-y-1.5 pl-0">
           {draft.data.questions.map((q, i) => (
             <li
               key={i}
-              className="flex gap-2 rounded-card-md bg-app-bg-secondary p-2 text-body text-text-primary"
+              className="flex gap-2 rounded-xl border border-[#f1e8e0] bg-white p-2.5 text-body text-[#5b4a4a]"
             >
-              <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-secondary-pink text-caption font-bold text-primary-strong">
+              <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#fbf4d4] text-[11px] font-bold text-[#a08a3a]">
                 {i + 1}
               </span>
               <span>{q}</span>
@@ -494,14 +519,14 @@ function DraftPreview({ draft }: { draft: AnyDraft }) {
     const d = draft.data;
     return (
       <div className="space-y-2">
-        <p className="text-card-title text-text-primary">面试复盘</p>
-        <ReviewCard title="问题概述" color="bg-secondary-lilac">
+        <p className="text-card-title text-[#5b4a4a]">面试复盘</p>
+        <ReviewCard title="问题概述" tint="bg-[#EDE7F5]">
           {d.questionSummary}
         </ReviewCard>
-        <ReviewCard title="回答概述" color="bg-secondary-yellow">
+        <ReviewCard title="回答概述" tint="bg-[#FBF4D4]">
           {d.answerSummary}
         </ReviewCard>
-        <ReviewCard title="建议" color="bg-secondary-mint">
+        <ReviewCard title="建议" tint="bg-[#E8EFE3]">
           {d.suggestion}
         </ReviewCard>
       </div>
@@ -513,32 +538,27 @@ function DraftPreview({ draft }: { draft: AnyDraft }) {
 function Row({ k, children }: { k: string; children: React.ReactNode }) {
   return (
     <div className="flex gap-2">
-      <span className="w-16 flex-shrink-0 text-text-tertiary">{k}</span>
-      <span className="flex-1 text-text-primary">{children}</span>
+      <span className="w-16 flex-shrink-0 text-[#b4a79e]">{k}</span>
+      <span className="flex-1 text-[#5b4a4a]">{children}</span>
     </div>
   );
 }
 
 function ReviewCard({
   title,
-  color,
+  tint,
   children,
 }: {
   title: string;
-  color: string;
+  tint: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className={cn("rounded-card-md p-3", color, "bg-opacity-40")}>
-      <p className="mb-1 text-caption font-semibold text-text-primary">
-        {title}
-      </p>
-      <p className="text-body text-text-primary">{children}</p>
+    <div className={cn("rounded-xl p-3", tint)}>
+      <p className="mb-1 text-[11px] font-semibold text-[#6b574f]">{title}</p>
+      <p className="text-body text-[#5b4a4a]">{children}</p>
     </div>
   );
 }
 
-/**
- * 也许以后不再直接用 Input（只做占位依赖）；保留以避免 tree-shaking 警告
- */
 void Input;
