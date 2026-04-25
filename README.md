@@ -1,143 +1,169 @@
 # 求职流程管理看板 · Job Hunt Flow Board
 
-一个面向求职季大学生的 **求职流程管理看板** 系统。浅色马卡龙粉风格，单人本地使用，用 **Vibe Coding** 方式一人闭环交付。
+面向求职季学生的全流程求职管理系统，支持**多用户注册登录、数据隔离**，集成 AI 辅助（面试邮件解析 / JD 解析 / 面试题生成 / 面试复盘 / 今日大厂动向）。
 
-🌐 **在线演示**：**https://system-pi-three.vercel.app**（Next.js 15 + Neon Postgres + 豆包 AI）
-- 演示环境不支持简历上传（避免云端存储复杂度），其他功能完整
-- 第一次访问慢 10~15 秒（Vercel + Neon 免费档双冷启动），之后亚秒级
-
-**技术栈**：Next.js 15 (App Router) · TypeScript · Postgres（生产）/ SQLite（本地可选）+ Prisma · shadcn/ui + Tailwind · 火山方舟豆包 API（实际底座 DeepSeek 3.2）
+> 🌐 **在线演示**：https://system-pi-three.vercel.app
+> 演示环境为免费 Vercel + Neon Postgres，首次访问冷启动约 10~15 秒。
 
 ---
 
-## 30 秒了解
+## ✨ v2.0 功能亮点
 
-- 3 个页面：
-  - `/dashboard` — 时间维度流程表、明日 AI 提醒、今日大厂动向、我的简历、AI Copilot
-  - `/calendar` — 月视图日历
-  - `/companies` — 大厂流程页（阿里 / 腾讯 / 字节 / 美团 / 百度 / 京东 / 拼多多 / 小红书 / 快手 / 滴滴）
-- 1 个全局右侧 Drawer —— 详情查看 + 编辑 + AI 辅助 + 保存，三页面共用
-- 5 个 AI 能力：解析面试邮件 / 解析 JD / 生成面试题 / 面试复盘 / 今日大厂动向
-- 所有 AI 结果先进入"**草稿态**"，允许用户编辑确认后再落库
+| 模块 | 说明 |
+|---|---|
+| 🔐 多用户系统 | 邮箱注册/登录，Cookie Session 鉴权，数据按用户严格隔离 |
+| 📊 首页 v2 布局 | AI 聊天前置、流程表格（今日/明日 Tab）、周便签 Todo、迷你简历 |
+| 🗂️ Stage 子 Tab | 每个面试节点支持面试题 / 复盘记录 / 随手记三个子页签 |
+| 🏢 Companies 自管理 | 预置 10 家大厂 + 自定义添加 + 隐藏不需要的预置项 |
+| 🤖 AI 聊天面板 | 通用对话流，可挂载能力组件（邮件解析 / JD 解析 / 出题 / 复盘） |
+| 👋 新手引导 | 首访自动弹出分步向导，Sidebar 随时可重新唤起 |
+| 📄 简历管理 | 上传 PDF、文本提取、与岗位关联、在线预览 |
+| 📅 日历视图 | 月视图展示所有面试/测评节点 |
+
+所有 AI 生成结果均先进入**草稿态**，用户编辑确认后再落库。
 
 ---
 
-## 三步跑起来
+## 🚀 快速启动
 
 ```bash
-# 1. 装依赖（需要 Node ≥ 20 + pnpm）
+# 1. 安装依赖（需要 Node ≥ 20 + pnpm）
 pnpm install
 
-# 2. 初始化数据库（SQLite，本地文件）
-#    - 建表
-pnpm exec prisma migrate deploy
-#    - 预置 10 家大厂占位
-pnpm exec prisma db seed
+# 2. 配置环境变量（复制 .env.example 或新建 .env.local）
+#    详见下方「环境变量」章节
 
-# 3. 启动开发服务器
+# 3. 初始化数据库
+pnpm exec prisma migrate deploy   # 执行迁移
+pnpm exec prisma db seed         # 预置 10 家大厂
+
+# 4. 启动开发服务器
 pnpm dev
-# 打开 http://localhost:3000 → 自动重定向到 /dashboard
+# 打开 http://localhost:3000 → 自动跳转 /login 注册登录
+```
+
+生产构建：
+
+```bash
+pnpm build && pnpm start
 ```
 
 ---
 
-## 环境变量
+## 🔑 环境变量
 
-复制一份 `.env.example`（如无则手建 `.env.local`），填入：
+新建 `.env.local`（Next.js runtime，不进 git）和 `.env`（Prisma CLI 专用）：
 
 ```env
-# Prisma 本地 SQLite
-DATABASE_URL="file:./dev.db"
+# .env.local
+DATABASE_URL="file:./prisma/dev.db"      # 本地 SQLite；生产环境填 Neon Postgres pooled URL
+AUTH_SECRET="your-random-secret"          # Cookie Session 签名密钥（生产环境必须设置）
 
-# 火山方舟（豆包）API，登录控制台获取
+# 火山方舟（豆包）API
 DOUBAO_API_KEY=ark-xxxx
 DOUBAO_BASE_URL=https://ark.cn-beijing.volces.com/api/v3
 DOUBAO_MODEL=ep-xxxxxxxxxxxxxxx
 ```
 
-`.env.local` 已在 `.gitignore` 里，**API Key 不会进 git**。
-
-另需一份 Prisma CLI 专用的 `.env`（只放 `DATABASE_URL` 一项）——因为 Prisma CLI 不读 `.env.local`。
+> **注意**：`AUTH_SECRET` 在生产部署（Vercel）中必须通过环境变量注入，否则 JWT 可被伪造。
 
 ---
 
-## 常用命令
+## 🛠️ 技术栈
+
+| 层级 | 选型 |
+|---|---|
+| 框架 | Next.js **15.5** (App Router) + React **18.3** + TypeScript **5.9** |
+| 样式 | Tailwind CSS **3.4** + shadcn/ui (new-york style) |
+| 数据库 | SQLite (本地开发) / **Neon Postgres** (生产) + Prisma **5.22** |
+| 鉴权 | bcryptjs + jose (JWT HS256) + Cookie Session |
+| AI | 火山方舟豆包 API（底座 DeepSeek 3.2）|
+| 部署 | **Vercel** (Hobby) + Neon Postgres (Singapore) |
+| 其他 | date-fns · react-hook-form + zod · framer-motion · lucide-react |
+
+---
+
+## 📁 项目结构
+
+```
+app/
+  login/page.tsx            # 登录/注册页
+  dashboard/page.tsx        # 首页 v2（AI 聊天 + 流程表 + 便签 + 迷你简历）
+  calendar/page.tsx         # 日历月视图
+  companies/page.tsx        # 公司流程页（预置 + 自定义）
+  api/
+    auth/{login,register,logout,me}  # 鉴权 API
+    ai/{chat,parse-email,parse-jd,generate-questions,review,daily-intel}
+    resumes/  applications/  stages/   # 业务 CRUD
+    weekly-todos/                      # 周便签 Todo
+    companies/                         # 自定义公司管理
+components/
+  auth/LoginForm.tsx        # 登录/注册表单
+  layout/Sidebar.tsx       # 侧边栏（窄边 + 花朵 Logo）
+  layout/Header.tsx         # 顶部栏（用户菜单）
+  dashboard/                # 首页组件（AIChatPanel / EventTable / StickyTodo 等）
+  drawer/                   # 全局右侧 Drawer（Stage 详情 + 新建）
+  drawer/tabs/              # Stage 子 Tab（面试题 / 复盘 / 随手记）
+  companies/                # 公司页组件（含 CustomCompanyManager）
+  onboarding/               # 新手引导 Dialog
+  widgets/StickyTodoPanel.tsx  # 周便签（便签/书签双形态）
+lib/
+  auth.ts                   # 鉴权工具（bcrypt + jose + Cookie Session）
+  db.ts                     # Prisma 单例
+  llmClient.ts              # 豆包 API 唯一出口
+  prompts.ts                # AI system prompts（PRD 原文）
+  queries/                  # 服务端数据查询
+middleware.ts               # Edge 运行时鉴权中间件
+prisma/
+  schema.prisma             # User / Resume / Application / Stage / CustomCompany / WeeklyTodo / AIRun / IntelSummary / TomorrowTipCache
+  seed.ts                   # 10 家大厂预置种子
+uploads/                    # PDF 上传目录（gitignore）
+```
+
+---
+
+## 🧪 常用命令
 
 ```bash
-pnpm dev                        # 启动 Next.js dev server（默认 3000）
-pnpm build && pnpm start        # 生产构建 + 启动
-pnpm lint                       # ESLint
-pnpm typecheck                  # TypeScript 类型检查
+pnpm dev                  # 启动开发服务器（localhost:3000）
+pnpm build                # 生产构建
+pnpm lint                 # ESLint 检查
+pnpm typecheck            # TypeScript 类型检查
 
-pnpm exec prisma studio         # 可视化查看 / 编辑数据
-pnpm exec prisma migrate dev    # 改完 schema.prisma 后执行迁移
+pnpm exec prisma studio   # 可视化数据库管理
+pnpm exec prisma migrate dev   # 开发时创建新迁移
 
-# 端到端烟测（需先启动 dev server）
-pnpm tsx scripts/smoke-api.ts       # REST API 层 14 断言
-pnpm tsx scripts/smoke-closures.ts  # PRD 6 闭环 E2E（含真实 AI 调用）
+# E2E 烟测（需先启动 dev server）
+pnpm tsx scripts/smoke-api.ts
 ```
 
 ---
 
-## 目录速查
-
-```
-app/                      # Next.js App Router（页面 + API route）
-  dashboard/  calendar/  companies/
-  api/
-    resumes/  applications/  stages/
-    dashboard/events/  calendar/events/  companies/progress/
-    ai/
-      parse-email/  parse-jd/  generate-questions/  review/
-      daily-intel/  tomorrow-tip/refresh/
-components/
-  ui/                     # shadcn/ui 生成（Button / Sheet / Dialog / Skeleton 等）
-  layout/                 # Sidebar / Header
-  dashboard/              # 首页 5 个主模块
-  calendar/  companies/   # 各自页面组件
-  drawer/                 # 全局 Drawer 容器 + 三种内容（stage / stage-new / application-new）
-  resume/                 # 简历上传 / 改名 / 预览 Dialog
-  common/                 # EmptyState / ErrorState / ConfirmDeleteDialog
-  CatIcon.tsx             # 小猫 SVG（呼吸 / 晃动 / hover 动效）
-lib/
-  db.ts                   # Prisma 单例
-  llmClient.ts            # 豆包 API 唯一出口（/chat/completions + response_format）
-  prompts.ts              # PRD 9.1~9.5 原文 system prompts
-  queries/                # Server Component 直调 Prisma 的 SSR 读方法
-  schemas/                # zod 校验 + z.infer 类型
-  fetcher.ts              # 客户端 fetchJson 封装
-  drawerUrl.ts            # URL 参数驱动的 Drawer 开关工具
-  serialize.ts  dates.ts  fakeIntelSource.ts  api.ts  utils.ts
-prisma/
-  schema.prisma           # 6 个 model（Resume / Application / Stage / AIRun / IntelSummary / TomorrowTipCache）
-  seed.ts                 # 10 家大厂占位（幂等）
-  migrations/
-  dev.db                  # SQLite（gitignore）
-scripts/
-  smoke-api.ts            # REST API 烟测
-  smoke-closures.ts       # PRD 6 闭环 E2E
-  fixtures/closure-tiny.pdf
-uploads/                  # 用户上传的 PDF（gitignore）
-```
-
----
-
-## 文档
+## 📚 文档索引
 
 | 文件 | 作用 |
 |---|---|
-| [`job_hunt_flow_board_prd.md`](./job_hunt_flow_board_prd.md) | 产品真相（数据模型、API 契约、AI 提示词原文、6 个验收闭环） |
-| [`UI.md`](./UI.md) | 视觉真相（浅色马卡龙粉色系、布局、动效） |
-| [`tech_stack.md`](./tech_stack.md) | 技术栈 + 目录 + 禁用方案清单 |
-| [`architecture.md`](./architecture.md) | 文件地图 + 关键契约点（22 条） |
-| [`implementation_plan.md`](./implementation_plan.md) | 7 Phase / 39 Step 指令手册 |
-| [`progress.md`](./progress.md) | 逐步勾选清单 |
+| [`CHANGELOG.md`](./CHANGELOG.md) | 维护期改动日志（做了什么 / 为什么 / 怎么验证） |
+| [`architecture.md`](./architecture.md) | 文件地图 + 关键架构契约点 |
 | [`CODEBUDDY.md`](./CODEBUDDY.md) | AI Agent 入口（含强制阅读门禁） |
+| [`job_hunt_flow_board_prd.md`](./job_hunt_flow_board_prd.md) | 产品需求文档（PRD） |
+| [`UI.md`](./UI.md) | 视觉规范（马卡龙粉配色） |
+| [`tech_stack.md`](./tech_stack.md) | 技术栈详解 + 禁用方案清单 |
+| [`implementation_plan.md`](./implementation_plan.md) | v1.0 实施步骤（7 Phase / 39 Step） |
 
 ---
 
-## 许可与声明
+## 📝 版本记录
 
-- 本仓库为个人求职流程管理工具，仅本地使用
-- 所有豆包 API Key 仅存在于 `.env.local`，永远不进 git
-- AI 输出均需用户确认后才会落库，符合 PRD 3.2 的草稿态硬性规则
+| 版本 | 日期 | 说明 |
+|---|---|---|
+| v2.0-maintenance-r1 | 2026-04-25 | 多用户鉴权 + 首页 v2 + Stage 子 Tab + Companies 自管理 + 新手引导 |
+| v1.0 | 2026-04-19 | 初始交付（39 Step 全绿，公网 demo 上线） |
+
+---
+
+## ⚠️ 声明
+
+- 本仓库为个人求职管理工具，**AI 输出均需用户确认后才会落库**
+- `DOUBAO_API_KEY` / `AUTH_SECRET` 仅存在于 `.env.local`，**永远不进 git**
+- 在线演示为免费托管，性能有限，仅供功能预览
