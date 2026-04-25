@@ -29,6 +29,9 @@ import { Label } from "@/components/ui/label";
 import { fetchJson } from "@/lib/fetcher";
 import { useRouter } from "next/navigation";
 import { ResumePreviewDialog } from "@/components/resume/ResumePreviewDialog";
+import { InterviewQuestionsTab } from "@/components/drawer/tabs/InterviewQuestionsTab";
+import { ReviewTab } from "@/components/drawer/tabs/ReviewTab";
+import { PersonalNotesTab } from "@/components/drawer/tabs/PersonalNotesTab";
 import {
   STAGE_TYPES,
   STAGE_STATUSES,
@@ -62,6 +65,9 @@ interface ApplicationWithStages {
     reviewQuestionSummary: string | null;
     reviewAnswerSummary: string | null;
     reviewSuggestion: string | null;
+    interviewQuestions: string[] | null;
+    personalNotes: string | null;
+    reviewTranscript: string | null;
   }>;
 }
 
@@ -127,6 +133,13 @@ export function StageDrawerContent({ stageId, onClose }: Props) {
     { id: string; name: string } | null
   >(null);
 
+  // ⚠️ Tab 切换状态必须和其他 hook 一样放在早 return 之前，
+  //    否则会触发 "Rendered more hooks than during the previous render." 崩溃，
+  //    直接表现为"侧边栏点开空白/崩溃"。
+  const [activeTab, setActiveTab] = React.useState<
+    "basic" | "questions" | "review" | "notes"
+  >("basic");
+
   // 第一步：拿到 Stage 所属的 Application。由于我们的 URL 只带 stage id，
   // 而 API 是 /api/applications/:id 返回 stages[]，这里用"全局小查询"：先拉所有 dashboard+calendar 不行
   // 简单做法：再建一个最小的 fetch，按 stage id → application id
@@ -143,6 +156,9 @@ export function StageDrawerContent({ stageId, onClose }: Props) {
       reviewQuestionSummary: string | null;
       reviewAnswerSummary: string | null;
       reviewSuggestion: string | null;
+      interviewQuestions: string[] | null;
+      personalNotes: string | null;
+      reviewTranscript: string | null;
     };
     application: ApplicationWithStages;
   }>(`/api/stages/${stageId}/detail`, swrFetcher);
@@ -241,6 +257,14 @@ export function StageDrawerContent({ stageId, onClose }: Props) {
   const stage = data.stage;
   const app = data.application;
 
+  // Tab 列表（纯常量，不是 hook，放这里没问题）
+  const TABS = [
+    { key: "basic", label: "基础" },
+    { key: "questions", label: "面试题" },
+    { key: "review", label: "复盘" },
+    { key: "notes", label: "随手记" },
+  ] as const;
+
   return (
     <>
       {/* A. 顶部概览区（UI.md 11.2 A） */}
@@ -281,15 +305,35 @@ export function StageDrawerContent({ stageId, onClose }: Props) {
             </a>
           )}
         </div>
+
+        {/* Tabs 切换 · v2 */}
+        <div className="mt-4 flex items-center gap-1 rounded-full border border-[#f1e8e0] bg-[#fdfbf8] p-1">
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setActiveTab(t.key)}
+              className={cn(
+                "flex-1 rounded-full px-3 py-1.5 text-[12px] transition-all",
+                activeTab === t.key
+                  ? "bg-white text-[#6b574f] shadow-[0_1px_2px_rgba(199,165,149,0.08)] font-semibold"
+                  : "text-[#a69890] hover:text-[#8a6d5f]"
+              )}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
       </SheetHeader>
 
-      {/* B. 基础信息编辑区（UI.md 11.2 B） */}
+      {/* B. 内容区 · 根据 Tab 切换 */}
       <SheetBody>
-        <form
-          id="stage-form"
-          onSubmit={form.handleSubmit(onSave)}
-          className="space-y-5"
-        >
+        {activeTab === "basic" && (
+          <form
+            id="stage-form"
+            onSubmit={form.handleSubmit(onSave)}
+            className="space-y-5"
+          >
           <section className="space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="text-card-title text-text-primary">基础信息</h4>
@@ -409,10 +453,50 @@ export function StageDrawerContent({ stageId, onClose }: Props) {
 
           {/* JD 信息区先空着（Phase 6 在 JD 解析里展开） */}
         </form>
+        )}
+
+        {activeTab === "questions" && (
+          <InterviewQuestionsTab
+            stageId={stage.id}
+            applicationId={app.id}
+            initialQuestions={stage.interviewQuestions}
+            onSaved={async () => {
+              await mutate();
+              router.refresh();
+            }}
+          />
+        )}
+
+        {activeTab === "review" && (
+          <ReviewTab
+            stageId={stage.id}
+            initial={{
+              reviewTranscript: stage.reviewTranscript,
+              reviewQuestionSummary: stage.reviewQuestionSummary,
+              reviewAnswerSummary: stage.reviewAnswerSummary,
+              reviewSuggestion: stage.reviewSuggestion,
+            }}
+            onSaved={async () => {
+              await mutate();
+              router.refresh();
+            }}
+          />
+        )}
+
+        {activeTab === "notes" && (
+          <PersonalNotesTab
+            stageId={stage.id}
+            initial={stage.personalNotes}
+            onSaved={async () => {
+              await mutate();
+              router.refresh();
+            }}
+          />
+        )}
       </SheetBody>
 
       <SheetFooter>
-        {isEditing && (
+        {isEditing && activeTab === "basic" && (
           <Button
             type="submit"
             form="stage-form"

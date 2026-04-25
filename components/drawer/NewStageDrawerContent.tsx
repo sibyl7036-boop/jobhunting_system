@@ -168,7 +168,7 @@ export function NewStageDrawerContent({
               </p>
             )}
             <p className="text-caption text-text-tertiary">
-              没有合适的岗位？去「大厂进度」页面右上角「新增申请」先建一个。
+              没有合适的岗位？去「公司进度」页面右上角「新增申请」先建一个。
             </p>
           </div>
 

@@ -23,6 +23,8 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import {
   Sheet,
   SheetContent,
+  SheetTitle,
+  SheetDescription,
 } from "@/components/ui/sheet";
 import { StageDrawerContent } from "@/components/drawer/StageDrawerContent";
 import { NewStageDrawerContent } from "@/components/drawer/NewStageDrawerContent";
@@ -37,6 +39,7 @@ export function DetailDrawer() {
   const stageId = searchParams.get("id");
   const applicationId = searchParams.get("applicationId");
   const prefillDate = searchParams.get("date");
+  const prefillCompany = searchParams.get("companyName");
 
   const open = drawerType !== null;
 
@@ -49,6 +52,7 @@ export function DetailDrawer() {
       sp.delete("id");
       sp.delete("applicationId");
       sp.delete("date");
+      sp.delete("companyName");
       const query = sp.toString();
       router.replace(query ? `${pathname}?${query}` : pathname, {
         scroll: false,
@@ -60,6 +64,16 @@ export function DetailDrawer() {
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent>
+        {/*
+         * 无障碍兜底：Radix Dialog 要求 DialogContent 必须有 Title 子元素。
+         * 子组件在 loading / 未匹配 type 时可能还没渲染 SheetTitle，
+         * 这里始终放一份视觉隐藏的标题，子组件自己再渲染可见标题不影响。
+         */}
+        <SheetTitle className="sr-only">详情面板</SheetTitle>
+        <SheetDescription className="sr-only">
+          查看与编辑面试 / 流程 / 岗位详情
+        </SheetDescription>
+
         {drawerType === "stage" && stageId && (
           <StageDrawerContent stageId={stageId} onClose={() => handleOpenChange(false)} />
         )}
@@ -71,7 +85,10 @@ export function DetailDrawer() {
           />
         )}
         {drawerType === "application-new" && (
-          <NewApplicationDrawerContent onClose={() => handleOpenChange(false)} />
+          <NewApplicationDrawerContent
+            initialCompany={prefillCompany ?? undefined}
+            onClose={() => handleOpenChange(false)}
+          />
         )}
       </SheetContent>
     </Sheet>

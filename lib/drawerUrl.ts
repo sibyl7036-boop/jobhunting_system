@@ -16,7 +16,7 @@ import { useCallback } from "react";
 export type DrawerAction =
   | { type: "stage"; id: string }
   | { type: "stage-new"; applicationId?: string; date?: string }
-  | { type: "application-new" };
+  | { type: "application-new"; companyName?: string };
 
 function applyAction(sp: URLSearchParams, action: DrawerAction): URLSearchParams {
   const next = new URLSearchParams(sp);
@@ -25,6 +25,7 @@ function applyAction(sp: URLSearchParams, action: DrawerAction): URLSearchParams
   next.delete("id");
   next.delete("applicationId");
   next.delete("date");
+  next.delete("companyName");
 
   next.set("drawer", action.type);
   if (action.type === "stage") {
@@ -32,6 +33,8 @@ function applyAction(sp: URLSearchParams, action: DrawerAction): URLSearchParams
   } else if (action.type === "stage-new") {
     if (action.applicationId) next.set("applicationId", action.applicationId);
     if (action.date) next.set("date", action.date);
+  } else if (action.type === "application-new") {
+    if (action.companyName) next.set("companyName", action.companyName);
   }
   return next;
 }
@@ -61,6 +64,7 @@ export function useCloseDrawer() {
     sp.delete("id");
     sp.delete("applicationId");
     sp.delete("date");
+    sp.delete("companyName");
     const q = sp.toString();
     router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
   }, [pathname, router, searchParams]);

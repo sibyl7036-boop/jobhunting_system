@@ -114,6 +114,10 @@ export const stageSchema = z.object({
   reviewQuestionSummary: z.string().nullable().optional(),
   reviewAnswerSummary: z.string().nullable().optional(),
   reviewSuggestion: z.string().nullable().optional(),
+  // [2026-04-25 v2] Drawer 新三 Tab 对应的字段
+  interviewQuestions: z.array(z.string()).nullable().optional(),
+  personalNotes: z.string().nullable().optional(),
+  reviewTranscript: z.string().nullable().optional(),
   createdAt: tsField,
   updatedAt: tsField,
 });
@@ -129,6 +133,9 @@ export const stageCreateInputSchema = stageSchema
     reviewQuestionSummary: true,
     reviewAnswerSummary: true,
     reviewSuggestion: true,
+    interviewQuestions: true,
+    personalNotes: true,
+    reviewTranscript: true,
   })
   .partial({
     time: true,
@@ -137,6 +144,9 @@ export const stageCreateInputSchema = stageSchema
     reviewQuestionSummary: true,
     reviewAnswerSummary: true,
     reviewSuggestion: true,
+    interviewQuestions: true,
+    personalNotes: true,
+    reviewTranscript: true,
   });
 export type StageCreateInput = z.infer<typeof stageCreateInputSchema>;
 

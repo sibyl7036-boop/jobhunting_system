@@ -70,16 +70,17 @@ function localInputToIso(input: string): string | null {
 
 interface Props {
   onClose: () => void;
+  initialCompany?: string;
 }
 
-export function NewApplicationDrawerContent({ onClose }: Props) {
+export function NewApplicationDrawerContent({ onClose, initialCompany }: Props) {
   const router = useRouter();
   const [saving, setSaving] = React.useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      companyName: "",
+      companyName: initialCompany ?? "",
       departmentName: "",
       roleName: "",
       addFirstStage: false,
