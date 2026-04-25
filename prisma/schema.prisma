@@ -5,9 +5,13 @@
 //   - Application.interviewQuestions（Step 6.3 AI 面试题共享题库，JSON 化 string[]）
 //   - TomorrowTipCache（Step 6.6 明日 AI 提醒的 eventsHash 被动失效缓存）
 //
+// [2026-04-19 deploy/vercel-postgres] datasource provider 从 sqlite 改为 postgresql
+// 理由：Vercel Serverless 不能用本地 SQLite 文件（容器重建会丢数据）。详见 architecture.md 契约点 25。
+//
 // 关键约束：
-//   1. 所有枚举值保留 PRD 规定的中文原值，SQLite 无原生枚举，用 String 字段 + zod 校验（Phase 1.4）
-//   2. jdKeywords / expectedSkills / interviewQuestions 是 string[]，SQLite 无数组，存 JSON 字符串，读写时 JSON.parse/stringify
+//   1. 所有枚举值保留 PRD 规定的中文原值，用 String 字段 + zod 校验（Phase 1.4）
+//   2. jdKeywords / expectedSkills / interviewQuestions 是 string[]，沿用"存 JSON 字符串"的约定
+//      （SQLite 时代的历史决定，Postgres 虽然支持原生数组但保持业务代码零改动，契约点 11）
 //   3. AIRun.outputJson 同理存 JSON 字符串
 //   4. 时间字段统一 DateTime
 //   5. Stage.applicationId onDelete Cascade（Application 删除时自动删 Stage）
@@ -18,13 +22,34 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// ── 6.0 User（用户 · 邮箱登录 + 昵称） ──
+// [2026-04-25 auth] 新增用户隔离：每个用户只能看到自己的数据
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  nickname     String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // 反向关系
+  resumes           Resume[]
+  applications      Application[]
+  intelSummaries    IntelSummary[]
+  tomorrowTips      TomorrowTipCache[]
+  aiRuns            AIRun[]
+  customCompanies   CustomCompany[]
+  weeklyTodos       WeeklyTodo[]
 }
 
 // ── 6.1 Resume（简历） ──
 model Resume {
   id            String   @id @default(cuid())
+  userId        String
   name          String
   tag           String // 枚举（PRD 中文原值）：产品 / 运营 / 算法 / 通用
   fileName      String
@@ -33,13 +58,17 @@ model Resume {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   // 反向关系：被哪些 Application 关联（Resume 被引用时不可直接删，由 API 层 409 拒绝，Phase 2.1）
   applications Application[]
+
+  @@index([userId])
 }
 
 // ── 6.2 Application（岗位申请 · 主干） ──
 model Application {
   id                 String   @id @default(cuid())
+  userId             String
   companyName        String
   departmentName     String
   roleName           String
@@ -53,14 +82,17 @@ model Application {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   linkedResume Resume? @relation(fields: [linkedResumeId], references: [id], onDelete: SetNull)
   stages       Stage[]
 
+  @@index([userId])
   @@index([companyName])
   @@index([linkedResumeId])
 }
 
 // ── 6.3 Stage（流程节点） ──
+// Stage 通过 applicationId 间接归属用户（查询时 join Application.userId 做校验）
 model Stage {
   id                    String    @id @default(cuid())
   applicationId         String
@@ -71,6 +103,12 @@ model Stage {
   reviewQuestionSummary String?
   reviewAnswerSummary   String?
   reviewSuggestion      String?
+  // [2026-04-25 v2] 面试题（JSON 字符串化的 string[]）
+  interviewQuestions    String?
+  // [2026-04-25 v2] 用户随手记（富文本/markdown 都可以存，前端按纯文本展示）
+  personalNotes         String?
+  // [2026-04-25 v2] 复盘原始转录文本（供重新解析用）
+  reviewTranscript      String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
@@ -83,6 +121,7 @@ model Stage {
 // ── 6.4 AIRun（AI 调用日志） ──
 model AIRun {
   id           String   @id @default(cuid())
+  userId       String?  // 允许为空：兼容系统级调用（如某些批处理）
   taskType     String // 枚举：parse_email / parse_jd / generate_questions / review / daily_intel / tomorrow_tip
   inputText    String
   outputText   String
@@ -91,27 +130,73 @@ model AIRun {
   errorMessage String?
   createdAt    DateTime @default(now())
 
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
   @@index([taskType, createdAt])
   @@index([status])
 }
 
 // ── 6.5 IntelSummary（今日大厂动向摘要缓存 · 按生成日本地时区天级缓存） ──
+// 用户隔离：同一天每个用户一份摘要；联合主键（userId, date）通过 @@unique
 model IntelSummary {
   id          String   @id @default(cuid())
-  date        String   @unique // 本地时区 YYYY-MM-DD；跨 0 点自动失效（查不到就重算）
+  userId      String
+  date        String // 本地时区 YYYY-MM-DD；跨 0 点自动失效（查不到就重算）
   summaryText String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId])
 }
 
 // ── 扩展 · TomorrowTipCache（明日 AI 提醒缓存 · eventsHash 被动失效） ──
-// Step 6.6 用：每次访问首页时计算明天 Stage 列表的 SHA-256 哈希，
-// 与缓存里的 eventsHash 对比，不一致则重调 AI，一致则直接返回 tipText。
 model TomorrowTipCache {
   id         String   @id @default(cuid())
-  date       String   @unique // 本地时区"明天"的 YYYY-MM-DD
+  userId     String
+  date       String // 本地时区"明天"的 YYYY-MM-DD
   tipText    String
   eventsHash String // 明天事件集合（id+time+type+status 排序 stringify 后的 SHA-256）
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId])
+}
+
+// ── 扩展 v2 · CustomCompany（用户自定义大厂名单）──
+// 预置 10 家写死在代码里（COMPANY_ORDER）；用户可再 + 自己想追踪的公司
+model CustomCompany {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+// ── 扩展 v2 · WeeklyTodo（便签式周 todo）──
+// weekStart 存"本周周一 YYYY-MM-DD"；一个用户一周可以有多条 todo
+model WeeklyTodo {
+  id        String   @id @default(cuid())
+  userId    String
+  weekStart String   // YYYY-MM-DD（周一）
+  content   String
+  done      Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, weekStart])
 }

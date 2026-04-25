@@ -1,17 +1,23 @@
 /**
- * GET /api/resumes/:id/file
+ * GET /api/resumes/[id]/file
  *
- * 流式返回用户上传的 PDF 文件（application/pdf）。
- * 浏览器直接打开或 <iframe> 嵌入预览都走这里。
+ * 读取 uploads/<id>.pdf 并以 application/pdf 返回（供 <iframe> 预览）
  *
- * 对应 PRD 7.1 / implementation_plan Step 5.1
+ * - 鉴权：必须登录，且简历归属当前用户
+ * - 非 JSON 响应：直接构造 NextResponse，不走 withApiHandler
+ * - inline 展示：Content-Disposition: inline（浏览器内置 PDF viewer 打开）
+ *
+ * [2026-04-25 bugfix] 之前该目录为空，导致简历预览 404/HTML 错误
  */
 
-import fs from "node:fs/promises";
+import fs from "node:fs";
 import path from "node:path";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { withApiHandler, notFound } from "@/lib/api";
+import { getCurrentUser } from "@/lib/auth";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const UPLOADS_DIR = path.join(process.cwd(), "uploads");
 
@@ -19,27 +25,57 @@ interface RouteContext {
   params: Promise<{ id: string }>;
 }
 
-export const GET = withApiHandler<RouteContext>(async (_req, ctx) => {
+export async function GET(_req: NextRequest, ctx: RouteContext) {
+  const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json(
+      { ok: false, error: { code: "UNAUTHORIZED", message: "请先登录" } },
+      { status: 401 }
+    );
+  }
+
   const { id } = await ctx.params;
 
   const resume = await prisma.resume.findUnique({ where: { id } });
-  if (!resume) throw notFound(`Resume ${id} 不存在`);
+  if (!resume || resume.userId !== user.id) {
+    return NextResponse.json(
+      { ok: false, error: { code: "NOT_FOUND", message: "简历不存在或无权限" } },
+      { status: 404 }
+    );
+  }
 
   const filePath = path.join(UPLOADS_DIR, `${id}.pdf`);
-  try {
-    const buf = await fs.readFile(filePath);
-    // 用 Uint8Array 构造 Response body 避免 Buffer 的 ArrayBufferLike 类型不匹配
-    const body = new Uint8Array(buf);
-    return new NextResponse(body, {
-      status: 200,
-      headers: {
-        "Content-Type": "application/pdf",
-        "Content-Length": String(buf.length),
-        "Content-Disposition": `inline; filename="${encodeURIComponent(resume.fileName)}"`,
-        "Cache-Control": "private, max-age=60",
+  if (!fs.existsSync(filePath)) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: {
+          code: "FILE_MISSING",
+          message: "文件已丢失（可能是部署重启导致），请重新上传",
+        },
       },
-    });
-  } catch {
-    throw notFound(`文件不存在：uploads/${id}.pdf`);
+      { status: 404 }
+    );
   }
-});
+
+  const stat = fs.statSync(filePath);
+  const buf = fs.readFileSync(filePath);
+
+  // 文件名处理：中文安全编码
+  const fallback = `${resume.id}.pdf`;
+  const utf8Name = `${resume.name || resume.fileName || "resume"}.pdf`;
+  const disposition = `inline; filename="${fallback}"; filename*=UTF-8''${encodeURIComponent(
+    utf8Name
+  )}`;
+
+  return new NextResponse(buf, {
+    status: 200,
+    headers: {
+      "Content-Type": "application/pdf",
+      "Content-Length": String(stat.size),
+      "Content-Disposition": disposition,
+      "Cache-Control": "private, max-age=0, must-revalidate",
+      "X-Content-Type-Options": "nosniff",
+    },
+  });
+}

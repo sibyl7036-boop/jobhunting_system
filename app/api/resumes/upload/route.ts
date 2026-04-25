@@ -29,15 +29,25 @@ import {
   ApiError,
 } from "@/lib/api";
 import { RESUME_TAGS } from "@/lib/schemas";
+import { requireCurrentUser } from "@/lib/auth";
 
-// 强制 Node.js runtime（pdf-parse / pdfjs-dist 不能在 edge-light 跑）
+// 强制 Node.js runtime
 export const runtime = "nodejs";
 
-const MAX_BYTES = 10 * 1024 * 1024; // 10MB
+const MAX_BYTES = 10 * 1024 * 1024;
 const UPLOADS_DIR = path.join(process.cwd(), "uploads");
 
 export const POST = withApiHandler(async (req) => {
-  // 1. 拿 multipart body
+  const user = await requireCurrentUser();
+
+  if (process.env.VERCEL === "1") {
+    throw new ApiError(
+      "FEATURE_UNAVAILABLE_IN_DEMO",
+      "演示环境暂不支持简历上传，本地运行可体验完整功能",
+      503
+    );
+  }
+
   let form: FormData;
   try {
     form = await req.formData();
@@ -49,7 +59,6 @@ export const POST = withApiHandler(async (req) => {
   const name = form.get("name");
   const tag = form.get("tag");
 
-  // 2. 基础校验
   if (!(file instanceof File) || file.size === 0) {
     throw validationError("缺少文件字段 file（PDF）");
   }
@@ -62,7 +71,6 @@ export const POST = withApiHandler(async (req) => {
     );
   }
 
-  // 3. MIME + 扩展名（PRD 5.1.4 只支持 PDF）
   const isPdfType =
     file.type === "application/pdf" || file.type === "application/x-pdf";
   const isPdfExt =
@@ -72,7 +80,6 @@ export const POST = withApiHandler(async (req) => {
     throw validationError("只支持 PDF 文件");
   }
 
-  // 4. 大小限制
   if (file.size > MAX_BYTES) {
     throw new ApiError(
       "VALIDATION_ERROR",
@@ -81,13 +88,13 @@ export const POST = withApiHandler(async (req) => {
     );
   }
 
-  // 5. Resume 落库（先拿 id，再用 id 命名文件）
+  // ── userId 加入 create ──
   const created = await prisma.resume.create({
     data: {
+      userId: user.id,
       name: name.trim(),
       tag,
       fileName: file.name,
-      // fileUrl 之后回填；先放占位
       fileUrl: "",
       extractedText: null,
     },
@@ -96,27 +103,21 @@ export const POST = withApiHandler(async (req) => {
   const savedPath = path.join(UPLOADS_DIR, `${created.id}.pdf`);
   const fileUrl = `/api/resumes/${created.id}/file`;
 
-  // 6. 写文件到 uploads/
   try {
     await fs.mkdir(UPLOADS_DIR, { recursive: true });
     const buf = Buffer.from(await file.arrayBuffer());
     await fs.writeFile(savedPath, buf);
 
-    // 7. 尝试提取文本（失败不阻断）
     let extractedText: string | null = null;
     let warning: string | undefined;
     try {
-      // pdf-parse v2：new PDFParse({ data }).getText()
-      // 动态 import 避免构建时 bundler 触碰 node:fs / worker 等
       const { PDFParse } = await import("pdf-parse");
       const parser = new PDFParse({ data: new Uint8Array(buf) });
       const result = await parser.getText();
       const raw = (result.text ?? "").trim();
-      // 清洗控制字符：保留换行（\n）和制表（\t），其他 C0 / DEL 一律替换为单空格
       const cleaned = raw
         .replace(/\r\n/g, "\n")
         .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, " ")
-        // 连续多空格压成单空格，多空行压成双换行
         .replace(/[ \t]+/g, " ")
         .replace(/\n{3,}/g, "\n\n")
         .trim();
@@ -125,7 +126,6 @@ export const POST = withApiHandler(async (req) => {
       warning = `文本提取失败：${e instanceof Error ? e.message : String(e)}`;
     }
 
-    // 8. 更新 fileUrl + extractedText
     const updated = await prisma.resume.update({
       where: { id: created.id },
       data: { fileUrl, extractedText },
@@ -136,7 +136,6 @@ export const POST = withApiHandler(async (req) => {
       { status: 201 }
     );
   } catch (e) {
-    // 失败时清掉 Resume 行，避免脏数据
     try {
       await prisma.resume.delete({ where: { id: created.id } });
     } catch {

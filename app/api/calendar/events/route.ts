@@ -1,17 +1,16 @@
 /**
- * GET /api/calendar/events?start=YYYY-MM-DD&end=YYYY-MM-DD
+ * GET /api/calendar/events?start=YYYY-MM-DD&end=YYYY-MM-DD · 当前用户
  *
- * 闭区间：[start 00:00:00.000, end 23:59:59.999]（本地时区）
- * start > end / 格式错误 / 缺参 都返 400
- *
- * 对应 PRD 7.3 / implementation_plan Step 2.3
+ * [2026-04-25 auth-v1]
  */
 
 import { prisma } from "@/lib/db";
 import { jsonOk, withApiHandler, validationError } from "@/lib/api";
 import { parseDateStartLocal, parseDateEndLocal } from "@/lib/dates";
+import { requireCurrentUser } from "@/lib/auth";
 
 export const GET = withApiHandler(async (req) => {
+  const user = await requireCurrentUser();
   const url = new URL(req.url);
   const startRaw = url.searchParams.get("start");
   const endRaw = url.searchParams.get("end");
@@ -33,6 +32,7 @@ export const GET = withApiHandler(async (req) => {
   const stages = await prisma.stage.findMany({
     where: {
       time: { gte: start, lte: end },
+      application: { userId: user.id },
     },
     orderBy: { time: "asc" },
     include: {

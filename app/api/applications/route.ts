@@ -1,25 +1,28 @@
 /**
  * /api/applications
  *
- * GET  · 列表（按 createdAt desc，不含占位的"未投递"空白行）
- * POST · 创建 Application；currentStatus 默认 "未投递"
+ * GET  · 列表（当前用户）
+ * POST · 创建 Application（归属当前用户）
  *
- * 对应 PRD 7.2 / implementation_plan Step 2.2 / Step 4.4
+ * [2026-04-25 auth-v1] 按用户隔离
  */
 
 import { prisma } from "@/lib/db";
-import { jsonOk, withApiHandler, parseJsonBody } from "@/lib/api";
+import { jsonOk, withApiHandler, parseJsonBody, notFound } from "@/lib/api";
 import { applicationCreateInputSchema } from "@/lib/schemas";
 import { stringifyStringArray, serializeApplication } from "@/lib/serialize";
+import { requireCurrentUser } from "@/lib/auth";
 
 export const GET = withApiHandler(async (req) => {
+  const user = await requireCurrentUser();
   const url = new URL(req.url);
   const includeEmpty = url.searchParams.get("includeEmpty") === "true";
 
   const rows = await prisma.application.findMany({
-    where: includeEmpty
-      ? undefined
-      : { NOT: { currentStatus: "未投递" } },
+    where: {
+      userId: user.id,
+      ...(includeEmpty ? {} : { NOT: { currentStatus: "未投递" } }),
+    },
     orderBy: [{ companyName: "asc" }, { createdAt: "asc" }],
   });
 
@@ -27,11 +30,24 @@ export const GET = withApiHandler(async (req) => {
 });
 
 export const POST = withApiHandler(async (req) => {
+  const user = await requireCurrentUser();
   const body = await parseJsonBody(req);
   const input = applicationCreateInputSchema.parse(body);
 
+  // 若带 linkedResumeId，校验简历归属
+  if (input.linkedResumeId) {
+    const resume = await prisma.resume.findUnique({
+      where: { id: input.linkedResumeId },
+      select: { userId: true },
+    });
+    if (!resume || resume.userId !== user.id) {
+      throw notFound("关联的简历不存在");
+    }
+  }
+
   const created = await prisma.application.create({
     data: {
+      userId: user.id,
       companyName: input.companyName,
       departmentName: input.departmentName ?? "",
       roleName: input.roleName,
