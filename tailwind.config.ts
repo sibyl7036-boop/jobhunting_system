@@ -2,10 +2,12 @@ import type { Config } from "tailwindcss";
 import tailwindcssAnimate from "tailwindcss-animate";
 
 /**
- * Tailwind 3 主题配置（严格按 UI.md 第 4 ~ 5 章原值）
- *
- * 色值 / 字号 / 间距 / 圆角 / 行高的真相源：/Users/sibyl/Desktop/system/UI.md
- * 本文件不做任何美学发挥，只负责把 UI.md 的原值翻译成 Tailwind 可识别的 token。
+ * Tailwind Theme · Macaron Minimal
+ * 设计原则：
+ *  - 低饱和奶油色系（cream / peach / butter / sky / blush / sage）
+ *  - 细描边 + 轻投影（没有重描边、没有浓阴影）
+ *  - 大圆角 20-24px，pill 999px
+ *  - 动效克制（0.2-0.5s，缓入缓出）
  */
 const config: Config = {
   darkMode: "class",
@@ -17,90 +19,166 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // ── UI.md 4.1 页面背景色组 ──
-        "app-bg": "#FFF7FB",
-        "app-bg-secondary": "#FFFDF7",
+        // ── Page backgrounds ──
+        "app-bg": "#FDF6EF",
         "surface-bg": "#FFFFFF",
-        "soft-panel": "#FFF1F7",
-        "warm-panel": "#FFF8E8",
-        "cool-panel": "#F8F5FF",
 
-        // ── UI.md 4.2 主色组 ──
-        primary: "#F3AFCB",
-        "primary-hover": "#EA9CBE",
-        "primary-strong": "#DD85AE",
+        // ── Cream / Peach 奶油桃 ──
+        cream: {
+          50: "#FDF6EF",
+          100: "#FBEBDE",
+          200: "#F5D9C0",
+          300: "#EABF9B",
+          400: "#E0A678",
+          500: "#D58B58",
+        },
 
-        // ── UI.md 4.3 辅助色组 ──
-        "secondary-pink": "#FFD8E8",
-        "secondary-yellow": "#FFF0B8",
-        "secondary-lilac": "#E9D8FF",
-        "secondary-peach": "#FFE2D6",
-        "secondary-mint": "#DDF5E8",
+        // ── Blush / Rose 淡玫瑰 ──
+        blush: {
+          50: "#FDF2F2",
+          100: "#FAE6EA",
+          200: "#F3CED6",
+          300: "#E9B1BF",
+          400: "#DC8C9E",
+          500: "#C86D85",
+        },
 
-        // ── UI.md 4.4 文本色组 ──
-        "text-primary": "#47384A",
-        "text-secondary": "#6F6172",
-        "text-tertiary": "#9B8F9D",
+        // ── Butter / Honey 奶油黄 ──
+        butter: {
+          50: "#FDFBEE",
+          100: "#FBF4D4",
+          200: "#F6E7A4",
+          300: "#EDD26E",
+          400: "#E0BB45",
+        },
+
+        // ── Sky / Mist 雾蓝 ──
+        sky: {
+          50: "#F3F7FA",
+          100: "#E6EEF7",
+          200: "#CFDFEC",
+          300: "#B1C8DE",
+          400: "#8FAECB",
+        },
+
+        // ── Sage / Matcha 抹茶绿 ──
+        sage: {
+          50: "#F3F7F1",
+          100: "#E8EFE3",
+          200: "#CFDCC7",
+          300: "#B0C3A3",
+          400: "#8FA783",
+        },
+
+        // ── Lilac 淡紫（低饱和版） ──
+        lilac: {
+          50: "#F7F4FB",
+          100: "#EDE7F5",
+          200: "#D9CEE8",
+          300: "#BEAED3",
+          400: "#9F8BBD",
+        },
+
+        // ── 兼容旧字段（保留但低饱和化） ──
+        primary: "#E9B1BF",
+        "primary-hover": "#DC8C9E",
+        "primary-strong": "#C86D85",
+        "primary-deep": "#B05871",
+
+        "secondary-pink": "#FAE6EA",
+        "secondary-yellow": "#FBF4D4",
+        "secondary-lilac": "#EDE7F5",
+        "secondary-peach": "#FBEBDE",
+        "secondary-mint": "#E8EFE3",
+        "secondary-sky": "#E6EEF7",
+        "secondary-lavender": "#F7F4FB",
+
+        // ── Text ──
+        "text-primary": "#5B4A4A",
+        "text-secondary": "#8A7972",
+        "text-tertiary": "#B4A79E",
         "text-on-primary": "#FFFFFF",
 
-        // ── UI.md 4.5 边框色 ──
-        "border-light": "#F3E4EC",
-        "border-strong": "#E8D4DE",
+        // ── Borders ──
+        "border-light": "#F1E8E0",
+        "border-strong": "#E8D7C8",
 
-        // ── UI.md 4.6 状态色 ──
-        success: "#8ECFAF",
-        warning: "#F3C96B",
-        danger: "#E58CA4",
-        info: "#A8BDF3",
-        neutral: "#DDD6E3",
+        // ── Status (muted 版) ──
+        success: "#8FA783",
+        warning: "#E0BB45",
+        danger: "#DC8C9E",
+        info: "#8FAECB",
+        neutral: "#D9CEE8",
       },
+
       boxShadow: {
-        // ── UI.md 4.5 阴影 ──
-        soft: "0 8px 24px rgba(214, 164, 187, 0.10)",
-        hover: "0 12px 30px rgba(214, 164, 187, 0.16)",
+        soft: "0 1px 2px rgba(199,165,149,0.04), 0 8px 24px rgba(199,165,149,0.06)",
+        hover:
+          "0 2px 6px rgba(199,165,149,0.06), 0 14px 32px rgba(199,165,149,0.1)",
+        pill: "0 1px 2px rgba(199,165,149,0.05), 0 2px 6px rgba(199,165,149,0.08)",
       },
+
       borderRadius: {
-        // ── UI.md 5.4 圆角规范 ──
-        "card-lg": "24px", // 大卡片
-        "card-md": "20px", // 中小卡片
-        "btn-sm": "14px", // 按钮偏小
-        "btn-lg": "18px", // 按钮偏大
-        pill: "999px", // 胶囊
+        "card-lg": "24px",
+        "card-md": "20px",
+        "card-sm": "16px",
+        "btn-sm": "12px",
+        "btn-lg": "16px",
+        pill: "999px",
       },
+
       fontFamily: {
-        // ── UI.md 5.1 字体 ──
         sans: [
           "PingFang SC",
           "Microsoft YaHei",
           "Noto Sans SC",
           "system-ui",
+          "-apple-system",
+          "Helvetica Neue",
           "sans-serif",
         ],
       },
+
       fontSize: {
-        // ── UI.md 5.2 字号层级 ──
-        "page-title": ["28px", { lineHeight: "1.4", fontWeight: "700" }],
-        "section-title": ["18px", { lineHeight: "1.5", fontWeight: "700" }],
-        "card-title": ["16px", { lineHeight: "1.5", fontWeight: "600" }],
-        body: ["14px", { lineHeight: "1.5", fontWeight: "500" }],
+        "page-title": ["38px", { lineHeight: "1.2", fontWeight: "700", letterSpacing: "-0.01em" }],
+        "section-title": ["20px", { lineHeight: "1.4", fontWeight: "600" }],
+        "card-title": ["15px", { lineHeight: "1.5", fontWeight: "600" }],
+        body: ["14px", { lineHeight: "1.6", fontWeight: "400" }],
         caption: ["12px", { lineHeight: "1.5", fontWeight: "500" }],
       },
+
+      backgroundImage: {
+        "gradient-cream":
+          "linear-gradient(110deg, #FAE6EA 0%, #FCEFE2 30%, #FDF6DB 60%, #E6EEF7 100%)",
+        "gradient-peach":
+          "linear-gradient(135deg, #FBEBDE 0%, #FBF4D4 100%)",
+        "gradient-blush":
+          "linear-gradient(135deg, #FAE6EA 0%, #FBEBDE 100%)",
+        "gradient-sky":
+          "linear-gradient(135deg, #E6EEF7 0%, #F3F7FA 100%)",
+        "gradient-sage":
+          "linear-gradient(135deg, #E8EFE3 0%, #F3F7F1 100%)",
+      },
+
       keyframes: {
-        // ── UI.md 8.4 小猫呼吸 ──
-        "cat-breathe": {
-          "0%, 100%": { transform: "scale(1)" },
-          "50%": { transform: "scale(1.03)" },
+        "fade-in-up": {
+          "0%": { opacity: "0", transform: "translateY(6px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
         },
-        // ── UI.md 13.4 AI 处理中轻微左右晃动 ──
-        "cat-wobble": {
-          "0%, 100%": { transform: "translateX(0) rotate(0deg)" },
-          "25%": { transform: "translateX(-1.5px) rotate(-2deg)" },
-          "75%": { transform: "translateX(1.5px) rotate(2deg)" },
+        "fade-in": {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
+        "soft-drift": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-4px)" },
         },
       },
+
       animation: {
-        "cat-breathe": "cat-breathe 2.4s ease-in-out infinite",
-        "cat-wobble": "cat-wobble 0.6s ease-in-out infinite",
+        "fade-in-up": "fade-in-up 0.55s cubic-bezier(0.22,0.61,0.36,1)",
+        "fade-in": "fade-in 0.6s ease-out",
+        "soft-drift": "soft-drift 4s ease-in-out infinite",
       },
     },
   },

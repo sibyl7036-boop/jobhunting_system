@@ -2,22 +2,237 @@
 @tailwind components;
 @tailwind utilities;
 
-/**
- * 全局基线（Step 0.2 · UI.md 第 4 / 5 章原值）
- * body 背景 / 文字色 / 字体 / 行高统一在这里设，后续组件尽量用 Tailwind 语义令牌。
- */
+/* ==========================================================================
+ * Global Baseline · Macaron Minimal
+ * 设计哲学：大量留白、极低饱和度、柔和水平渐变、细描边小圆角卡片
+ * 灵感：cream / peach / butter / baby blue 的奶油马卡龙色谱
+ * ========================================================================== */
+
 html,
 body {
   height: 100%;
 }
 
 body {
-  background-color: #fff7fb; /* UI.md 4.1 app-bg */
-  color: #47384a; /* UI.md 4.4 text-primary */
+  color: #5b4a4a;
   font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui,
-    sans-serif;
-  font-size: 14px; /* UI.md 5.2 正文基准 */
-  line-height: 1.5; /* UI.md 5.3 */
+    -apple-system, "Helvetica Neue", sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* 横向三段渐变：左 blush → 中 cream/butter → 右 sky
+   * 参考图的核心氛围就是这条柔和的色带 */
+  background-color: #fdf6ef;
+  background-image: linear-gradient(
+    110deg,
+    #fae6ea 0%,
+    #fcefe2 28%,
+    #fdf6db 55%,
+    #eef4ea 78%,
+    #e6eef7 100%
+  );
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+/* ==========================================================================
+ * Decorative Stars (very subtle · 参考图里的白色小星星)
+ * 仅作为背景装饰，透明度极低，关屏动效
+ * ========================================================================== */
+.bg-stars {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    /* 大星 */
+    radial-gradient(
+      circle at 6% 22%,
+      rgba(255, 255, 255, 0) 6px,
+      transparent 7px
+    ),
+    radial-gradient(
+      circle at 94% 30%,
+      rgba(255, 255, 255, 0) 5px,
+      transparent 6px
+    );
+  /* 真正的星星用 SVG 背景 */
+  background-repeat: no-repeat;
+}
+
+/* ==========================================================================
+ * Minimal Animations
+ * ========================================================================== */
+
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes soft-drift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.55s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out both;
+}
+.animate-soft-drift {
+  animation: soft-drift 4s ease-in-out infinite;
+}
+.animate-twinkle {
+  animation: twinkle 3s ease-in-out infinite;
+}
+
+/* ==========================================================================
+ * Typography Gradient · 低饱和奶油金（参考图的 "Know about Qiuqiu"）
+ * 不流动、不闪烁、只给标题一个温柔的横向渐变
+ * ========================================================================== */
+.text-gradient-cream {
+  background: linear-gradient(
+    90deg,
+    #e9a38a 0%,
+    #e3b474 45%,
+    #d8a766 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-blush {
+  background: linear-gradient(
+    90deg,
+    #d8879a 0%,
+    #e3a98e 55%,
+    #d8a766 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ==========================================================================
+ * Surface (所有卡片统一用这套)
+ * 白底、极细描边、很轻的投影
+ * ========================================================================== */
+.surface {
+  background: #ffffff;
+  border: 1px solid #f1e8e0;
+  border-radius: 20px;
+  box-shadow: 0 1px 2px rgba(199, 165, 149, 0.04),
+    0 8px 24px rgba(199, 165, 149, 0.06);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+.surface:hover {
+  box-shadow: 0 2px 6px rgba(199, 165, 149, 0.06),
+    0 14px 32px rgba(199, 165, 149, 0.1);
+  transform: translateY(-2px);
+}
+
+.surface-flat {
+  background: #ffffff;
+  border: 1px solid #f1e8e0;
+  border-radius: 20px;
+}
+
+/* Pill 通用样式：参考图里 Experiences / AI Product / Data Insight 等 */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(233, 220, 210, 0.8);
+  backdrop-filter: blur(8px);
+  color: #6b574f;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+.pill:hover {
+  background: #ffffff;
+  border-color: #e8d7c8;
+}
+
+/* ==========================================================================
+ * Scrollbar · 低饱和米色
+ * ========================================================================== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #e8d7c8;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #d9c3b1;
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+
+/* ==========================================================================
+ * Selection
+ * ========================================================================== */
+::selection {
+  background: rgba(232, 175, 145, 0.3);
+  color: #5b4a4a;
+}
+
+/* 主内容区高于背景装饰 */
+main {
+  position: relative;
+  z-index: 1;
+}
+aside {
+  z-index: 30;
+}
+
+/* Focus 状态统一，去掉默认蓝色 outline，改用温暖的奶油色 */
+*:focus-visible {
+  outline: 2px solid #e9b99a;
+  outline-offset: 2px;
+  border-radius: 8px;
 }

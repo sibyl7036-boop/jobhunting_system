@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import "./globals.css";
 
-import { Sidebar } from "@/components/layout/Sidebar";
-import { Header } from "@/components/layout/Header";
+import { AppShell } from "@/components/layout/AppShell";
 import { DetailDrawer } from "@/components/drawer/DetailDrawer";
 import { Toaster } from "sonner";
 
@@ -20,6 +19,9 @@ export const metadata: Metadata = {
  * - 主内容区（最大宽度 1440~1600px，左右 padding 32px，UI.md 5.3 / 15.1）
  * - 全局 DetailDrawer（Phase 4.1）：由 URL search param 驱动，三个页面共用
  * - 全局 Toaster（sonner）：保存成功 / 失败 / 删除成功等提示
+ *
+ * [2026-04-25 auth-v1] Sidebar/Header 抽到 AppShell 中按 pathname 条件渲染：
+ *   /login 等全屏页不渲染，其他业务页正常渲染
  */
 export default function RootLayout({
   children,
@@ -29,13 +31,7 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body className="antialiased">
-        <Sidebar />
-        <div className="ml-[112px] pr-8">
-          <main className="mx-auto max-w-[1600px] min-h-screen px-8">
-            <Header />
-            {children}
-          </main>
-        </div>
+        <AppShell>{children}</AppShell>
         {/* Drawer 依赖 useSearchParams，必须放 Suspense 边界 */}
         <Suspense fallback={null}>
           <DetailDrawer />
@@ -44,9 +40,9 @@ export default function RootLayout({
           position="top-center"
           toastOptions={{
             style: {
-              borderRadius: 18,
-              border: "1px solid #F3E4EC",
-              boxShadow: "0 8px 24px rgba(214,164,187,0.10)",
+              borderRadius: 14,
+              border: "1px solid #f1e8e0",
+              boxShadow: "0 8px 24px rgba(199,165,149,0.1)",
             },
           }}
           richColors
