@@ -56,7 +56,29 @@ export async function fetchJson<T>(
 
   // 204 之类无 body 的响应
   const text = await res.text();
-  const body = text ? (JSON.parse(text) as unknown) : null;
+
+  // 健壮 JSON 解析：服务端返非 JSON（如 Next.js 404/500 HTML 页、代理层 HTML）
+  // 时不应再直接 JSON.parse，否则前端会看到 "Unexpected token '<'" 难以定位的错误。
+  let body: unknown = null;
+  if (text) {
+    try {
+      body = JSON.parse(text) as unknown;
+    } catch {
+      // 非 JSON 响应：根据状态码给出明确错误
+      if (!res.ok) {
+        throw new FetchError(
+          res.status,
+          res.status === 404 ? "NOT_FOUND" : "UNKNOWN_ERROR",
+          res.status === 404
+            ? "接口不存在（HTTP 404）"
+            : `请求失败（HTTP ${res.status}）`,
+          text.slice(0, 200) // 保留前 200 字符便于调试
+        );
+      }
+      // 2xx 但响应体不是 JSON：极少见，兜底当 null
+      body = null;
+    }
+  }
 
   if (!res.ok) {
     const env = body as Partial<ApiErrorEnvelope> | null;

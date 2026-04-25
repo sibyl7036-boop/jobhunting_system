@@ -2,7 +2,11 @@
 
 一个面向求职季大学生的 **求职流程管理看板** 系统。浅色马卡龙粉风格，单人本地使用，用 **Vibe Coding** 方式一人闭环交付。
 
-**技术栈**：Next.js 15 (App Router) · TypeScript · SQLite + Prisma · shadcn/ui + Tailwind · 火山方舟豆包 API（实际底座 DeepSeek 3.2）
+🌐 **在线演示**：**https://system-pi-three.vercel.app**（Next.js 15 + Neon Postgres + 豆包 AI）
+- 演示环境不支持简历上传（避免云端存储复杂度），其他功能完整
+- 第一次访问慢 10~15 秒（Vercel + Neon 免费档双冷启动），之后亚秒级
+
+**技术栈**：Next.js 15 (App Router) · TypeScript · Postgres（生产）/ SQLite（本地可选）+ Prisma · shadcn/ui + Tailwind · 火山方舟豆包 API（实际底座 DeepSeek 3.2）
 
 ---
 

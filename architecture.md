@@ -15,7 +15,7 @@
 
 ## 🗺️ 目录树（当前真实状态）
 
-> 当前仓库处于"**v1.0 验收完成 ✅🎉**"——39/39 Step 全绿 · PRD 第 13 章 6 闭环 E2E 31 断言全通 · `pnpm lint/typecheck/build` 均 0 警告 · README 就绪 · 18 个 API + 5 个 AI 能力 + 3 页 + 全局 Drawer 全部到位。下一步由用户自行决定是否上生产或继续迭代。
+> 当前仓库处于"**v2.0-maintenance-r1（2026-04-25）**"——在 v1.0 公网 demo 基础上完成第一波维护期大迭代：多用户登录与数据隔离 · 首页 v2 布局（AI 聊天前置 + 便签 Todo + 迷你简历） · Stage 子 Tab（面试题/复盘/随手记） · Companies 自管理 · 新手引导。`pnpm lint/typecheck/build` 均 0 警告 · Neon Postgres（Singapore pooled）+ 原有 Vercel 基线不变。**Demo: https://system-pi-three.vercel.app**
 
 ```
 /Users/sibyl/Desktop/system/
@@ -26,6 +26,7 @@
 ├── progress.md                      ← 已有 · 进度真相（逐步勾选清单）
 ├── architecture.md                  ← 已有 · 文件地图（本文件）
 ├── CODEBUDDY.md                     ← 已有 · AI Agent 入口（首读）
+├── CHANGELOG.md                     ← 已有 · v1.0 后维护期动作流水（做了什么 / 为什么 / 验证 / 踩坑）
 ├── .env                             ← 已有 · Prisma CLI 专用（DATABASE_URL="file:./dev.db"）；不进 git
 ├── .env.local                       ← 已有 · Next.js runtime（DATABASE_URL="file:./dev.db" + DOUBAO_*）；不进 git
 ├── .gitignore                       ← 已有 · 保护 node_modules / .next / .env* / dev.db / uploads / .workbuddy 等
@@ -53,10 +54,11 @@
 │
 │ ── Phase 1 产物（6 个 model + 种子 + zod） ──
 ├── prisma/
-│   ├── schema.prisma                ← 6 个 model（Resume / Application（含 interviewQuestions）/ Stage / AIRun / IntelSummary / TomorrowTipCache）
+│   ├── schema.prisma                ← 6 个 model（Resume / Application（含 interviewQuestions）/ Stage / AIRun / IntelSummary / TomorrowTipCache）· provider=postgresql（2026-04-19 起）
 │   ├── seed.ts                      ← 幂等种子：10 家大厂占位
-│   ├── migrations/20260418121855_init/  ← 首次迁移（6 表 + 索引）
-│   └── dev.db                       ← SQLite 文件（gitignore）
+│   ├── migrations/20260419021839_init_postgres/  ← 现行 Postgres 初始迁移（6 表 + 索引）
+│   ├── _sqlite_archive/             ← 归档：旧 SQLite 迁移（20260418121855_init + migration_lock.toml），历史参照用
+│   └── dev.db                       ← SQLite 本地遗留文件（gitignore），回退 SQLite 时用
 ├── lib/schemas/
 │   ├── enums.ts                     ← 6 组中文枚举 + zod enum
 │   ├── entities.ts                  ← 6 实体 schema + Create/Update 派生 + z.infer 类型
@@ -189,6 +191,54 @@
 
 （Phase 7 已完成，无新增计划项）
 
+│ ── v2.0 维护期产物（2026-04-25 · 鉴权 + 多用户 + UI 重排 + Stage 子 Tab + Companies 自管理 + 便签 Todo + 新手引导） ──
+├── middleware.ts                    ← 新增 · Edge 运行时 JWT 验签 + 未登录跳 /login（详见契约点 27）
+├── lib/auth.ts                      ← 新增 · bcryptjs + jose + Cookie Session + getCurrentUser/requireCurrentUser（契约点 27）
+├── app/login/page.tsx               ← 新增 · 登录/注册页（左侧 4 能力卡 + 右侧 Tab 切换表单）
+├── components/auth/LoginForm.tsx    ← 新增 · 登录/注册表单（邮箱 + 密码 + 昵称 · 马卡龙配色）
+├── app/api/auth/
+│   ├── login/route.ts               ← 新增 · POST · 校验密码 + 签发 Session Cookie
+│   ├── register/route.ts            ← 新增 · POST · 昵称 + 邮箱 + 密码（bcrypt 存 hash）
+│   ├── logout/route.ts              ← 新增 · POST · 清 Cookie
+│   └── me/route.ts                  ← 新增 · GET · 返当前登录用户（Header/组件内同步用）
+├── app/api/weekly-todos/
+│   ├── route.ts                     ← 新增 · GET ?weekStart=YYYY-MM-DD / POST
+│   └── [id]/route.ts                ← 新增 · PATCH / DELETE
+├── app/api/companies/
+│   ├── route.ts                     ← 新增 · GET 用户自定义公司列表 / POST 新增（唯一键 userId+name）
+│   └── [id]/route.ts                ← 新增 · DELETE 自定义公司
+├── app/api/ai/chat/route.ts         ← 新增 · 通用对话流（可叠加 parse-email / parse-jd / 面试题 / 复盘 的 context）
+├── components/layout/AppShell.tsx   ← 新增 · 按 pathname 条件渲染 Shell（/login 走全屏裸渲染）
+├── components/layout/Sidebar.tsx    ← 重写 · 76px 窄 + 胶囊 + 花朵 Logo + 底部新手引导按钮
+├── components/layout/Header.tsx     ← 重写 · 去 EN 切换；昵称首字母头像 + 下拉菜单（登出）
+├── components/onboarding/OnboardingDialog.tsx  ← 新增 · 多步向导；首访自动弹 + Sidebar 左下按钮随时唤出
+├── components/widgets/StickyTodoPanel.tsx      ← 新增 · 便签式周 Todo；variant: "card"（首页右栏内嵌） / "bookmark"（日历右侧书签）
+├── components/dashboard/
+│   ├── AIChatPanel.tsx              ← 新增 · 首页 AI 主入口；紧凑卡 + 展开全屏弹窗两形态（契约点 29）
+│   ├── AIWorkstation.tsx            ← 新增 · AI 解析工作区；挂在 AIChatPanel 弹窗内
+│   ├── MiniResumePanel.tsx          ← 新增 · 简历迷你卡（v2 右栏用）
+│   ├── MiniStatsColumn.tsx          ← 新增 · 右栏 3 格统计（今日/明日/近 7 天） · 已去 "Passed" 维度
+│   ├── QuickAddFab.tsx              ← 新增 · 全局浮动新增按钮（右下角）
+│   ├── QuickStats.tsx               ← 新增 · 统计组件（备用）
+│   └── TodayTimeline.tsx            ← 新增 · 今日时间轴（备用，页面未引用；保留作组件库件）
+├── components/drawer/tabs/
+│   ├── InterviewQuestionsTab.tsx    ← 新增 · Stage 面试题子 Tab（手工 + 批量粘贴 · 契约点 28）
+│   ├── PersonalNotesTab.tsx        ← 新增 · Stage 随手记子 Tab（契约点 28）
+│   └── ReviewTab.tsx                ← 新增 · Stage 复盘子 Tab（含 reviewTranscript 原始转录 · 契约点 28）
+├── components/drawer/StageDrawerContent.tsx    ← 升级 · 集成三个子 Tab 切换
+├── components/companies/
+│   ├── CustomCompanyManager.tsx     ← 新增 · 自定义公司管理（契约点 30）
+│   ├── hiddenPresetStore.ts         ← 新增 · localStorage 存"已隐藏的预置公司"（契约点 30）
+│   └── CompanyRow.tsx               ← 升级 · 行可点击创建申请 + 每公司可删（预置走 hiddenPresetStore；自定义走 API）
+├── prisma/schema.prisma             ← 升级 · 新增 User / CustomCompany / WeeklyTodo；6 张业务表全部加 userId 外键 + onDelete Cascade
+│
+│ ── v1.0 遗留物清理（2026-04-25 一并处理） ──
+│   - 删：.next_old/                  ← 旧 Next 构建缓存整目录
+│   - 删：prisma/_sqlite_archive/      ← 已空的 SQLite 迁移归档
+│   - 删：prisma/migrations/20260419021839_init_postgres/  ← 空目录（迁移改走 db push）
+│   - 删：app/api/_test-throw/ + app/api/test-throw/       ← 调试残留空目录
+│   - 留：prisma/migrations/20260418121855_init/           ← SQL 是 SQLite 方言但 lock.toml 指 postgres；物理删会打破 Prisma 元数据，留作历史参照
+
 └── node_modules/                    ← 已有 · pnpm 安装产物（不进 git）
 ```
 
@@ -203,11 +253,12 @@
 | `job_hunt_flow_board_prd.md` | **产品真相**。数据模型、API 契约、页面规格、AI 提示词原文、6 个验收闭环。 | 所有人 |
 | `UI.md` | **视觉真相**。浅色马卡龙色系、布局、组件、交互动效。 | 所有人 |
 | `tech_stack.md` | **落地真相**。Next.js + SQLite + Prisma + shadcn/ui + 豆包。含禁用方案清单。 | AI Agent |
-| `implementation_plan.md` | **步骤真相**。7 Phase / 39 Step 指令手册，每步含验证清单，严禁代码。 | AI Agent |
-| `progress.md` | **进度真相**。逐步勾选清单，配合 implementation_plan 使用。 | AI Agent |
-| `architecture.md` | **文件地图**（本文件）。每个文件/文件夹的作用。 | AI Agent |
-| `CODEBUDDY.md` | **入口**。AI Agent 进入仓库第一读物，含强制阅读门禁。 | AI Agent |
-| `README.md` | 仓库门面，人类读者看（Phase 7.4 才产出）。 | 人类 |
+| `implementation_plan.md` | **步骤真相**（v1.0 历史快照）。7 Phase / 39 Step 指令手册，每步含验证清单。维护期不修改。 | AI Agent |
+| `progress.md` | **进度真相**（v1.0 历史快照）。逐步勾选清单，39/39 已完成。维护期不修改。 | AI Agent |
+| `architecture.md` | **文件地图 + 关键契约点**（本文件）。每个文件/文件夹的作用 + 所有架构决策。 | AI Agent |
+| `CHANGELOG.md` | **改过啥**。v1.0 后维护期每次改动的动作流水（做了什么 / 为什么 / 验证 / 踩坑）。 | AI Agent |
+| `CODEBUDDY.md` | **入口**。AI Agent 进入仓库第一读物，含两种模式门禁 + 14 条工作守则。 | AI Agent |
+| `README.md` | 仓库门面，人类读者看（Phase 7.4 产出）。 | 人类 |
 
 ### B. 配置层
 
@@ -283,6 +334,14 @@
 20. **明日提醒缓存方案（2026-04-19 Step 6.6 决策）** → 复用 Phase 1.1 已建的 `TomorrowTipCache` 表（`date @unique` + `tipText` + `eventsHash` + ...），**按"事件集合 SHA-256"被动失效**，而非主动清理。`eventsHash = sha256(JSON.stringify(明天 Stage[].map({id,time,type,status}).sortById))`；查 TomorrowTipCache(date=明天) + hash 一致 → 直接返；hash 不一致 / 未命中 → 调 AI + upsert；明天事件为空 → 返 UI.md 空态原文 "明天暂无流程安排，可以安心休息一下。"（不调 AI）。好处：任何手动/AI CRUD 改明天 Stage 都自动让 hash 不匹配，无需手动清缓存。前端 RefreshCw 按钮走 `POST /api/ai/tomorrow-tip/refresh`（先 delete 缓存，再调 `getTomorrowTip({force:true})`）。
 21. **AI 调用 4 种错误分类（2026-04-19 Step 6.1 决策）** → `lib/llmClient.ts` 的 `AIError.code` 枚举：`AI_CONFIG_MISSING`（env 三件套缺）/ `AI_CALL_TIMEOUT`（30s）/ `AI_CALL_FAILED`（网络/HTTP 4xx-5xx/响应体异常）/ `AI_PARSE_FAILED`（expectJson=true 时 JSON.parse 失败）。所有 AI route 的 handler 在 catch 时把 `AIError` 包成 502 `INTERNAL_ERROR` 返前端，并在 `details.code` 里带上细分 code；`AIRun.errorMessage` 也用 `"<code>: <msg>"` 前缀，便于 Prisma Studio 里肉眼分类。日志脱敏：catch 时 `console.error` 只打 taskType + code，禁止打 Authorization / key / 完整 url。
 22. **AI 草稿态前端流程（2026-04-19 Step 6.3 决策）** → PRD 3.2 硬性规则：AI 解析结果 **不写业务表**（只写 AIRun 日志），由前端收下作为 "草稿" 再由用户确认后走 PATCH/POST 入库。具体 4 条：(a) 解析邮件 → sessionStorage 暂存 → 打开 `application-new` Drawer 自动预填所有字段 → 保存时一次性建 Application + 首个 Stage；(b) 解析 JD → 选 Application → 内联展示 → 点"采纳保存" PATCH /api/applications/:id 写 jdText/jdSummary/jdKeywords/expectedSkills；(c) 生成面试题 → 选 Application → 点采纳 PATCH 写 `Application.interviewQuestions`（共享题库，同 Application 所有 Stage 共用）；(d) 生成复盘 → 选 Stage → 点采纳 PATCH 写 Stage 的 review 三字段。
+23. **维护期工作流（2026-04-19 v1.0 交付后决策）** → v1.0 交付后进入"维护期"，工作模式与建设期不同：①进门先读 `CODEBUDDY.md` + `architecture.md`（本文件） + `CHANGELOG.md` 最近 3 条 + `MEMORY.md`，**不再读** `implementation_plan.md` / `progress.md`（v1.0 历史快照）；②任何改动都先发"自检单"（影响范围 / 数据模型 / 契约冲突 / 验证方法）给用户点头；③建独立分支（`tweak/*` / `feat/*` / `deploy/*` / `refactor/*` / `fix/*`）；④关键改动加 inline 注释格式 `// [YYYY-MM-DD <branch>] <原因>`；⑤完工后必做 5 件事：三件套 0 警告、追加 `CHANGELOG.md` 条目（4 问题格式）、更新本文件目录树（若动了文件）、追加新契约点（若有新决策）、`<type>-<描述>-<yyyymmdd>` 命名 tag + push。Commit message 里附 CHANGELOG 条目日期 + 本文件契约点编号作为交叉引用。
+24. **部署环境上传路由降级（2026-04-19 feat-upload-demo-fallback 决策）** → 用户选择部署 demo 到 Vercel 时不做 PDF 存储改造（省 1 小时）。由于 Vercel Serverless 容器没有持久化文件系统，`app/api/resumes/upload/route.ts` 在函数入口处做环境探测：`process.env.VERCEL === "1"` 时直接 `throw new ApiError("FEATURE_UNAVAILABLE_IN_DEMO", "演示环境暂不支持简历上传，本地运行可体验完整功能", 503)`，不进入写盘流程。前端 `UploadResumeDialog.tsx` 无需改动——原有 catch 会把后端 error.message 直接 toast 给用户，降级文案体验友好。其他简历功能（GET 列表 / 预览 / 删除）在空 DB 下都自然走空态，不报错。未来若真要支持云端上传，改回去的路径是：移除这 5 行 early return + 装 `@vercel/blob` + 改 upload/file/delete 三个 route 走 Blob API，预计 60 分钟。为什么用 `process.env.VERCEL` 而不是自定义环境变量：这是 Vercel 平台自动注入的变量（Vercel 官方保证存在且值为 `"1"`），不用额外配置。
+25. **数据库从 SQLite 迁到 Neon Postgres（2026-04-19 deploy-neon-postgres 决策）** → 为支持 Vercel Serverless 部署（容器无持久化文件系统），datasource provider 从 `sqlite` 改为 `postgresql`。本地开发和生产 Vercel 都连**同一个 Neon 实例**（Singapore pooled 连接），demo 项目无多环境隔离需求。迁移策略：①旧 SQLite 迁移归档到 `prisma/_sqlite_archive/` 不删（历史参照）；②新 Postgres 迁移由 `prisma migrate dev --name init_postgres` 重新生成，落在 `prisma/migrations/20260419021839_init_postgres/`；③`prisma/dev.db` 保留在本地（gitignore，需要回退时改 `DATABASE_URL="file:./dev.db"` 即可恢复）；④`package.json` 的 `build` 脚本前缀加 `prisma generate && prisma migrate deploy &&`，保证 Vercel 每次部署自动同步 Prisma Client + 幂等应用迁移。连接串必须用 Neon 的 **pooled** 版本（主机名带 `-pooler`），否则 Serverless 并发会爆连接数。Neon 免费版闲置 5 分钟会休眠，下次访问唤醒需 5~10 秒——不是 bug 是免费档特性。schema 6 个 model 字段类型全是 Prisma 通用类型（String / Int / DateTime / Boolean），SQLite 和 Postgres 都原生兼容，**零业务代码改动**。`Application.jdKeywords / expectedSkills / interviewQuestions / AIRun.outputJson` 继续沿用"存 JSON 字符串"的约定（契约点 11），Postgres 虽支持原生数组/JSONB 但保持既有约定零迁移成本。
+26. **用户数据强制隔离（2026-04-25 auth-v1 决策）** → 所有业务实体（`Resume` / `Application` / `Stage` 间接 / `IntelSummary` / `TomorrowTipCache` / `AIRun` / `CustomCompany` / `WeeklyTodo`）**必须**通过 `userId` 外键绑到 `User`，`onDelete: Cascade`。`Stage` 本身不直接存 `userId`，通过 `Application.userId` 间接归属，查询时 `include: { application: true }` 后校验。实现硬规则：①所有 `lib/queries/*.ts` 函数**第一个参数必须是 `userId: string`**，内部 `where: { userId, ... }`；②所有 `app/api/**/route.ts` handler 开头调 `const user = await requireCurrentUser();`，拿到 `user.id` 作过滤条件；③前端永远不传 `userId`——由服务端从 Cookie Session 解出；④`IntelSummary` / `TomorrowTipCache` 的唯一键升级为 `@@unique([userId, date])`，每个用户每天一份独立缓存；⑤`CustomCompany` 的唯一键是 `@@unique([userId, name])`。校验方式：用第二个账号登录，必须看不到第一个账号的任何数据（包括 AIRun 日志）。
+27. **鉴权栈：Cookie Session + Edge middleware + 白名单（2026-04-25 auth-v1 决策）** → 技术选型：`bcryptjs`（密码 hash）+ `jose`（JWT 签发/验签，**Edge 兼容**）+ `cookies()` API（Next 15 async）。**不引入** NextAuth / Auth.js / iron-session（避免额外 provider 层与配置负担）。实现硬规则：①密码 hash 盐轮 10；②JWT 算法 HS256，`AUTH_SECRET` 不小于 32 字节（环境变量注入，dev 有硬编码兜底字符串）；③Cookie 名 `jhb_session`，`httpOnly / sameSite=lax / secure(prod) / maxAge=7d`；④Session payload 只含 `{ sub: userId, nickname, email }`，不含敏感字段；⑤`middleware.ts` 必须只用 jose 验签（Edge 跑不了 bcryptjs 的 Node 原生库）；⑥白名单路径前缀：`/login` / `/api/auth/` / `/_next/` / `/favicon`；⑦未登录业务页 → 302 `/login?redirect=<原路径>`；⑧未登录 API → 401 JSON（结构与 `ApiError` 一致：`{ error: { code: "UNAUTHORIZED", message } }`）；⑨已登录访问 `/login` → 302 `/dashboard`。未来若要扩展第三方登录（GitHub / Google 等），新建 `/api/auth/oauth/[provider]/route.ts`，签发同一 Cookie 即可复用 middleware。
+28. **Stage 子信息三件套（2026-04-25 stage-tabs-v1 决策）** → `Stage` 在 v1 仅有"时间 / 状态 / 链接 / 复盘三字段"（questionSummary/answerSummary/suggestion），v2 扩展 3 个字段承载 AI 产物 + 用户随手记：①`interviewQuestions: String?` — JSON 字符串化的 `string[]`，与 `Application.interviewQuestions`（岗位共享题库）并存，此字段是"**本场面试实际问到的题**"，AI 生成的默认题库由前端从 Application 拉取后可导入 Stage；②`personalNotes: String?` — 用户自由文字（markdown 友好，但前端按纯文本渲染），放这场面试的临场感受 / 收到的反馈 / 自己的启发；③`reviewTranscript: String?` — 面试原始转录文本，供二次调用复盘 AI 重新解析用（可选，复盘完成后用户可清空）。前端承载：`components/drawer/tabs/` 目录下三个 Tab 组件，`StageDrawerContent.tsx` 顶部用 Tab 切换器。读写继续走 `/api/stages/[id]` PATCH（单次提交可部分更新）。**不**新增 API route，不新增 zod schema 文件（entities.ts 里追加字段即可）。
+29. **AI 聊天面板为首页核心入口（2026-04-25 ai-chat-v1 决策）** → v1 的 `AICopilot` 是"4 按钮 + 草稿预览卡"形态，v2 升级为**对话流 + 能力挂载**两种形态并存：①主视图 `AIChatPanel` 作为首页左栏（`EventTable` 下方）的紧凑对话卡，用户可直接自然语言提问（"帮我优化 xx 岗位的简历投递策略"等）；②顶部有"展开"按钮，点后打开全屏 `Dialog` 承载完整 `AIChatPanel`（`variant="modal"`），左侧能力 chips（邮件解析 / JD 解析 / 生成面试题 / 复盘）可点击作为"上下文 tag"叠加到当前对话；③选中能力后调用 `/api/ai/chat`（新增），内部 orchestrator 根据 tag 决定调哪条具体的 AI route（`parse-email` / `parse-jd` / `generate-questions` / `review`）；④**草稿态流程完全不变**（契约点 22）：AI 生成结果仍作为"草稿"由用户确认后 PATCH/POST 落库，chat 路径不例外。`AICopilot.tsx` 保留未删（作为 fallback / 后续 A/B 备用），当前页面未引用。`AIWorkstation.tsx`（30KB）是解析工作区的具体实现，挂在展开弹窗内。
+30. **Companies 预置+自定义混合策略（2026-04-25 companies-custom-v1 决策）** → v1 的 `/companies` 写死 10 家大厂（`COMPANY_ORDER` 常量），v2 支持**预置隐藏 + 自定义扩展**：①预置 10 家继续由 `lib/queries/companies.ts` 的 `COMPANY_ORDER` 提供顺序；②用户可通过 `CustomCompany` 表扩展自己想追踪的公司（`@@unique([userId, name])`）；③用户也可"隐藏"任何一家预置公司——此偏好存 **localStorage**（key: `jhb:hidden-preset-companies`，`components/companies/hiddenPresetStore.ts` 封装读写），而非数据库，因为"隐藏偏好"是端侧视觉喜好、不需要跨设备同步且避免服务端状态膨胀；④前端渲染顺序：未隐藏的预置 → 用户自定义（按 `sortOrder` 升序）；⑤每家公司行支持"点击创建新申请"（预填 `companyName`）+ "删除该公司"（预置走 hiddenPresetStore，自定义走 `DELETE /api/companies/[id]`）。**未来扩展**：若要做多设备同步隐藏偏好，可把 hiddenPresetStore 迁到 User 一个 `hiddenPresetCompanies: String?`（JSON 数组）字段，最多 10 条，零侵入改造。
 
 ---
 

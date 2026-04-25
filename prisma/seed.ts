@@ -1,70 +1,19 @@
 /**
- * prisma/seed.ts · 预置 10 家大厂占位 Application
+ * prisma/seed.ts
  *
- * 目的：给 /companies 页的"未投递公司"逻辑兜底数据。
- * 每家大厂创建一条 currentStatus=未投递 的占位 Application（无 Stage）。
+ * [2026-04-25 auth-v1] 改造为按用户隔离后：
+ *   - /companies 页的"10 家大厂"已由 COMPANY_ORDER 常量在前端保证展示
+ *   - 不需要在数据库里预置"未投递"占位 Application
+ *   - 保留此文件只为兼容 package.json 的 prisma.seed 脚本，运行后 noop
  *
- * 幂等：用 (companyName, departmentName, roleName) 作为自然键 upsert，重复跑不会产生重复数据。
- * 运行：pnpm exec prisma db seed
+ * 如需预置演示数据，可按 userId 创建（本脚本暂不涉及）。
  */
 
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
-
-// PRD 5.3.3 规定的 10 家大厂，按 PRD 顺序
-const BIG_COMPANIES = [
-  "阿里",
-  "腾讯",
-  "字节",
-  "美团",
-  "百度",
-  "京东",
-  "拼多多",
-  "小红书",
-  "快手",
-  "滴滴",
-] as const;
-
 async function main() {
-  console.log("▶ Seed: 预置 10 家大厂占位 Application");
-
-  for (const companyName of BIG_COMPANIES) {
-    // 自然键：companyName + departmentName="" + roleName="待填"
-    // findFirst + 分支 upsert（Prisma 不支持复合非唯一字段的 where unique，手写等价逻辑）
-    const existing = await prisma.application.findFirst({
-      where: {
-        companyName,
-        departmentName: "",
-        roleName: "待填",
-      },
-    });
-
-    if (existing) {
-      console.log(`  [skip] ${companyName} 已存在 (id=${existing.id})`);
-      continue;
-    }
-
-    const created = await prisma.application.create({
-      data: {
-        companyName,
-        departmentName: "",
-        roleName: "待填",
-        currentStatus: "未投递",
-      },
-    });
-    console.log(`  [create] ${companyName} (id=${created.id})`);
-  }
-
-  const total = await prisma.application.count();
-  console.log(`✅ Seed 完成，Application 表共 ${total} 条记录`);
+  console.log("▶ Seed: noop（数据按用户维度隔离，不需要全局预置）");
 }
 
-main()
-  .catch((e) => {
-    console.error("❌ Seed 失败:", e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+main().catch((e) => {
+  console.error("❌ Seed 失败:", e);
+  process.exit(1);
+});
