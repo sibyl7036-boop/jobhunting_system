@@ -1,26 +1,11 @@
 "use client";
 
 /**
- * components/calendar/MonthView.tsx
- *
- * 月视图日历（UI.md 9）
- *
- * 决策（Step 3.4）：不用 react-day-picker，手写 7×N grid。
- *   - 我们的需求是"展示事件"而非"选日期"，react-day-picker 的强项用不上
- *   - 手写只依赖已有的 date-fns + Tailwind grid
- *   - UI.md 9.3 "每格足够留白"需要精细控制，自己布局更直接
- *
- * 外观：
- *   - 月份切换 + 大卡片容器
- *   - 7 列（周一~周日）× 5~6 行，每格 min-h 108px
- *   - 事件用胶囊小标签，颜色规则同 EventTable（UI.md 9.4）
- *   - 一格最多 3 条，超出用 +N 省略
- *   - 点击日期格：右侧 ListView 展示当日事件；无事件则开 stage-new Drawer 预填日期
- *   - 点击事件：打开 stage Drawer（Phase 4.3 已接）
+ * components/calendar/MonthView.tsx · 极简奶油马卡龙风
  */
 
 import * as React from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, Plus } from "lucide-react";
 import {
   startOfMonth,
   endOfMonth,
@@ -40,32 +25,34 @@ import { fetchJson } from "@/lib/fetcher";
 import { useOpenDrawer } from "@/lib/drawerUrl";
 
 // ──────────────────────────────────────────────────────────────────────
-// 事件颜色规则（UI.md 9.4，与 EventTable 8.3 视觉一致）
+// 事件颜色规则 · 低饱和 pill
 // ──────────────────────────────────────────────────────────────────────
 
 function chipClass(type: string): string {
-  if (["一面", "二面", "三面", "HR面"].includes(type)) {
-    return "bg-secondary-lilac text-text-primary";
+  if (["一面", "二面", "三面"].includes(type)) {
+    return "bg-[#F7F4FB] text-[#8a6fa5] border-[#ede7f5]";
+  }
+  if (type === "HR面") {
+    return "bg-[#FAE6EA] text-[#c86d85] border-[#f3d9df]";
   }
   if (["笔试", "测评"].includes(type)) {
-    return "bg-secondary-yellow text-text-primary";
+    return "bg-[#FBF4D4] text-[#a08a3a] border-[#f0e5b0]";
   }
-  if (type === "Offer") {
-    return "bg-secondary-mint text-[#4A9970]";
+  if (type === "Offer" || type === "Offer沟通") {
+    return "bg-[#E8EFE3] text-[#70876a] border-[#d7e2cd]";
   }
-  return "bg-neutral/60 text-text-secondary";
+  return "bg-[#fdfbf8] text-[#8a7972] border-[#f1e8e0]";
 }
 
 // ──────────────────────────────────────────────────────────────────────
 // 类型
 // ──────────────────────────────────────────────────────────────────────
 
-/** Server → Client 边界上的事件类型（Date 已序列化，和 EventTable 的 SerializedEvent 对齐） */
 export interface CalendarEventVM {
   id: string;
   type: string;
   status: string;
-  timeIso: string; // 月视图里 time 必有（保留 string，Date.parse 后本地时区解释）
+  timeIso: string;
   application: {
     id: string;
     companyName: string;
@@ -75,11 +62,8 @@ export interface CalendarEventVM {
 }
 
 interface MonthViewProps {
-  /** 初始展示月份的任一天（默认当天） */
   initial?: string;
-  /** 初始数据（SSR 注入），避免首屏空白 */
   initialEvents: CalendarEventVM[];
-  /** 初始 start / end（YYYY-MM-DD） */
   initialRange: { start: string; end: string };
 }
 
@@ -91,11 +75,9 @@ function ymd(d: Date): string {
   return format(d, "yyyy-MM-dd");
 }
 
-/** 生成日历网格的 42 或 35 天（周一起始） */
 function buildGrid(anchor: Date): Date[] {
   const monthStart = startOfMonth(anchor);
   const monthEnd = endOfMonth(anchor);
-  // 周一起始（UI.md 没强制，但中文日历习惯周一）
   const gridStart = startOfWeek(monthStart, { weekStartsOn: 1 });
   const gridEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
   return eachDayOfInterval({ start: gridStart, end: gridEnd });
@@ -123,14 +105,12 @@ export function MonthView({
 
   const currentRange = React.useRef(initialRange);
 
-  // 切换月份时重新拉数据
   React.useEffect(() => {
     const gridStart = startOfWeek(startOfMonth(anchor), { weekStartsOn: 1 });
     const gridEnd = endOfWeek(endOfMonth(anchor), { weekStartsOn: 1 });
     const start = ymd(gridStart);
     const end = ymd(gridEnd);
 
-    // 首屏已有数据且 range 一致，跳过
     if (
       currentRange.current.start === start &&
       currentRange.current.end === end
@@ -145,7 +125,6 @@ export function MonthView({
     )
       .then((data) => {
         if (cancelled) return;
-        // 后端返回的是 Prisma 原生结构（time 是 ISO 字符串、有嵌套 application），适配一下
         const normalized: CalendarEventVM[] = (data as RawEvent[])
           .filter((e) => e.time)
           .map((e) => ({
@@ -176,7 +155,6 @@ export function MonthView({
     };
   }, [anchor]);
 
-  // 按日期分组事件（YYYY-MM-DD → Event[]）
   const byDay = React.useMemo(() => {
     const map = new Map<string, CalendarEventVM[]>();
     for (const e of events) {
@@ -190,52 +168,76 @@ export function MonthView({
   }, [events]);
 
   const grid = buildGrid(anchor);
-  const monthLabel = format(anchor, "yyyy 年 M 月");
+  const monthLabel = format(anchor, "yyyy · M");
   const selectedKey = ymd(selectedDay);
   const selectedEvents = byDay.get(selectedKey) ?? [];
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-      {/* 左 8 栏：月视图 */}
+      {/* 左 8 栏 */}
       <div className="lg:col-span-8">
-        <section className="rounded-card-lg bg-surface-bg p-6 shadow-soft">
-          {/* 月份切换 */}
+        <section className="surface p-6">
           <header className="mb-5 flex items-center justify-between">
-            <h2 className="text-section-title text-text-primary">
-              {monthLabel}
-            </h2>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setAnchor((d) => subMonths(d, 1))}
-                className="flex h-9 w-9 items-center justify-center rounded-btn-sm bg-soft-panel text-text-primary transition-colors hover:bg-secondary-pink"
-                aria-label="上一月"
-              >
-                <ChevronLeft size={16} />
-              </button>
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FBEBDE]">
+                <Calendar
+                  size={16}
+                  className="text-[#b87a56]"
+                  strokeWidth={2}
+                />
+              </div>
+              <div>
+                <h2 className="text-section-title text-[#5b4a4a]">
+                  {monthLabel}
+                </h2>
+                <p className="text-[11px] text-[#b4a79e]">Monthly Calendar</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <NavBtn onClick={() => setAnchor((d) => subMonths(d, 1))} label="上一月">
+                <ChevronLeft size={14} />
+              </NavBtn>
               <button
                 type="button"
                 onClick={() => setAnchor(new Date())}
-                className="rounded-btn-sm bg-soft-panel px-3 py-1.5 text-caption text-text-primary transition-colors hover:bg-secondary-pink"
+                className="rounded-full border border-[#f1e8e0] bg-white px-3.5 py-1.5 text-[12px] font-semibold text-[#6b574f] transition-all hover:border-[#e8d7c8] hover:bg-[#fdfbf8]"
               >
-                今天
+                Today
               </button>
+              <NavBtn onClick={() => setAnchor((d) => addMonths(d, 1))} label="下一月">
+                <ChevronRight size={14} />
+              </NavBtn>
+              <div className="mx-1 h-5 w-px bg-[#f1e8e0]" />
               <button
                 type="button"
-                onClick={() => setAnchor((d) => addMonths(d, 1))}
-                className="flex h-9 w-9 items-center justify-center rounded-btn-sm bg-soft-panel text-text-primary transition-colors hover:bg-secondary-pink"
-                aria-label="下一月"
+                onClick={() =>
+                  openDrawer({ type: "stage-new", date: ymd(selectedDay) })
+                }
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[12px] font-semibold text-white transition-all",
+                  "bg-gradient-to-br from-[#e9b99a] to-[#d99a7a] shadow-[0_2px_8px_rgba(233,185,154,0.35)]",
+                  "hover:-translate-y-0.5 hover:shadow-[0_4px_14px_rgba(233,185,154,0.45)]",
+                  "active:translate-y-0"
+                )}
+                title={`在 ${format(selectedDay, "M 月 d 日")} 新建事件`}
               >
-                <ChevronRight size={16} />
+                <Plus size={13} strokeWidth={2.5} />
+                新建事件
               </button>
             </div>
           </header>
 
           {/* 周标题 */}
-          <div className="mb-2 grid grid-cols-7 gap-2 text-caption text-text-tertiary">
-            {["一", "二", "三", "四", "五", "六", "日"].map((w) => (
-              <div key={w} className="px-2 py-1 text-center">
-                周{w}
+          <div className="mb-2 grid grid-cols-7 gap-1.5 text-[11px]">
+            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((w, idx) => (
+              <div
+                key={w}
+                className={cn(
+                  "px-2 py-1.5 text-center font-semibold uppercase tracking-wider",
+                  idx >= 5 ? "text-[#c86d85]" : "text-[#b4a79e]"
+                )}
+              >
+                {w}
               </div>
             ))}
           </div>
@@ -243,7 +245,7 @@ export function MonthView({
           {/* 日期格 */}
           <div
             className={cn(
-              "grid grid-cols-7 gap-2 transition-opacity",
+              "grid grid-cols-7 gap-1.5 transition-opacity",
               loading && "opacity-60"
             )}
           >
@@ -260,34 +262,65 @@ export function MonthView({
                   key={key}
                   onClick={() => {
                     setSelectedDay(day);
-                    // Step 4.4 · 日期格子本身的点击：若当日无事件，打开新建 Drawer 并预填日期
-                    if (dayEvents.length === 0) {
-                      openDrawer({ type: "stage-new", date: ymd(day) });
-                    }
                   }}
                   className={cn(
-                    "flex min-h-[108px] flex-col rounded-card-md p-2 text-left transition-colors",
+                    "group relative flex min-h-[92px] flex-col rounded-xl border p-2 text-left transition-all duration-200",
+                    "hover:border-[#e8d7c8]",
                     inMonth
-                      ? "bg-app-bg-secondary hover:bg-soft-panel"
-                      : "bg-surface-bg/50 text-text-tertiary hover:bg-soft-panel/60",
-                    today && "ring-2 ring-primary/40",
-                    selected && "bg-soft-panel ring-2 ring-primary"
+                      ? selected
+                        ? "border-[#e9b99a] bg-[#fdf2ea]"
+                        : today
+                          ? "border-[#f1e3d4] bg-[#fdfbf8]"
+                          : "border-[#f4ece4] bg-white"
+                      : "border-transparent bg-[#fdfbf8]/40 opacity-50"
                   )}
                 >
                   {/* 日期数字 */}
                   <div className="mb-1 flex items-center justify-between">
                     <span
                       className={cn(
-                        "text-caption font-medium",
-                        today ? "text-primary-strong" : "text-text-secondary",
-                        !inMonth && "text-text-tertiary"
+                        "flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-[12px] font-semibold tabular-nums",
+                        today
+                          ? "bg-[#e9b99a] text-white"
+                          : selected
+                            ? "text-[#b87a56]"
+                            : "text-[#6b574f]",
+                        !inMonth && "text-[#b4a79e]"
                       )}
                     >
                       {format(day, "d")}
                     </span>
+
+                    {/* 日期格右上角的新建按钮：仅 hover 显示，不会挡内容 */}
+                    {inMonth && (
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        aria-label="在该日新建事件"
+                        onClick={(ev) => {
+                          ev.stopPropagation();
+                          openDrawer({ type: "stage-new", date: ymd(day) });
+                        }}
+                        onKeyDown={(ev) => {
+                          if (ev.key === "Enter" || ev.key === " ") {
+                            ev.stopPropagation();
+                            openDrawer({ type: "stage-new", date: ymd(day) });
+                          }
+                        }}
+                        className={cn(
+                          "flex h-5 w-5 items-center justify-center rounded-full",
+                          "text-[#e9b99a] opacity-0 transition-all",
+                          "hover:bg-[#fdf2ea] hover:text-[#b87a56]",
+                          "group-hover:opacity-100"
+                        )}
+                        title="新建事件"
+                      >
+                        <Plus size={11} strokeWidth={2.5} />
+                      </span>
+                    )}
                   </div>
 
-                  {/* 事件小胶囊（最多 3 条，超出 +N） */}
+                  {/* 事件 */}
                   <div className="flex flex-col gap-1">
                     {dayEvents.slice(0, 3).map((e) => (
                       <span
@@ -297,7 +330,8 @@ export function MonthView({
                           openDrawer({ type: "stage", id: e.id });
                         }}
                         className={cn(
-                          "truncate rounded-pill px-2 py-0.5 text-[11px] leading-tight",
+                          "truncate rounded-md border px-1.5 py-0.5 text-[10px] font-medium leading-tight cursor-pointer",
+                          "transition-all hover:-translate-y-0.5",
                           chipClass(e.type)
                         )}
                         title={`${e.type} · ${e.application.companyName}${e.application.roleName ? " · " + e.application.roleName : ""}`}
@@ -306,7 +340,7 @@ export function MonthView({
                       </span>
                     ))}
                     {dayEvents.length > 3 && (
-                      <span className="text-[11px] text-text-tertiary">
+                      <span className="text-[10px] text-[#b4a79e]">
                         +{dayEvents.length - 3}
                       </span>
                     )}
@@ -318,63 +352,101 @@ export function MonthView({
         </section>
       </div>
 
-      {/* 右 4 栏：选中日期的事件列表 */}
+      {/* 右 4 栏：选中日期详情 */}
       <aside className="lg:col-span-4">
-        <section className="rounded-card-lg bg-surface-bg p-5 shadow-soft">
-          <header className="mb-4">
-            <h3 className="text-card-title text-text-primary">
-              {format(selectedDay, "M 月 d 日")}
-            </h3>
-            <p className="mt-1 text-caption text-text-tertiary">
-              {selectedEvents.length
-                ? `当日 ${selectedEvents.length} 个事件`
-                : "当日暂无事件"}
-            </p>
+        <section className="surface sticky top-6 p-5">
+          <header className="mb-4 flex items-start gap-3">
+            <div className="flex h-11 w-11 flex-col items-center justify-center rounded-xl border border-[#f1e3d4] bg-[#fdfbf8] text-[#6b574f]">
+              <span className="text-[9px] leading-none font-medium uppercase tracking-wider text-[#b4a79e]">
+                {format(selectedDay, "MMM")}
+              </span>
+              <span className="mt-0.5 text-[15px] leading-none font-bold">
+                {format(selectedDay, "d")}
+              </span>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-card-title text-[#5b4a4a]">
+                {format(selectedDay, "yyyy 年 M 月 d 日")}
+              </h3>
+              <p className="text-[11px] text-[#b4a79e]">
+                {selectedEvents.length
+                  ? `当日 ${selectedEvents.length} 个事件`
+                  : "当日暂无事件"}
+              </p>
+            </div>
           </header>
 
           {selectedEvents.length === 0 ? (
-            <div className="rounded-card-md bg-app-bg-secondary py-8 text-center text-body text-text-secondary">
-              今天可以专心把简历磨一磨 🌸
+            <div className="rounded-2xl border border-dashed border-[#ead8c8] bg-[#fdfbf8]/60 py-10 text-center">
+              <div className="mb-2 text-[24px] opacity-80">☕</div>
+              <p className="text-body text-[#6b574f]">今天可以专心打磨简历</p>
+              <p className="mt-1 text-[11px] text-[#b4a79e]">
+                点击日期格也能新增事件
+              </p>
             </div>
           ) : (
-            <ul className="space-y-2">
-              {selectedEvents.map((e) => {
-                const d = new Date(e.timeIso);
-                const hhmm = format(d, "HH:mm");
-                return (
-                  <li
-                    key={e.id}
-                    onClick={() => {
-                      openDrawer({ type: "stage", id: e.id });
-                    }}
-                    className="cursor-pointer rounded-card-md bg-app-bg-secondary p-3 transition-all hover:-translate-y-0.5 hover:bg-soft-panel hover:shadow-soft"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={cn(
-                          "inline-flex flex-shrink-0 items-center rounded-pill px-2.5 py-0.5 text-caption",
-                          chipClass(e.type)
+            <>
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-[11px] font-semibold text-[#b4a79e] uppercase tracking-wider">
+                  Events · {selectedEvents.length}
+                </p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    openDrawer({ type: "stage-new", date: ymd(selectedDay) })
+                  }
+                  className="inline-flex items-center gap-1 rounded-full border border-[#f1e8e0] bg-white px-2.5 py-1 text-[11px] font-medium text-[#8a7972] transition-all hover:-translate-y-0.5 hover:border-[#e9b99a] hover:bg-[#fdf2ea] hover:text-[#b87a56]"
+                  title="在该日新建事件"
+                >
+                  <Plus size={11} strokeWidth={2.5} />
+                  新建
+                </button>
+              </div>
+              <ul className="space-y-2">
+                {selectedEvents.map((e, idx) => {
+                  const d = new Date(e.timeIso);
+                  const hhmm = format(d, "HH:mm");
+                  return (
+                    <li
+                      key={e.id}
+                      onClick={() => {
+                        openDrawer({ type: "stage", id: e.id });
+                      }}
+                      className="group cursor-pointer rounded-xl border border-[#f1e8e0] bg-white p-3 transition-all hover:-translate-y-0.5 hover:border-[#e8d7c8] animate-fade-in-up"
+                      style={{ animationDelay: `${idx * 0.04}s` }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={cn(
+                            "inline-flex flex-shrink-0 items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold",
+                            chipClass(e.type)
+                          )}
+                        >
+                          {e.type}
+                        </span>
+                        <span className="text-[12px] font-semibold text-[#6b574f] tabular-nums">
+                          {hhmm}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-body font-medium text-[#5b4a4a]">
+                        {e.application.companyName}
+                        {e.application.roleName && (
+                          <span className="text-[#8a7972]">
+                            {" "}
+                            · {e.application.roleName}
+                          </span>
                         )}
-                      >
-                        {e.type}
-                      </span>
-                      <span className="text-caption font-medium text-text-primary">
-                        {hhmm}
-                      </span>
-                    </div>
-                    <p className="mt-1.5 text-body text-text-primary">
-                      {e.application.companyName}
-                      {e.application.roleName && ` · ${e.application.roleName}`}
-                    </p>
-                    {e.application.departmentName && (
-                      <p className="text-caption text-text-tertiary">
-                        {e.application.departmentName}
                       </p>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
+                      {e.application.departmentName && (
+                        <p className="mt-0.5 text-[11px] text-[#b4a79e]">
+                          {e.application.departmentName}
+                        </p>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
           )}
         </section>
       </aside>
@@ -382,9 +454,26 @@ export function MonthView({
   );
 }
 
-// ──────────────────────────────────────────────────────────────────────
-// 后端 raw shape（来自 /api/calendar/events，time 为 ISO string）
-// ──────────────────────────────────────────────────────────────────────
+function NavBtn({
+  children,
+  onClick,
+  label,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className="flex h-8 w-8 items-center justify-center rounded-full border border-[#f1e8e0] bg-white text-[#8a7972] transition-all hover:border-[#e8d7c8] hover:bg-[#fdfbf8] hover:text-[#6b574f]"
+    >
+      {children}
+    </button>
+  );
+}
 
 interface RawEvent {
   id: string;

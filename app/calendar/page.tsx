@@ -12,7 +12,9 @@ import {
   endOfWeek,
   format,
 } from "date-fns";
+import { redirect } from "next/navigation";
 import { getCalendarEvents } from "@/lib/queries";
+import { getCurrentUser } from "@/lib/auth";
 import {
   MonthView,
   type CalendarEventVM,
@@ -21,13 +23,16 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function CalendarPage() {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login?redirect=/calendar");
+
   const today = new Date();
   const gridStart = startOfWeek(startOfMonth(today), { weekStartsOn: 1 });
   const gridEnd = endOfWeek(endOfMonth(today), { weekStartsOn: 1 });
   const startStr = format(gridStart, "yyyy-MM-dd");
   const endStr = format(gridEnd, "yyyy-MM-dd");
 
-  const events = await getCalendarEvents(startStr, endStr);
+  const events = await getCalendarEvents(user.id, startStr, endStr);
 
   // 只保留有 time 的事件（月视图按日期格子放）
   const initialEvents: CalendarEventVM[] = events
