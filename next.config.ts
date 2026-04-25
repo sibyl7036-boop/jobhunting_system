@@ -11,6 +11,7 @@ import type { NextConfig } from "next";
  */
 const nextConfig: NextConfig = {
   serverExternalPackages: ["pdf-parse", "pdfjs-dist"],
+  transpilePackages: ["jose"],
 };
 
 export default nextConfig;

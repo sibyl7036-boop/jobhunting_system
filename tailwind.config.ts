@@ -175,6 +175,10 @@ const config: Config = {
         },
       },
 
+      transitionTimingFunction: {
+        smooth: "cubic-bezier(0.22, 1, 0.36, 1)",
+      },
+
       animation: {
         "fade-in-up": "fade-in-up 0.55s cubic-bezier(0.22,0.61,0.36,1)",
         "fade-in": "fade-in 0.6s ease-out",

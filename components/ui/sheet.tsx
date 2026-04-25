@@ -65,7 +65,7 @@ const SheetContent = React.forwardRef<
         "after:absolute after:top-1/2 after:-translate-y-1/2 after:-left-2.5 after:w-2.5 after:h-16 after:rounded-l-full after:bg-gradient-to-b after:from-[#f3d9df] after:via-[#fbebde] after:to-[#ede7f5] after:shadow-[-6px_0_16px_-6px_rgba(200,109,133,0.25)] after:pointer-events-none",
         widthClassName,
         // 稍慢的滑入：280ms，更优雅
-        "transition ease-[cubic-bezier(0.22,1,0.36,1)] duration-300",
+        "transition ease-smooth duration-300",
         "data-[state=open]:animate-in data-[state=closed]:animate-out",
         "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right",
         className

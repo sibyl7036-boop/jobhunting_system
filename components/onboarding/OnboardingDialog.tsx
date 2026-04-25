@@ -18,6 +18,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import type { LucideIcon } from "lucide-react";
 import {
   Sparkles,
   LayoutDashboard,
@@ -50,7 +51,7 @@ function Illo({
   label,
   gradient,
 }: {
-  icon: any;
+  icon: LucideIcon;
   label: string;
   gradient: string;
 }) {
