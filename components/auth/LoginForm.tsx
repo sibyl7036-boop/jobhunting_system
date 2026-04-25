@@ -9,11 +9,10 @@
  */
 
 import * as React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2, Mail, Lock, User as UserIcon, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 
 type Mode = "login" | "register";
 
@@ -24,7 +23,6 @@ interface FormState {
 }
 
 export function LoginForm() {
-  const router = useRouter();
   const sp = useSearchParams();
   const redirect = sp.get("redirect") || "/dashboard";
 

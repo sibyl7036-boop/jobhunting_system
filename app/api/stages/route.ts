@@ -18,7 +18,9 @@ import { stageCreateInputSchema } from "@/lib/schemas";
 import { requireCurrentUser } from "@/lib/auth";
 
 // [2026-04-25 v2] 列表 · 供 AIChatPanel StagePicker 用
-export const GET = withApiHandler(async (req) => {
+// [2026-04-25 lint] GET 不需要直接读 req；鉴权走 requireCurrentUser()
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const GET = withApiHandler(async (_req) => {
   const user = await requireCurrentUser();
   const rows = await prisma.stage.findMany({
     where: { application: { userId: user.id } },

@@ -29,11 +29,8 @@ import {
   Trash2,
   ChevronDown,
   CheckCircle2,
-  ArrowUpRight,
-  Zap,
   X,
   Maximize2,
-  Minimize2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
