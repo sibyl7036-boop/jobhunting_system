@@ -3,7 +3,7 @@
 /**
  * lib/drawerUrl.ts · Drawer URL 参数工具
  *
- * Drawer 由 URL search params 驱动（architecture.md 契约点 16）。
+ * Drawer 由 URL search params 驱动（docs/architecture.md 契约点 16）。
  * 本文件提供：
  *   - useOpenDrawer()：push / replace URL 加上 drawer 参数
  *   - useCloseDrawer()：清掉 drawer 参数

@@ -3,7 +3,7 @@
 /**
  * components/dashboard/AICopilot.tsx · 极简奶油风
  *
- * AI Copilot 卡片（UI.md 8.7 + PRD 5.1.5）
+ * AI Copilot 卡片（docs/ui-guide.md 8.7 + PRD 5.1.5）
  *
  *   - 解析面试邮件：调 /api/ai/parse-email → 弹出 Stage Drawer 预填
  *   - 解析 JD：选 Application → 调 /api/ai/parse-jd → 内联展示 → 保存 PATCH

@@ -12,11 +12,11 @@ export const metadata: Metadata = {
 };
 
 /**
- * 全局根布局（UI.md 6.1 页面结构）
+ * 全局根布局（docs/ui-guide.md 6.1 页面结构）
  *
- * - 左侧固定导航栏（88px 宽，半悬浮胶囊，UI.md 6.2）
- * - 顶部 Header（薄、轻、通透，UI.md 6.3）
- * - 主内容区（最大宽度 1440~1600px，左右 padding 32px，UI.md 5.3 / 15.1）
+ * - 左侧固定导航栏（88px 宽，半悬浮胶囊，docs/ui-guide.md 6.2）
+ * - 顶部 Header（薄、轻、通透，docs/ui-guide.md 6.3）
+ * - 主内容区（最大宽度 1440~1600px，左右 padding 32px，docs/ui-guide.md 5.3 / 15.1）
  * - 全局 DetailDrawer（Phase 4.1）：由 URL search param 驱动，三个页面共用
  * - 全局 Toaster（sonner）：保存成功 / 失败 / 删除成功等提示
  *

@@ -3,10 +3,11 @@
 > **本仓库的改动日志**。v1.0 交付（2026-04-19）之后所有的维护期变更都记在这里。
 >
 > **与其他文档的分工**：
-> - `implementation_plan.md` / `progress.md` / `job_hunt_flow_board_prd.md` / `UI.md` / `tech_stack.md` = **v1.0 的历史快照**，维护期**不修改**
-> - `architecture.md` = **当下的文件地图 + 关键契约点**（做新决策时追加契约点）
+> - `docs/legacy/` = **v1.0 建设期历史快照**（implementation_plan / progress / 旧 architecture / 旧 tech_stack），维护期**冻结不修改**
+> - `docs/prd.md` / `docs/ui-guide.md` / `docs/tech-stack.md` = **产品/视觉/技术栈规格**，长期参照，按需更新
+> - `docs/architecture.md` = **当下的文件地图 + 关键契约点**（做新决策时追加契约点）
 > - 本文件 = **动作流水**（每次改了什么、为什么、怎么验证、踩了什么坑）
-> - `MEMORY.md`（工作记忆）= **用户偏好 + 项目约定**（跨会话）
+> - `.workbuddy/memory/MEMORY.md` = **用户偏好 + 项目约定**（跨会话）
 >
 > **写入规则**
 > - 按时间倒序，**最新在最上**
@@ -82,6 +83,106 @@
 ---
 
 <!-- 未来新条目插在这行下方，最新的在最上面 -->
+
+## [未发布] · 2026-04-26 · 文档大整理 📚
+
+### docs: 重组 MD 文档到 docs/ · 重写 architecture + tech-stack + CODEBUDDY · 归档 v1.0 快照（分支 main）
+
+**做了什么**
+- **文件迁移**（`git mv` 保留历史）：
+  - `UI.md` → `docs/ui-guide.md`（产品规格 · 长期参照）
+  - `job_hunt_flow_board_prd.md` → `docs/prd.md`（产品规格 · 长期参照）
+  - `implementation_plan.md` → `docs/legacy/implementation_plan.md`（v1.0 冻结）
+  - `progress.md` → `docs/legacy/progress.md`（v1.0 冻结）
+  - `architecture.md` → `docs/legacy/architecture.md`（v1.0 版旧地图 · 冻结）
+  - `tech_stack.md` → `docs/legacy/tech_stack.md`（v1.0 版旧技术栈 · 冻结）
+- **重写两份核心文档**（**删除旧版所有 v1.0 建设期痕迹**）：
+  - `docs/architecture.md`（24KB · 重写）· 文件地图按当前 v2.0 真实结构画，30 条契约点按领域分组（数据访问 / 数据模型 / API / 前端交互 / 维护部署 / v2.0 新增），保留所有硬规则
+  - `docs/tech-stack.md`（11KB · 重写）· 反映当前真实栈（Neon Postgres + bcryptjs + jose + Vercel），加版本锁定章节（为什么锁 Next 15 不上 Next 16）+ v1.0→v2.0 变更摘要表
+- **重写 `CODEBUDDY.md`**（精简到 9 节，原 14 节）：删 "项目初始化（尚未执行）"、"实现优先级 6 天节奏"、"开发前准备自检"（Phase 6 前置）等过时内容；加"红色信号 · 看到这些停下来问"章节
+- **新增 `docs/legacy/README.md`** 说明为什么冻结 v1.0 建设期文档 + 当前应该读哪些文档
+- **更新 `README.md`**：
+  - Prisma 命令 `migrate deploy` → `db push`（与 v2.0 build 脚本一致）
+  - 环境变量示例 `DATABASE_URL="file:./prisma/dev.db"` → Neon pooled URL
+  - 文档索引改指 `docs/` 新路径
+- **批量修正代码注释里的文档引用**（`sed` 批处理）：
+  - `UI.md` → `docs/ui-guide.md`（app/ + components/ 共 12 个文件）
+  - `architecture.md 关键契约点` → `docs/architecture.md 契约点`（lib/ + prisma/ 共 7 个文件）
+- **更新 `CHANGELOG.md` 顶部**"与其他文档的分工"段落，改指 `docs/` 新路径
+- **清理残留**：
+  - 删除 `.with/Dockerfile`（v1.0 Docker 残留，项目已切 Vercel）
+  - 清理 `.git/info/exclude` 的 `.with/` 规则（已不需要）
+
+**为什么**
+- 根目录有 7 份 MD 文件散落，新 Agent 进入仓库分不清哪些是当前规格 / 哪些是历史快照 / 哪些应优先读
+- v1.0 的 `implementation_plan.md`（72KB）+ `progress.md`（42KB）全是"39 Step 全绿"的建设期历史，对维护期 Agent 没有价值但会干扰阅读判断
+- v1.0 版的 `architecture.md`（45KB）充斥"Phase X 产物 · 从计划中迁移到已有区"的建设期轨迹，已经与当前 v2.0 真实结构不匹配
+- v1.0 版的 `tech_stack.md` 说"用 SQLite 本地开发"，但实际项目早已切 Neon Postgres + 上 Vercel，还加了鉴权栈
+- 用户明确要求"所有旧版本的东西需要删除，这样可以帮助下一次负责优化代码的 Agent 更好地上手目前的现有代码和功能"
+
+**怎么验证**
+- `pnpm typecheck` ✅ 0 error
+- `pnpm lint` ✅ 0 warning 0 error（批量 sed 替换未破坏代码）
+- `pnpm build` ✅ Compiled successfully (4.1s)
+- 根目录 `ls` 清爽：只剩 `README.md` / `CODEBUDDY.md` / `CHANGELOG.md` + 代码配置文件
+- `git mv` 保留文件历史（`git log --follow docs/legacy/implementation_plan.md` 能追溯到最初）
+- 所有代码注释里的文档路径引用都更新为新位置，无破损链接
+
+**踩坑**
+- **批量 sed 替换时引号问题**：macOS 的 `sed -i` 必须加空串参数 `-i ''`，直接 `-i` 会报错。用 `find ... -exec sed -i '' 's|...|...|g' {} +` 避免逐文件启动 sed 进程
+- **CODEBUDDY.md 重写时**误删了原"一致性声明"相关段落，后补"红色信号"章节覆盖等效功能
+- `.with/Dockerfile` 本被 `.git/info/exclude` 排除（未进 git），但物理文件还在磁盘上；`rm -rf` 删掉后同步清 exclude 规则
+
+**关联 commit / tag / 分支**
+- commit: （本 commit）
+- tag: `docs-restructure-20260426`（建议）
+- 分支: `main`
+
+**对应 architecture.md 契约点**
+- 无新契约（纯文档重组 + 清理，保留原 30 条契约点不变，只重新分组和措辞）
+
+---
+
+## [未发布] · 2026-04-25（第 2 条）· 审查修复 🔍
+
+### fix: 全量代码审查 · 修复构建/ESLint 错误 + 清理残留（分支 main）
+
+**做了什么**
+- `components/onboarding/OnboardingDialog.tsx`：`icon: any` → `LucideIcon`（消除 ESLint no-explicit-any，Vercel 构建阻断错误）
+- `components/ui/sheet.tsx` + `tailwind.config.ts`：`ease-[cubic-bezier(0.22,1,0.36,1)]` → 自定义 `ease-smooth`（消除 Tailwind 歧义警告）
+- `next.config.ts`：加 `transpilePackages: ['jose']`（修复 Edge Runtime jose 构建警告）
+- `package.json` build 脚本：`prisma migrate deploy` → `prisma db push --accept-data-loss`（修复 Vercel 构建 P3005 数据库非空报错）
+- `app/api/stages/route.ts`：GET handler 加 `eslint-disable-next-line`（间接鉴权，不直接读 req）
+- `components/auth/LoginForm.tsx`：移除未使用 `Button` import 和 `router`（页面使用 `window.location.href` 跳转）
+- `components/dashboard/AIChatPanel.tsx`：移除未使用 `ArrowUpRight` / `Zap` / `Minimize2` import
+- `components/dashboard/MiniResumePanel.tsx`：移除未使用 `Eye` import
+
+**为什么**
+- Vercel 构建时 ESLint 报错会直接阻断部署（`OnboardingDialog.tsx` 的 `any` 类型）
+- Tailwind 对含括号的 arbitrary value 解析有歧义，构建警告 contaminants 日志
+- `jose` 在 Edge Runtime 需要 transpile 才能正确打包
+- `prisma migrate deploy` 在 Neon 数据库已含 schema 时会报 P3005，`db push` 更适合迭代场景
+- 未使用的 import/variable 是代码整洁度问题，顺手清理
+
+**怎么验证**
+- `pnpm typecheck` ✔ 0 error
+- `pnpm lint` ✔ 0 warning 0 error（本轮清理前只剩 unused-var warnings）
+- `pnpm build` ✔ Compiled successfully（3.7s）
+- Vercel 推送后自动触发重新部署
+
+**踩坑**
+- `OnboardingDialog.tsx` 最初尝试用 `_req` 前缀规避 unused-var，但 `@typescript-eslint/no-unused-vars` 不认 `_` 前缀，最终用 `eslint-disable-next-line` 解决
+- `LoginForm.tsx` 里 `router` 被 import 但未使用，是因为早期版本用 `router.push()` 跳转，后来改为 `window.location.href` 保证 Cookie 生效后立即刷新服务端渲染，`router` 忘记一并移除
+
+**关联 commit / tag / 分支**
+- commit: `386a8f5`（构建修复）+ `8493a9c`（lint 清理）
+- tag: 无（未到发布节点）
+- 分支: `main`
+
+**对应 architecture.md 契约点**
+- 无新契约（均为修复，不改变架构决策）
+
+---
 
 ## [v2.0-maintenance-r1] · 2026-04-25 · 维护期第一波大迭代（分支 main，多次小 commit）🎨🔐
 

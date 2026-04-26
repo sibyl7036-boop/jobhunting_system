@@ -1,7 +1,7 @@
 /**
  * lib/serialize.ts
  *
- * JSON 字符串数组字段在 DB ↔ 应用层 之间的转换（见 architecture.md 关键契约点 11）
+ * JSON 字符串数组字段在 DB ↔ 应用层 之间的转换（见 docs/docs/architecture.md 契约点 11）
  *
  * - Application.jdKeywords / expectedSkills / interviewQuestions 在 DB 是 String?
  * - AIRun.outputJson 在 DB 是 String?

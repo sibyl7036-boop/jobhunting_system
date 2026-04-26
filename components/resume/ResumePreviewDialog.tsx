@@ -5,7 +5,7 @@
  *
  * 简历预览（Step 5.2）· 大 Dialog 内嵌 <iframe> 渲染 PDF
  *
- * PDF 预览不使用 react-pdf，按 UI.md 约定直接用浏览器原生 iframe。
+ * PDF 预览不使用 react-pdf，按 docs/ui-guide.md 约定直接用浏览器原生 iframe。
  */
 
 import * as React from "react";

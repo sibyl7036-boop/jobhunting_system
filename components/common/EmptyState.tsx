@@ -4,7 +4,7 @@
  * Step 7.1：所有页面 / 卡片 / 表格的空态都走这里。
  *
  * 设计：lucide 图标（浅粉圆底）+ 标题 + 副文案（可选）+ 可选 CTA slot
- * UI.md 2.6（空态："今天可以专心准备简历哦~"语气）
+ * docs/ui-guide.md 2.6（空态："今天可以专心准备简历哦~"语气）
  */
 
 import * as React from "react";

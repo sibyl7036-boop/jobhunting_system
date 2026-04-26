@@ -34,7 +34,7 @@ pnpm install
 #    详见下方「环境变量」章节
 
 # 3. 初始化数据库
-pnpm exec prisma migrate deploy   # 执行迁移
+pnpm exec prisma db push         # 同步 schema 到数据库
 pnpm exec prisma db seed         # 预置 10 家大厂
 
 # 4. 启动开发服务器
@@ -56,8 +56,8 @@ pnpm build && pnpm start
 
 ```env
 # .env.local
-DATABASE_URL="file:./prisma/dev.db"      # 本地 SQLite；生产环境填 Neon Postgres pooled URL
-AUTH_SECRET="your-random-secret"          # Cookie Session 签名密钥（生产环境必须设置）
+DATABASE_URL="postgresql://...@ep-xxx-pooler.neon.tech/neondb?sslmode=require"   # Neon Postgres pooled URL
+AUTH_SECRET="your-random-secret"          # Cookie Session 签名密钥，用 openssl rand -base64 32 生成
 
 # 火山方舟（豆包）API
 DOUBAO_API_KEY=ark-xxxx
@@ -83,7 +83,9 @@ DOUBAO_MODEL=ep-xxxxxxxxxxxxxxx
 
 ---
 
-## 📁 项目结构
+> 完整文件地图 + 30 条架构契约点见 [`docs/architecture.md`](./docs/architecture.md)。
+
+## 📁 项目结构（简略）
 
 ```
 app/
@@ -143,13 +145,13 @@ pnpm tsx scripts/smoke-api.ts
 
 | 文件 | 作用 |
 |---|---|
+| [`CODEBUDDY.md`](./CODEBUDDY.md) | **AI Agent 入口**（强制阅读门禁 + 红线守则） |
 | [`CHANGELOG.md`](./CHANGELOG.md) | 维护期改动日志（做了什么 / 为什么 / 怎么验证） |
-| [`architecture.md`](./architecture.md) | 文件地图 + 关键架构契约点 |
-| [`CODEBUDDY.md`](./CODEBUDDY.md) | AI Agent 入口（含强制阅读门禁） |
-| [`job_hunt_flow_board_prd.md`](./job_hunt_flow_board_prd.md) | 产品需求文档（PRD） |
-| [`UI.md`](./UI.md) | 视觉规范（马卡龙粉配色） |
-| [`tech_stack.md`](./tech_stack.md) | 技术栈详解 + 禁用方案清单 |
-| [`implementation_plan.md`](./implementation_plan.md) | v1.0 实施步骤（7 Phase / 39 Step） |
+| [`docs/architecture.md`](./docs/architecture.md) | 文件地图 + 30 条关键架构契约点 |
+| [`docs/tech-stack.md`](./docs/tech-stack.md) | 技术栈详解 + 版本锁定 + 禁用方案清单 |
+| [`docs/prd.md`](./docs/prd.md) | 产品需求文档（PRD） |
+| [`docs/ui-guide.md`](./docs/ui-guide.md) | 视觉规范（马卡龙粉配色） |
+| [`docs/legacy/`](./docs/legacy/) | v1.0 建设期历史快照（冻结 · 不再维护） |
 
 ---
 

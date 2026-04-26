@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
  * Step 0.3 说明：
  * - 本组件是 shadcn CLI 在 new-york style 下的标准产出（Tailwind class 样式）。
  * - 颜色走 Tailwind 语义令牌：primary / primary-hover / primary-strong / text-on-primary 等，
- *   这些令牌在 tailwind.config.ts 里指向 UI.md 4.x 的真实色值。
+ *   这些令牌在 tailwind.config.ts 里指向 docs/ui-guide.md 4.x 的真实色值。
  * - 需要改配色时改 tailwind.config.ts，不要在这里写死 hex。
  */
 const buttonVariants = cva(

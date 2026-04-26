@@ -1,7 +1,7 @@
 /**
  * lib/dates.ts · 日期工具（本地时区，Asia/Shanghai 实际表现 ≈ 本机时区）
  *
- * 对齐 architecture.md 关键契约点时间语义（Step 2.3 决策）：
+ * 对齐 docs/docs/architecture.md 契约点时间语义（Step 2.3 决策）：
  *   - dashboard range 是半开区间 [今天 00:00, 今天 + N 天 00:00)
  *   - calendar 是闭区间 [start 00:00:00.000, end 23:59:59.999]
  *   - YYYY-MM-DD 一律按本地时区解释

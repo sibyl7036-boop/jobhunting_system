@@ -9,7 +9,7 @@
  *   - 成功：返 T（已是 API 的 data 部分；{ data } 结构自动剥壳）
  *   - 失败：抛 FetchError，前端 catch 后展示 message
  *
- * 对齐 architecture.md 关键契约点 12 的错误结构：
+ * 对齐 docs/docs/architecture.md 契约点 12 的错误结构：
  *   { error: { code, message, details? } }
  */
 

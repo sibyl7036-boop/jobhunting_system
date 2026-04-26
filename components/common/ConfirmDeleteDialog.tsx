@@ -3,7 +3,7 @@
 /**
  * components/common/ConfirmDeleteDialog.tsx
  *
- * 二次确认删除（UI.md 风格：圆角大卡 + 浅色马卡龙）
+ * 二次确认删除（docs/ui-guide.md 风格：圆角大卡 + 浅色马卡龙）
  *
  * 使用：
  *   const [open, setOpen] = useState(false);

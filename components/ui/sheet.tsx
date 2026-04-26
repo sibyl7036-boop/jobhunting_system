@@ -5,9 +5,9 @@
  *
  * 右侧滑出抽屉。Drawer 的外壳由本组件提供：
  *   - 遮罩（Overlay）
- *   - 动效（240ms ease-out，对齐 UI.md 11.3）
- *   - 左侧大圆角 + 宽 440px（UI.md 11.1）
- *   - 关闭按钮（圆形 icon button，UI.md 11.1）
+ *   - 动效（240ms ease-out，对齐 docs/ui-guide.md 11.3）
+ *   - 左侧大圆角 + 宽 440px（docs/ui-guide.md 11.1）
+ *   - 关闭按钮（圆形 icon button，docs/ui-guide.md 11.1）
  */
 
 import * as React from "react";
@@ -40,7 +40,7 @@ SheetOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
 interface SheetContentProps
   extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> {
-  /** 自定义宽度，默认 440px（UI.md 11.1） */
+  /** 自定义宽度，默认 440px（docs/ui-guide.md 11.1） */
   widthClassName?: string;
 }
 

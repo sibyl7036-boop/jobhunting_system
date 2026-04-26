@@ -3,9 +3,9 @@
 /**
  * components/drawer/DetailDrawer.tsx
  *
- * 全局右侧 Drawer 容器（UI.md 11）
+ * 全局右侧 Drawer 容器（docs/ui-guide.md 11）
  *
- * 状态管理：URL search params（architecture.md 关键契约点 16）
+ * 状态管理：URL search params（docs/docs/architecture.md 契约点 16）
  *   - ?drawer=stage&id=xxx              → 查看 / 编辑已有 Stage
  *   - ?drawer=stage-new&applicationId=  → 新建 Stage（可选 &date=YYYY-MM-DD 预填）
  *   - ?drawer=application-new           → 新建 Application（+ 可选第一个 Stage）

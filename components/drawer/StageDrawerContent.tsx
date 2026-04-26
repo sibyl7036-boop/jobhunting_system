@@ -267,7 +267,7 @@ export function StageDrawerContent({ stageId, onClose }: Props) {
 
   return (
     <>
-      {/* A. 顶部概览区（UI.md 11.2 A） */}
+      {/* A. 顶部概览区（docs/ui-guide.md 11.2 A） */}
       <SheetHeader>
         <SheetTitle>{app.companyName}</SheetTitle>
         <SheetDescription>
@@ -425,7 +425,7 @@ export function StageDrawerContent({ stageId, onClose }: Props) {
             </div>
           </section>
 
-          {/* D. 关联简历区（UI.md 11.2 D · Step 5.3 实装） */}
+          {/* D. 关联简历区（docs/ui-guide.md 11.2 D · Step 5.3 实装） */}
           <section className="space-y-3 border-t border-border-light pt-5">
             <h4 className="text-card-title text-text-primary">关联简历</h4>
 

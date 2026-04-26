@@ -1,5 +1,5 @@
 /**
- * /calendar 日历页（UI.md 9）
+ * /calendar 日历页（docs/ui-guide.md 9）
  *
  * SSR 拉"当月对应网格（包含前月尾 + 下月头）"的事件数据，注入给 Client MonthView。
  * 之后切月由 Client 端直接 fetch /api/calendar/events，无需刷页。
